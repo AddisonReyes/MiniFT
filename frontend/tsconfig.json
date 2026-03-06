@@ -6,7 +6,8 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "moduleResolution": "node"
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext"
   },
   "references": [
     { "path": "./tsconfig.app.json" },
