@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 async function getCsrfToken(): Promise<string> {
-  const res = await fetch(`${API_URL}/api/auth/csrf/`, {
+  const res = await fetch(`${API_URL}/auth/csrf/`, {
     credentials: "include",
   });
   const data = await res.json();
@@ -10,7 +10,7 @@ async function getCsrfToken(): Promise<string> {
 
 export async function signIn(email: string, password: string) {
   const csrfToken = await getCsrfToken();
-  const res = await fetch(`${API_URL}/api/auth/login/`, {
+  const res = await fetch(`${API_URL}/auth/login/`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -25,7 +25,7 @@ export async function signIn(email: string, password: string) {
 
 export async function signUp(email: string, password: string) {
   const csrfToken = await getCsrfToken();
-  const res = await fetch(`${API_URL}/api/auth/register/`, {
+  const res = await fetch(`${API_URL}/auth/register/`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -40,7 +40,7 @@ export async function signUp(email: string, password: string) {
 
 export async function signOut() {
   const csrfToken = await getCsrfToken();
-  await fetch(`${API_URL}/api/auth/logout/`, {
+  await fetch(`${API_URL}/auth/logout/`, {
     method: "POST",
     credentials: "include",
     headers: { "X-CSRFToken": csrfToken },

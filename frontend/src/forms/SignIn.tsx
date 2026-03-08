@@ -15,7 +15,8 @@ function SignIn() {
       await signIn(email, password);
       navigate("/dashboard");
     } catch (err) {
-      alert(`Usuario o contraseña incorrectos. Error: ${err}`);
+      alert("Usuario o contraseña incorrectos.");
+      console.log(`Error: ${err}`);
     } finally {
       setPassword("");
       setEmail("");
