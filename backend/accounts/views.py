@@ -3,8 +3,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt  
 from django.contrib.auth.decorators import login_required
 from .services import register_user, login_user, logout_user
-from django.middleware.csrf import get_token
 
+
+@csrf_exempt
 def register_view(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -15,6 +16,8 @@ def register_view(request):
     except (ValueError, KeyError) as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
+@csrf_exempt
 def login_view(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
