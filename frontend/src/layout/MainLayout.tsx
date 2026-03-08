@@ -8,7 +8,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       </header>
       <main>{children}</main>
       <footer>
-        <p>&copy; 2024 Finance Tracker. All rights reserved.</p>
+        <p>&copy; 2024 MiniFT. All rights reserved.</p>
         <h6>
           Created by{" "}
           <a
