@@ -9,4 +9,20 @@
 
 Minimalist finance tracker app focused on helping you with your personal finances.
 
+## Docker (local)
+
+Run everything (PostgreSQL + Django API + React UI):
+
+```bash
+docker-compose up --build
+```
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
+
+Notes:
+
+- Backend env for Docker is in `backend/.env.docker` (includes `DATABASE_URL` pointing to the `db` service).
+- Optional: override ports with `FRONTEND_PORT` and/or `BACKEND_PORT` (example: `FRONTEND_PORT=5174 docker-compose up --build`).
+
 License: MIT (see `LICENSE`).

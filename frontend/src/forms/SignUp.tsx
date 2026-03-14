@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import FormInput from "../components/FormInput";
+import { signIn, signUp } from "../services/api";
 
 function SignUp() {
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
@@ -12,21 +12,26 @@ function SignUp() {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // TODO: Implement actual login logic here, such as making an API call to authenticate the user.
+    if (password !== confirmPassword) {
+      alert("Las contrasenas no coinciden.");
+      return;
+    }
 
-    setUsername("");
+    try {
+      await signUp(email, password);
+      await signIn(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      alert("No se pudo crear la cuenta.");
+      console.log(`Error: ${err}`);
+    }
+
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-
-    navigate("/Dashboard");
-  };
-
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(e.target.value);
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,15 +52,6 @@ function SignUp() {
     <div>
       <h3>Register</h3>
       <form onSubmit={handleSubmit}>
-        <FormInput
-          label="Username"
-          type="text"
-          id="username"
-          name="username"
-          value={username}
-          onChange={handleUsernameChange}
-          required
-        />
         <FormInput
           label="Email"
           type="email"

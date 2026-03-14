@@ -1,5 +1,5 @@
 # ── Stage 1: deps ──────────────────────────────────────────────────────────────
-FROM python:3.14.3-slim AS deps
+FROM python:3.12-slim AS deps
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # ── Stage 2: runtime ───────────────────────────────────────────────────────────
-FROM python:3.14.3-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
