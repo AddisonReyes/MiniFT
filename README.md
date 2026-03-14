@@ -25,4 +25,9 @@ Notes:
 - Backend env for Docker is in `backend/.env.docker` (includes `DATABASE_URL` pointing to the `db` service).
 - Optional: override ports with `FRONTEND_PORT` and/or `BACKEND_PORT` (example: `FRONTEND_PORT=5174 docker-compose up --build`).
 
+## Frontend local dev
+
+- `frontend/.env` points to local Docker backend (`VITE_API_URL=http://localhost:8000`).
+- Production URL lives in `frontend/.env.production`.
+
 License: MIT (see `LICENSE`).

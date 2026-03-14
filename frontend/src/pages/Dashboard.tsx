@@ -61,7 +61,7 @@ function Dashboard() {
       setSummary(s);
       setEntries(e);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error cargando datos");
+      setError(err instanceof Error ? err.message : "Error loading data");
     } finally {
       setLoadingSummary(false);
       setLoadingEntries(false);
@@ -98,19 +98,19 @@ function Dashboard() {
       setIsRecurring(false);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear");
+      setError(err instanceof Error ? err.message : "Could not create entry");
     }
   }
 
   async function handleDelete(id: number) {
-    const ok = confirm("Eliminar este movimiento?");
+    const ok = confirm("Delete this entry?");
     if (!ok) return;
     setError(null);
     try {
       await deleteEntry(id);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo eliminar");
+      setError(err instanceof Error ? err.message : "Could not delete entry");
     }
   }
 
@@ -140,7 +140,7 @@ function Dashboard() {
         <section>
           <h2>Balance</h2>
           {loadingSummary ? (
-            <p>Cargando...</p>
+            <p>Loading...</p>
           ) : summary ? (
             <div>
               <p>Total income: {String(summary.total_income)}</p>
@@ -148,12 +148,12 @@ function Dashboard() {
               <p>Balance: {String(summary.balance)}</p>
             </div>
           ) : (
-            <p>Sin datos</p>
+            <p>No data</p>
           )}
         </section>
 
         <section>
-          <h2>Nuevo movimiento</h2>
+          <h2>New entry</h2>
           <form onSubmit={handleCreate}>
             <div>
               <label htmlFor="name">Name</label>
@@ -292,7 +292,7 @@ function Dashboard() {
         </section>
 
         <section>
-          <h2>Movimientos</h2>
+          <h2>Entries</h2>
 
           <div>
             <label htmlFor="filter">Filter</label>
@@ -311,9 +311,9 @@ function Dashboard() {
           </div>
 
           {loadingEntries ? (
-            <p>Cargando...</p>
+            <p>Loading...</p>
           ) : entries.length === 0 ? (
-            <p>No hay movimientos</p>
+            <p>No entries</p>
           ) : (
             <table>
               <thead>
