@@ -142,6 +142,9 @@ if DEBUG:
         "http://localhost:5174",
     ]
 else:
-    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOWED_ORIGINS = [
+        "https://minift.pages.dev",
+        # "https://minift.addison-amin.workers.dev",
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
