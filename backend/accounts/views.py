@@ -1,13 +1,11 @@
 import json
 import logging
 
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .jwt import create_login_token
 from .services import login_user, logout_user, register_user
-
 
 logger = logging.getLogger("minift.audit")
 
@@ -97,7 +95,7 @@ def login_view(request):
         return JsonResponse({"error": str(e)}, status=401)
 
 
-@login_required
+@csrf_exempt
 def logout_view(request):
     logger.info(
         "AUTH logout uid=%s rid=%s",

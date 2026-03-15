@@ -143,10 +143,16 @@ if DEBUG:
         "http://localhost:5173",
         "http://localhost:5174",
     ]
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+    ]
 else:
     CORS_ALLOWED_ORIGINS = [
         "https://minift.pages.dev",
-        # "https://minift.addison-amin.workers.dev",
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        "https://minift.pages.dev",
     ]
 
 CORS_ALLOW_CREDENTIALS = True
