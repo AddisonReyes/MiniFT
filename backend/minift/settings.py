@@ -135,6 +135,8 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = "Lax"
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
 
 # CORS
 

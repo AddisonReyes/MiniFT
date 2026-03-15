@@ -1,8 +1,8 @@
 import json
 import logging
 
+from accounts.auth import jwt_required
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
 from .jwt import create_login_token
 from .services import login_user, logout_user, register_user
@@ -24,7 +24,7 @@ def _mask_email(email: str) -> str:
         return ""
 
 
-@csrf_exempt
+@jwt_required
 def register_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
@@ -57,7 +57,7 @@ def register_view(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-@csrf_exempt
+@jwt_required
 def login_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
@@ -95,7 +95,7 @@ def login_view(request):
         return JsonResponse({"error": str(e)}, status=401)
 
 
-@csrf_exempt
+@jwt_required
 def logout_view(request):
     logger.info(
         "AUTH logout uid=%s rid=%s",

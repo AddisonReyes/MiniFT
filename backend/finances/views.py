@@ -1,7 +1,7 @@
 import json
 import logging
 
-from django.contrib.auth.decorators import login_required
+from accounts.auth import jwt_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -14,12 +14,11 @@ from .services import (
     update_entry,
 )
 
-
 logger = logging.getLogger("minift.audit")
 
 
 @csrf_exempt
-@login_required
+@jwt_required
 def entries_view(request):
     # GET – list all entries
     if request.method == "GET":
@@ -34,18 +33,18 @@ def entries_view(request):
         )
         data = [
             {
-                "id": e.id,  # type: ignore[attr-defined]
-                "name": e.name,  # type: ignore[attr-defined]
-                "date": str(e.date),  # type: ignore[attr-defined]
-                "amount": str(e.amount),  # type: ignore[attr-defined]
-                "currency": e.currency,  # type: ignore[attr-defined]
-                "entry_type": e.entry_type,  # type: ignore[attr-defined]
-                "is_recurring": e.is_recurring,  # type: ignore[attr-defined]
+                "id": e.id,
+                "name": e.name,
+                "date": str(e.date),
+                "amount": str(e.amount),
+                "currency": e.currency,
+                "entry_type": e.entry_type,
+                "is_recurring": e.is_recurring,
                 "recurring": (
                     {
-                        "frequency": e.recurring_config.frequency,  # type: ignore[attr-defined]
-                        "repeat_every": e.recurring_config.repeat_every,  # type: ignore[attr-defined]
-                        "repetitions": e.recurring_config.repetitions,  # type: ignore[attr-defined]
+                        "frequency": e.recurring_config.frequency,
+                        "repeat_every": e.recurring_config.repeat_every,
+                        "repetitions": e.recurring_config.repetitions,
                     }
                     if e.recurring_config
                     else None
@@ -77,7 +76,7 @@ def entries_view(request):
                 getattr(request, "request_id", ""),
             )
             return JsonResponse(
-                {"message": "Entry created", "id": entry.id},  # type: ignore[attr-defined]
+                {"message": "Entry created", "id": entry.id},
                 status=201,
             )
         except (ValueError, KeyError) as e:
@@ -93,7 +92,7 @@ def entries_view(request):
 
 
 @csrf_exempt
-@login_required
+@jwt_required
 def entry_detail(request, pk):
     # GET – single entry
     if request.method == "GET":
@@ -107,18 +106,18 @@ def entry_detail(request, pk):
             )
             return JsonResponse(
                 {
-                    "id": e.id,  # type: ignore[attr-defined]
-                    "name": e.name,  # type: ignore[attr-defined]
-                    "date": str(e.date),  # type: ignore[attr-defined]
-                    "amount": str(e.amount),  # type: ignore[attr-defined]
-                    "currency": e.currency,  # type: ignore[attr-defined]
-                    "entry_type": e.entry_type,  # type: ignore[attr-defined]
-                    "is_recurring": e.is_recurring,  # type: ignore[attr-defined]
+                    "id": e.id,
+                    "name": e.name,
+                    "date": str(e.date),
+                    "amount": str(e.amount),
+                    "currency": e.currency,
+                    "entry_type": e.entry_type,
+                    "is_recurring": e.is_recurring,
                     "recurring": (
                         {
-                            "frequency": e.recurring_config.frequency,  # type: ignore[attr-defined]
-                            "repeat_every": e.recurring_config.repeat_every,  # type: ignore[attr-defined]
-                            "repetitions": e.recurring_config.repetitions,  # type: ignore[attr-defined]
+                            "frequency": e.recurring_config.frequency,
+                            "repeat_every": e.recurring_config.repeat_every,
+                            "repetitions": e.recurring_config.repetitions,
                         }
                         if e.recurring_config
                         else None
@@ -146,9 +145,7 @@ def entry_detail(request, pk):
                 entry.id,  # type: ignore[attr-defined]
                 getattr(request, "request_id", ""),
             )
-            return JsonResponse(
-                {"message": "Entry updated", "id": entry.id}  # type: ignore[attr-defined]
-            )
+            return JsonResponse({"message": "Entry updated", "id": entry.id})
         except ValueError as e:
             logger.warning(
                 "FIN entry update fail uid=%s entry_id=%s err=%s rid=%s",
@@ -183,7 +180,7 @@ def entry_detail(request, pk):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-@login_required
+@jwt_required
 def summary_view(request):
     if request.method != "GET":
         return JsonResponse({"error": "GET required"}, status=405)
