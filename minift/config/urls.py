@@ -26,12 +26,22 @@ urlpatterns = [
         web_views.transaction_edit_view,
         name="web-transaction-edit",
     ),
+    path(
+        "transactions/<uuid:pk>/delete/",
+        web_views.transaction_delete_view,
+        name="web-transaction-delete",
+    ),
     path("budgets/", web_views.budgets_view, name="web-budgets"),
     path("budgets/create/", web_views.budget_create_view, name="web-budget-create"),
     path(
         "budgets/<uuid:pk>/edit/",
         web_views.budget_edit_view,
         name="web-budget-edit",
+    ),
+    path(
+        "budgets/<uuid:pk>/delete/",
+        web_views.budget_delete_view,
+        name="web-budget-delete",
     ),
     path(
         "transactions/summary/month/",

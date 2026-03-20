@@ -41,7 +41,11 @@
         <td>{{ t.amount }}</td>
         <td>{{ t.note|default:'' }}</td>
         <td>
-          <a href="{% url 'web-transaction-edit' t.id %}">Edit</a>
+          <a href="{% url 'web-transaction-edit' t.id %}"><button type="button">Edit</button></a>
+          <form action="{% url 'web-transaction-delete' t.id %}" method="post" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('Delete this transaction?');">Delete</button>
+          </form>
         </td>
       </tr>
     {% empty %}

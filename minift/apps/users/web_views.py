@@ -216,6 +216,22 @@ def transaction_edit_view(request, pk):
 
 
 @login_required
+def transaction_delete_view(request, pk):
+    if request.method != "POST":
+        messages.error(request, "Delete must be submitted as a form")
+        return redirect("web-home")
+
+    transaction = Transaction.objects.filter(user=request.user, pk=pk).first()
+    if transaction is None:
+        messages.error(request, "Transaction not found")
+        return redirect("web-home")
+
+    transaction.delete()
+    messages.success(request, "Transaction deleted")
+    return redirect("web-home")
+
+
+@login_required
 def budgets_view(request):
     budgets = Budget.objects.filter(user=request.user).order_by("-month", "category")
     return render(request, "budgets.html", {"budgets": budgets})
@@ -283,6 +299,22 @@ def budget_edit_view(request, pk):
         "budget_form.html",
         {"form": form, "is_edit": True, "budget": budget},
     )
+
+
+@login_required
+def budget_delete_view(request, pk):
+    if request.method != "POST":
+        messages.error(request, "Delete must be submitted as a form")
+        return redirect("web-budgets")
+
+    budget = Budget.objects.filter(user=request.user, pk=pk).first()
+    if budget is None:
+        messages.error(request, "Budget not found")
+        return redirect("web-budgets")
+
+    budget.delete()
+    messages.success(request, "Budget deleted")
+    return redirect("web-budgets")
 
 
 @login_required
