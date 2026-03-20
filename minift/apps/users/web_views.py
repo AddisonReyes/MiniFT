@@ -18,6 +18,39 @@ def _current_month_choice():
     return str(today.month)
 
 
+def _month_start_from_query(value: str | None) -> date | None:
+    if not value:
+        return None
+
+    s = str(value).strip()
+    if not s:
+        return None
+
+    # Accept YYYY-MM or YYYY-MM-DD
+    parts = s.split("-")
+    if len(parts) < 2:
+        return None
+
+    try:
+        year = int(parts[0])
+        month = int(parts[1])
+    except ValueError:
+        return None
+
+    if month < 1 or month > 12:
+        return None
+
+    return date(year, month, 1)
+
+
+def _add_months(d: date, delta_months: int) -> date:
+    # d is expected to be the 1st day of a month.
+    month_index = (d.year * 12 + (d.month - 1)) + int(delta_months)
+    year = month_index // 12
+    month = (month_index % 12) + 1
+    return date(year, month, 1)
+
+
 def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
@@ -88,10 +121,20 @@ def transactions_view(request):
 @login_required
 def dashboard_view(request):
     today = date.today()
-    start_of_month = date(today.year, today.month, 1)
+    start_of_month = _month_start_from_query(request.GET.get("month"))
+    if start_of_month is None:
+        start_of_month = date(today.year, today.month, 1)
+
+    start_next_month = _add_months(start_of_month, 1)
+    prev_month = _add_months(start_of_month, -1)
+    next_month = _add_months(start_of_month, 1)
 
     transactions = (
-        Transaction.objects.filter(user=request.user)
+        Transaction.objects.filter(
+            user=request.user,
+            date__gte=start_of_month,
+            date__lt=start_next_month,
+        )
         .order_by("-date", "-created_at")
         .all()[:10]
     )
@@ -105,7 +148,10 @@ def dashboard_view(request):
     spent_by_category = {
         row["category"]: row["total"]
         for row in Transaction.objects.filter(
-            user=request.user, date__gte=start_of_month, type=TransactionType.EXPENSE
+            user=request.user,
+            date__gte=start_of_month,
+            date__lt=start_next_month,
+            type=TransactionType.EXPENSE,
         )
         .values("category")
         .annotate(total=Sum("amount"))
@@ -127,14 +173,20 @@ def dashboard_view(request):
 
     total_expenses = (
         Transaction.objects.filter(
-            user=request.user, date__gte=start_of_month, type=TransactionType.EXPENSE
+            user=request.user,
+            date__gte=start_of_month,
+            date__lt=start_next_month,
+            type=TransactionType.EXPENSE,
         ).aggregate(total=Sum("amount"))["total"]
         or 0
     )
 
     total_income = (
         Transaction.objects.filter(
-            user=request.user, date__gte=start_of_month, type=TransactionType.INCOME
+            user=request.user,
+            date__gte=start_of_month,
+            date__lt=start_next_month,
+            type=TransactionType.INCOME,
         ).aggregate(total=Sum("amount"))["total"]
         or 0
     )
@@ -150,6 +202,10 @@ def dashboard_view(request):
             "transactions": transactions,
             "budget_rows": budget_rows,
             "month_name": start_of_month.strftime("%B"),
+            "month_label": start_of_month.strftime("%B %Y"),
+            "selected_month": start_of_month,
+            "prev_month": prev_month,
+            "next_month": next_month,
             "total_income": total_income,
             "total_expenses": total_expenses,
             "net": total_income - total_expenses,
