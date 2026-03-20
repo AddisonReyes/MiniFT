@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Budgets{% endblock %}
+
+{% block content %}
+<h1>Budgets</h1>
+<p><a href="/budgets/create/">Add Budget</a></p>
+
+<table border="1">
+    <tr>
+        <th>Category</th>
+        <th>Limit</th>
+        <th>Month</th>
+    </tr>
+    {% for b in budgets %}
+    <tr>
+        <td>{{ b.category }}</td>
+        <td>{{ b.limit }}</td>
+        <td>{{ b.month }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">No budgets</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

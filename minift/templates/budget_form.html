@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Budget{% endblock %}
+
+{% block content %}
+<h1>Add Budget</h1>
+<form method="post">
+    {% csrf_token %}
+    <p>Category: <input type="text" name="category" required></p>
+    <p>Limit: <input type="number" step="0.01" name="limit" required></p>
+    <p>Month: <input type="month" name="month" required></p>
+    <button type="submit">Save</button>
+</form>
+<p><a href="/budgets/">Back to Budgets</a></p>
+{% endblock %}

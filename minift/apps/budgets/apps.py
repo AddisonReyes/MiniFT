@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class BudgetsConfig(AppConfig):
-    name = 'budgets'
+    name = "minift.apps.budgets"

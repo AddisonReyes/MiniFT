@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+<h1>Transactions</h1>
+<p><a href="/transactions/create/">Add Transaction</a></p>
+
+<form method="get">
+    <label>Filter by type:
+        <select name="type">
+            <option value="">All</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+    </label>
+    <label>Category: <input type="text" name="category"></label>
+    <label>From: <input type="date" name="from"></label>
+    <label>To: <input type="date" name="to"></label>
+    <button type="submit">Filter</button>
+</form>
+
+<table border="1">
+    <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Note</th>
+    </tr>
+    {% for t in transactions %}
+    <tr>
+        <td>{{ t.date }}</td>
+        <td>{{ t.type }}</td>
+        <td>{{ t.category }}</td>
+        <td>{{ t.amount }}</td>
+        <td>{{ t.note|default:"" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No transactions</td></tr>
+    {% endfor %}
+</table>
+
+<p><a href="/transactions/summary/month/">Monthly Summary</a> | <a href="/transactions/summary/categories/">Category Summary</a></p>
+{% endblock %}

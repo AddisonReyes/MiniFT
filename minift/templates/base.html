@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}MiniFT{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        {% if user.is_authenticated %}
+            <a href="/transactions/">Transactions</a> |
+            <a href="/budgets/">Budgets</a> |
+            <a href="/auth/me/">My Account</a> |
+            <form action="/auth/logout/" method="post" style="display:inline">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <a href="/auth/login/">Login</a> |
+            <a href="/auth/register/">Register</a>
+        {% endif %}
+    </nav>
+
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</body>
+</html>

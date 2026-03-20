@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Category Summary{% endblock %}
+
+{% block content %}
+<h1>Spending by Category</h1>
+<table border="1">
+    <tr>
+        <th>Category</th>
+        <th>Total</th>
+    </tr>
+    {% for c in categories %}
+    <tr>
+        <td>{{ c.category }}</td>
+        <td>{{ c.total }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2">No data</td></tr>
+    {% endfor %}
+</table>
+<p><a href="/transactions/">Back to Transactions</a></p>
+{% endblock %}
