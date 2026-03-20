@@ -1,20 +1,23 @@
+# pyright: ignore
+
 import uuid
 from datetime import date
 
 from django.db import models
-
-from minift.apps.users.models import User
+from django.conf import settings
 
 
 class TransactionType(models.TextChoices):
-    INCOME = "income", "Income"
-    EXPENSE = "expense", "Expense"
+    INCOME = "income", "Income"  # type: ignore[assignment]
+    EXPENSE = "expense", "Expense"  # type: ignore[assignment]
 
 
 class Transaction(models.Model):
+    objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="transactions"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions"
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     type = models.CharField(max_length=7, choices=TransactionType.choices)

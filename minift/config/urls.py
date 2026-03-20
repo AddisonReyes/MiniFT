@@ -10,7 +10,7 @@ urlpatterns = [
     path("api/transactions/", include("minift.apps.transactions.urls")),
     path("api/budgets/", include("minift.apps.budgets.urls")),
     # Web routes (templates)
-    path("", web_views.transactions_view, name="web-home"),
+    path("", web_views.dashboard_view, name="web-home"),
     path("transactions/", web_views.transactions_view, name="web-transactions"),
     path("auth/register/", web_views.register_view, name="web-register"),
     path("auth/login/", web_views.login_view, name="web-login"),
@@ -21,8 +21,18 @@ urlpatterns = [
         web_views.transaction_create_view,
         name="web-transaction-create",
     ),
+    path(
+        "transactions/<uuid:pk>/edit/",
+        web_views.transaction_edit_view,
+        name="web-transaction-edit",
+    ),
     path("budgets/", web_views.budgets_view, name="web-budgets"),
     path("budgets/create/", web_views.budget_create_view, name="web-budget-create"),
+    path(
+        "budgets/<uuid:pk>/edit/",
+        web_views.budget_edit_view,
+        name="web-budget-edit",
+    ),
     path(
         "transactions/summary/month/",
         web_views.monthly_summary_view,

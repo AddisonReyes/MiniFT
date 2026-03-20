@@ -18,14 +18,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "currency"]
 
     def create(self, validated_data):
-        from django.contrib.auth.hashers import make_password
-
-        user = User.objects.create(
+        return User.objects.create_user(  # type: ignore[attr-defined]
             email=validated_data["email"],
-            password_hash=make_password(validated_data["password"]),
+            password=validated_data["password"],
             currency=validated_data.get("currency", "USD"),
         )
-        return user
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

@@ -13,8 +13,17 @@
   <h2>Update Currency</h2>
   <form method="post">
     {% csrf_token %}
+    {% if form.non_field_errors %}
+      <ul>
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <p>
-      Currency:<input type="text" name="currency" value="{{ user.currency }}" />
+      Currency:
+      <input type="text" name="currency" value="{{ form.currency.value|default:user.currency }}" />
+      {% for error in form.currency.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
     <button type="submit">Update</button>
   </form>

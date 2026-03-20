@@ -8,14 +8,27 @@
   <h1>Register</h1>
   <form method="post">
     {% csrf_token %}
+    {% if form.non_field_errors %}
+      <ul>
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <p>
-      Email:<input type="email" name="email" required />
+      Email:
+      <input type="email" name="email" value="{{ form.email.value|default_if_none:'' }}" required />
+      {% for error in form.email.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
     <p>
-      Password:<input type="password" name="password" required />
+      Password:
+      <input type="password" name="password" required />
+      {% for error in form.password.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
     <p>
-      Currency:<input type="text" name="currency" value="USD" />
+      Currency:
+      <input type="text" name="currency" value="{{ form.currency.value|default:'USD' }}" />
+      {% for error in form.currency.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
     <button type="submit">Register</button>
   </form>

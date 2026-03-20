@@ -1,13 +1,20 @@
+from __future__ import annotations
+
 import uuid
+from datetime import date
+from typing import cast
 
 from django.db import models
-
-from minift.apps.users.models import User
+from django.conf import settings
 
 
 class Budget(models.Model):
+    objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="budgets")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="budgets"
+    )
     category = models.CharField(max_length=100)
     limit = models.DecimalField(max_digits=10, decimal_places=2)
     month = models.DateField()
@@ -18,4 +25,5 @@ class Budget(models.Model):
         ordering = ["-month", "category"]
 
     def __str__(self):
-        return f"{self.category}: {self.limit} ({self.month.strftime('%Y-%m')})"
+        month = cast(date, self.month)
+        return f"{self.category}: {self.limit} ({month.strftime('%Y-%m')})"

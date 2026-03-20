@@ -1,23 +1,66 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  Add Budget
+  {% if is_edit %}
+    Edit Budget
+  {% else %}
+    Add Budget
+  {% endif %}
 {% endblock %}
 
 {% block content %}
-  <h1>Add Budget</h1>
+  <h1>
+    {% if is_edit %}
+      Edit Budget
+    {% else %}
+      Add Budget
+    {% endif %}
+  </h1>
   <form method="post">
     {% csrf_token %}
+    {% if form.non_field_errors %}
+      <ul>
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <p>
-      Category:<input type="text" name="category" required />
+      Category:
+      <input type="text" name="category" value="{{ form.category.value|default_if_none:'' }}" required />
+      {% for error in form.category.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
     <p>
-      Limit:<input type="number" step="0.01" name="limit" required />
+      Limit:
+      <input type="number" step="0.01" name="limit" value="{{ form.limit.value|default_if_none:'' }}" required />
+      {% for error in form.limit.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
     <p>
-      Month:<input type="month" name="month" required />
+      Month:
+      <select name="month" required>
+        <option value="">Select month</option>
+        <option value="1" {% if form.month.value == '1' %}selected{% endif %}>January</option>
+        <option value="2" {% if form.month.value == '2' %}selected{% endif %}>February</option>
+        <option value="3" {% if form.month.value == '3' %}selected{% endif %}>March</option>
+        <option value="4" {% if form.month.value == '4' %}selected{% endif %}>April</option>
+        <option value="5" {% if form.month.value == '5' %}selected{% endif %}>May</option>
+        <option value="6" {% if form.month.value == '6' %}selected{% endif %}>June</option>
+        <option value="7" {% if form.month.value == '7' %}selected{% endif %}>July</option>
+        <option value="8" {% if form.month.value == '8' %}selected{% endif %}>August</option>
+        <option value="9" {% if form.month.value == '9' %}selected{% endif %}>September</option>
+        <option value="10" {% if form.month.value == '10' %}selected{% endif %}>October</option>
+        <option value="11" {% if form.month.value == '11' %}selected{% endif %}>November</option>
+        <option value="12" {% if form.month.value == '12' %}selected{% endif %}>December</option>
+      </select>
+      {% for error in form.month.errors %}<span>{{ error }}</span>{% endfor %}
     </p>
-    <button type="submit">Save</button>
+    <button type="submit">
+      {% if is_edit %}
+        Update
+      {% else %}
+        Save
+      {% endif %}
+    </button>
   </form>
   <p>
     <a href="{% url 'web-budgets' %}">Back to Budgets</a>

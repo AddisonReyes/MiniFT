@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Dashboard
+{% endblock %}
+
+{% block content %}
+  <h1>Dashboard</h1>
+
+  <p>
+    <a href="{% url 'web-transaction-create' %}">Add Transaction</a> |
+    <a href="{% url 'web-budget-create' %}">Add Budget</a>
+  </p>
+
+  <h2>{{ month_name }} Summary</h2>
+  <table border="1">
+    <tr>
+      <th>Total Income</th>
+      <th>Total Expenses</th>
+      <th>Net</th>
+      <th>Budgeted Limit</th>
+      <th>Budgeted Spent</th>
+      <th>Budgeted Remaining</th>
+    </tr>
+    <tr>
+      <td>{{ total_income }}</td>
+      <td>{{ total_expenses }}</td>
+      <td>{{ net }}</td>
+      <td>{{ budgeted_limit }}</td>
+      <td>{{ budgeted_spent }}</td>
+      <td>{{ budgeted_remaining }}</td>
+    </tr>
+  </table>
+
+  <h2>This Month's Budgets</h2>
+  {% if budget_rows %}
+    <table border="1">
+      <tr>
+        <th>Category</th>
+        <th>Limit</th>
+        <th>Spent</th>
+        <th>Remaining</th>
+        <th>Actions</th>
+      </tr>
+      {% for row in budget_rows %}
+        <tr>
+          <td>{{ row.category }}</td>
+          <td>{{ row.limit }}</td>
+          <td>{{ row.spent }}</td>
+          <td>{{ row.remaining }}</td>
+          <td>
+            <a href="{% url 'web-budget-edit' row.id %}">Edit</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No budgets set for {{ month_name }}.</p>
+  {% endif %}
+
+  <h2>Recent Transactions</h2>
+  {% if transactions %}
+    <table border="1">
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Note</th>
+        <th>Actions</th>
+      </tr>
+      {% for t in transactions %}
+        <tr>
+          <td>{{ t.date }}</td>
+          <td>{{ t.type }}</td>
+          <td>{{ t.category }}</td>
+          <td>{{ t.amount }}</td>
+          <td>{{ t.note|default:"" }}</td>
+          <td>
+            <a href="{% url 'web-transaction-edit' t.id %}">Edit</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No transactions yet.</p>
+  {% endif %}
+
+  <p>
+    <a href="{% url 'web-transactions' %}">View all transactions</a> |
+    <a href="{% url 'web-budgets' %}">View all budgets</a>
+  </p>
+{% endblock %}

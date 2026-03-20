@@ -1,5 +1,6 @@
-from django.contrib.auth import authenticate
-from django.contrib.auth.hashers import check_password
+from typing import Any, cast
+
+from django.contrib.auth import authenticate, login, logout
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -31,14 +32,21 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
+            data = cast(dict[str, Any], serializer.validated_data)
+            email = data.get("email")
+            password = data.get("password")
+            if not email or not password:
+                return Response(
+                    {"error": "Email and password are required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             user = authenticate(
-                email=serializer.validated_data["email"],
-                password=serializer.validated_data["password"],
+                request,
+                username=email,
+                password=password,
             )
             if user:
-                request.session.create()
-                request.session["user_id"] = str(user.id)
-                request.session.modified = True
+                login(request, user)
                 return Response(UserSerializer(user).data)
             return Response(
                 {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
@@ -50,7 +58,7 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        request.session.flush()
+        logout(request)
         return Response({"message": "Logged out successfully"})
 
 

@@ -15,16 +15,20 @@
       <th>Category</th>
       <th>Limit</th>
       <th>Month</th>
+      <th>Actions</th>
     </tr>
     {% for b in budgets %}
-      <tr>
+    <tr>
         <td>{{ b.category }}</td>
         <td>{{ b.limit }}</td>
-        <td>{{ b.month }}</td>
-      </tr>
+        <td>{{ b.month|date:"F" }}</td>
+        <td>
+          <a href="{% url 'web-budget-edit' b.id %}">Edit</a>
+        </td>
+    </tr>
     {% empty %}
       <tr>
-        <td colspan="3">No budgets</td>
+        <td colspan="4">No budgets</td>
       </tr>
     {% endfor %}
   </table>
