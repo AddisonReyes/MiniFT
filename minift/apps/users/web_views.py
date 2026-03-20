@@ -41,9 +41,15 @@ def login_view(request):
     return render(request, "login.html", {"form": form})
 
 
+def home_view(request):
+    if request.user.is_authenticated:
+        return dashboard_view(request)
+    return render(request, "landing.html")
+
+
 def logout_view(request):
     logout(request)
-    return redirect("web-login")
+    return redirect("web-home")
 
 
 @login_required

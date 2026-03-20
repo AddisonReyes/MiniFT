@@ -5,97 +5,140 @@
 {% endblock %}
 
 {% block content %}
-  <h1>Dashboard</h1>
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p class="mt-1 text-sm text-black/70 dark:text-white/70">{{ month_name }} overview</p>
+      </div>
+      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <a href="{% url 'web-transaction-create' %}" class="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+          Add Transaction
+        </a>
+        <a href="{% url 'web-budget-create' %}" class="inline-flex items-center justify-center rounded-md border border-black/15 px-4 py-2 text-sm font-medium hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10">
+          Add Budget
+        </a>
+      </div>
+    </div>
 
-  <p>
-    <a href="{% url 'web-transaction-create' %}">Add Transaction</a> |
-    <a href="{% url 'web-budget-create' %}">Add Budget</a>
-  </p>
+    <section class="rounded-2xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
+      <h2 class="text-base font-semibold">{{ month_name }} Summary</h2>
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div class="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-black">
+          <p class="text-xs text-black/60 dark:text-white/60">Total Income</p>
+          <p class="mt-1 text-lg font-semibold">{{ total_income }}</p>
+        </div>
+        <div class="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-black">
+          <p class="text-xs text-black/60 dark:text-white/60">Total Expenses</p>
+          <p class="mt-1 text-lg font-semibold">{{ total_expenses }}</p>
+        </div>
+        <div class="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-black">
+          <p class="text-xs text-black/60 dark:text-white/60">Net</p>
+          <p class="mt-1 text-lg font-semibold">{{ net }}</p>
+        </div>
+        <div class="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-black">
+          <p class="text-xs text-black/60 dark:text-white/60">Budgeted Limit</p>
+          <p class="mt-1 text-lg font-semibold">{{ budgeted_limit }}</p>
+        </div>
+        <div class="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-black">
+          <p class="text-xs text-black/60 dark:text-white/60">Budgeted Spent</p>
+          <p class="mt-1 text-lg font-semibold">{{ budgeted_spent }}</p>
+        </div>
+        <div class="rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-black">
+          <p class="text-xs text-black/60 dark:text-white/60">Budgeted Remaining</p>
+          <p class="mt-1 text-lg font-semibold">{{ budgeted_remaining }}</p>
+        </div>
+      </div>
+    </section>
 
-  <h2>{{ month_name }} Summary</h2>
-  <table border="1">
-    <tr>
-      <th>Total Income</th>
-      <th>Total Expenses</th>
-      <th>Net</th>
-      <th>Budgeted Limit</th>
-      <th>Budgeted Spent</th>
-      <th>Budgeted Remaining</th>
-    </tr>
-    <tr>
-      <td>{{ total_income }}</td>
-      <td>{{ total_expenses }}</td>
-      <td>{{ net }}</td>
-      <td>{{ budgeted_limit }}</td>
-      <td>{{ budgeted_spent }}</td>
-      <td>{{ budgeted_remaining }}</td>
-    </tr>
-  </table>
+    <section class="rounded-2xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-base font-semibold">This Month's Budgets</h2>
+        <a href="{% url 'web-budgets' %}" class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">View all</a>
+      </div>
 
-  <h2>This Month's Budgets</h2>
-  {% if budget_rows %}
-    <table border="1">
-      <tr>
-        <th>Category</th>
-        <th>Limit</th>
-        <th>Spent</th>
-        <th>Remaining</th>
-        <th>Actions</th>
-      </tr>
-      {% for row in budget_rows %}
-        <tr>
-          <td>{{ row.category }}</td>
-          <td>{{ row.limit }}</td>
-          <td>{{ row.spent }}</td>
-          <td>{{ row.remaining }}</td>
-          <td>
-            <a href="{% url 'web-budget-edit' row.id %}"><button type="button">Edit</button></a>
-            <form action="{% url 'web-budget-delete' row.id %}" method="post" style="display:inline">
-              {% csrf_token %}
-              <button type="submit" onclick="return confirm('Delete this budget?');">Delete</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>No budgets set for {{ month_name }}.</p>
-  {% endif %}
+      {% if budget_rows %}
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full min-w-[560px] border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="text-left text-black/70 dark:text-white/70">
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Category</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Limit</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Spent</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Remaining</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in budget_rows %}
+                <tr class="hover:bg-black/5 dark:hover:bg-white/10">
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ row.category }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ row.limit }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ row.spent }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ row.remaining }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">
+                    <div class="flex flex-wrap gap-2">
+                      <a href="{% url 'web-budget-edit' row.id %}" class="inline-flex items-center justify-center rounded-md border border-black/15 px-3 py-1.5 text-xs font-medium hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10">Edit</a>
+                      <form action="{% url 'web-budget-delete' row.id %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center justify-center rounded-md bg-black px-3 py-1.5 text-xs font-medium text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80" onclick="return confirm('Delete this budget?');">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="mt-4 text-sm text-black/70 dark:text-white/70">No budgets set for {{ month_name }}.</p>
+      {% endif %}
+    </section>
 
-  <h2>Recent Transactions</h2>
-  {% if transactions %}
-    <table border="1">
-      <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Category</th>
-        <th>Amount</th>
-        <th>Note</th>
-        <th>Actions</th>
-      </tr>
-      {% for t in transactions %}
-        <tr>
-          <td>{{ t.date }}</td>
-          <td>{{ t.type }}</td>
-          <td>{{ t.category }}</td>
-          <td>{{ t.amount }}</td>
-          <td>{{ t.note|default:"" }}</td>
-          <td>
-            <a href="{% url 'web-transaction-edit' t.id %}"><button type="button">Edit</button></a>
-            <form action="{% url 'web-transaction-delete' t.id %}" method="post" style="display:inline">
-              {% csrf_token %}
-              <button type="submit" onclick="return confirm('Delete this transaction?');">Delete</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>No transactions yet.</p>
-  {% endif %}
+    <section class="rounded-2xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-base font-semibold">Recent Transactions</h2>
+        <a href="{% url 'web-transactions' %}" class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">View all</a>
+      </div>
 
-  <p>
-    <a href="{% url 'web-transactions' %}">View all transactions</a> |
-    <a href="{% url 'web-budgets' %}">View all budgets</a>
-  </p>
+      {% if transactions %}
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full min-w-[680px] border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="text-left text-black/70 dark:text-white/70">
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Date</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Type</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Category</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Amount</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Note</th>
+                <th class="border-b border-black/10 p-3 dark:border-white/10">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in transactions %}
+                <tr class="hover:bg-black/5 dark:hover:bg-white/10">
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.date }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.type }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.category }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.amount }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.note|default:"" }}</td>
+                  <td class="border-b border-black/10 p-3 dark:border-white/10">
+                    <div class="flex flex-wrap gap-2">
+                      <a href="{% url 'web-transaction-edit' t.id %}" class="inline-flex items-center justify-center rounded-md border border-black/15 px-3 py-1.5 text-xs font-medium hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10">Edit</a>
+                      <form action="{% url 'web-transaction-delete' t.id %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center justify-center rounded-md bg-black px-3 py-1.5 text-xs font-medium text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80" onclick="return confirm('Delete this transaction?');">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="mt-4 text-sm text-black/70 dark:text-white/70">No transactions yet.</p>
+      {% endif %}
+    </section>
+  </div>
 {% endblock %}

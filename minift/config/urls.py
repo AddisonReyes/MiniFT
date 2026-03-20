@@ -10,7 +10,7 @@ urlpatterns = [
     path("api/transactions/", include("minift.apps.transactions.urls")),
     path("api/budgets/", include("minift.apps.budgets.urls")),
     # Web routes (templates)
-    path("", web_views.dashboard_view, name="web-home"),
+    path("", web_views.home_view, name="web-home"),
     path("transactions/", web_views.transactions_view, name="web-transactions"),
     path("auth/register/", web_views.register_view, name="web-register"),
     path("auth/login/", web_views.login_view, name="web-login"),
