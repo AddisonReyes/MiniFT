@@ -80,40 +80,40 @@ minift/
 
 | Method | Endpoint          | Description          |
 | ------ | ----------------- | -------------------- |
-| POST   | `/auth/register/` | Register new user    |
-| POST   | `/auth/login/`    | Login user           |
-| POST   | `/auth/logout/`   | Logout user          |
-| GET    | `/auth/me/`       | Get current user     |
-| PATCH  | `/auth/me/`       | Update user settings |
+| POST   | `/api/auth/register/` | Register new user    |
+| POST   | `/api/auth/login/`    | Login user           |
+| POST   | `/api/auth/logout/`   | Logout user          |
+| GET    | `/api/auth/me/`       | Get current user     |
+| PATCH  | `/api/auth/me/`       | Update user settings |
 
 ### Transactions
 
 | Method | Endpoint                            | Description                                                           |
 | ------ | ----------------------------------- | --------------------------------------------------------------------- |
-| GET    | `/transactions/`                    | List transactions (filters: `?type=`, `?category=`, `?from=`, `?to=`) |
-| POST   | `/transactions/`                    | Create transaction                                                    |
-| GET    | `/transactions/:id/`                | Get transaction                                                       |
-| PATCH  | `/transactions/:id/`                | Update transaction                                                    |
-| DELETE | `/transactions/:id/`                | Delete transaction                                                    |
-| GET    | `/transactions/summary/month/`      | Monthly totals                                                        |
-| GET    | `/transactions/summary/categories/` | Spending by category                                                  |
+| GET    | `/api/transactions/`                    | List transactions (filters: `?type=`, `?category=`, `?from=`, `?to=`) |
+| POST   | `/api/transactions/`                    | Create transaction                                                    |
+| GET    | `/api/transactions/:id/`                | Get transaction                                                       |
+| PATCH  | `/api/transactions/:id/`                | Update transaction                                                    |
+| DELETE | `/api/transactions/:id/`                | Delete transaction                                                    |
+| GET    | `/api/transactions/summary/month/`      | Monthly totals                                                        |
+| GET    | `/api/transactions/summary/categories/` | Spending by category                                                  |
 
 ### Budgets
 
 | Method | Endpoint        | Description   |
 | ------ | --------------- | ------------- |
-| GET    | `/budgets/`     | List budgets  |
-| POST   | `/budgets/`     | Create budget |
-| PATCH  | `/budgets/:id/` | Update budget |
-| DELETE | `/budgets/:id/` | Delete budget |
+| GET    | `/api/budgets/`     | List budgets  |
+| POST   | `/api/budgets/`     | Create budget |
+| PATCH  | `/api/budgets/:id/` | Update budget |
+| DELETE | `/api/budgets/:id/` | Delete budget |
 
 ## Web Interface
 
 Access via browser at:
 
 - `/` - Dashboard (transactions)
-- `/register/` - Registration
-- `/login/` - Login
+- `/auth/register/` - Registration
+- `/auth/login/` - Login
 - `/transactions/create/` - Add transaction
 - `/budgets/` - Budgets
 - `/budgets/create/` - Add budget

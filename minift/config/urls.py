@@ -1,31 +1,36 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+
 from minift.apps.users import web_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("auth/", include("minift.apps.users.urls")),
-    path("transactions/", include("minift.apps.transactions.urls")),
-    path("budgets/", include("minift.apps.budgets.urls")),
-    path("", web_views.transactions_view, name="home"),
-    path("register/", web_views.register_view, name="register"),
-    path("login/", web_views.login_view, name="login"),
-    path("logout/", web_views.logout_view, name="logout"),
+    # API routes (DRF)
+    path("api/auth/", include("minift.apps.users.urls")),
+    path("api/transactions/", include("minift.apps.transactions.urls")),
+    path("api/budgets/", include("minift.apps.budgets.urls")),
+    # Web routes (templates)
+    path("", web_views.transactions_view, name="web-home"),
+    path("transactions/", web_views.transactions_view, name="web-transactions"),
+    path("auth/register/", web_views.register_view, name="web-register"),
+    path("auth/login/", web_views.login_view, name="web-login"),
+    path("auth/logout/", web_views.logout_view, name="web-logout"),
+    path("auth/me/", web_views.me_view, name="web-me"),
     path(
         "transactions/create/",
         web_views.transaction_create_view,
-        name="transaction-create",
+        name="web-transaction-create",
     ),
-    path("budgets/create/", web_views.budget_create_view, name="budget-create"),
+    path("budgets/", web_views.budgets_view, name="web-budgets"),
+    path("budgets/create/", web_views.budget_create_view, name="web-budget-create"),
     path(
         "transactions/summary/month/",
         web_views.monthly_summary_view,
-        name="monthly-summary",
+        name="web-monthly-summary",
     ),
     path(
         "transactions/summary/categories/",
         web_views.category_summary_view,
-        name="category-summary",
+        name="web-category-summary",
     ),
-    path("auth/me/", web_views.me_view, name="me"),
 ]

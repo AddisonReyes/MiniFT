@@ -1,12 +1,16 @@
 {% extends 'base.html' %}
 
-{% block title %}Monthly Summary{% endblock %}
+{% block title %}
+  Monthly Summary
+{% endblock %}
 
 {% block content %}
-<h1>Monthly Summary</h1>
-<p>Month: {{ month }}</p>
-<p>Total Income: {{ total_income }}</p>
-<p>Total Expenses: {{ total_expenses }}</p>
-<p>Net: {{ net }}</p>
-<p><a href="/transactions/">Back to Transactions</a></p>
+  <h1>Monthly Summary</h1>
+  <p>Month: {{ month }}</p>
+  <p>Total Income: {{ total_income }}</p>
+  <p>Total Expenses: {{ total_expenses }}</p>
+  <p>Net: {{ net }}</p>
+  <p>
+    <a href="{% url 'web-transactions' %}">Back to Transactions</a>
+  </p>
 {% endblock %}

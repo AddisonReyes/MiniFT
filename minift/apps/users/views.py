@@ -1,15 +1,16 @@
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from minift.apps.users.models import User
 from minift.apps.users.serializers import (
-    UserSerializer,
-    UserRegistrationSerializer,
-    UserUpdateSerializer,
     LoginSerializer,
+    UserRegistrationSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
 )
 
 

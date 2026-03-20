@@ -1,15 +1,25 @@
 {% extends 'base.html' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}
+  Register
+{% endblock %}
 
 {% block content %}
-<h1>Register</h1>
-<form method="post">
+  <h1>Register</h1>
+  <form method="post">
     {% csrf_token %}
-    <p>Email: <input type="email" name="email" required></p>
-    <p>Password: <input type="password" name="password" required></p>
-    <p>Currency: <input type="text" name="currency" value="USD"></p>
+    <p>
+      Email:<input type="email" name="email" required />
+    </p>
+    <p>
+      Password:<input type="password" name="password" required />
+    </p>
+    <p>
+      Currency:<input type="text" name="currency" value="USD" />
+    </p>
     <button type="submit">Register</button>
-</form>
-<p>Already have an account? <a href="/auth/login/">Login</a></p>
+  </form>
+  <p>
+    Already have an account? <a href="{% url 'web-login' %}">Login</a>
+  </p>
 {% endblock %}

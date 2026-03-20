@@ -1,12 +1,14 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db import models
-from minift.apps.users.models import User
-from minift.apps.transactions.models import Transaction, TransactionType
-from minift.apps.budgets.models import Budget
 from datetime import date
+
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.db import models
+from django.shortcuts import redirect, render
+
+from minift.apps.budgets.models import Budget
+from minift.apps.transactions.models import Transaction, TransactionType
+from minift.apps.users.models import User
 
 
 def register_view(request):
@@ -23,7 +25,7 @@ def register_view(request):
                 email=email, password_hash=make_password(password), currency=currency
             )
             login(request, user)
-            return redirect("/transactions/")
+            return redirect("web-transactions")
     return render(request, "register.html")
 
 
@@ -37,7 +39,7 @@ def login_view(request):
 
             if check_password(password, user.password_hash):
                 login(request, user)
-                return redirect("/transactions/")
+                return redirect("web-transactions")
             else:
                 messages.error(request, "Invalid credentials")
         except User.DoesNotExist:
@@ -47,7 +49,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect("/auth/login/")
+    return redirect("web-login")
 
 
 @login_required
@@ -86,7 +88,7 @@ def transaction_create_view(request):
             note=request.POST.get("note") or None,
             date=request.POST.get("date"),
         )
-        return redirect("/transactions/")
+        return redirect("web-transactions")
     return render(request, "transaction_form.html")
 
 
@@ -108,7 +110,7 @@ def budget_create_view(request):
             limit=request.POST.get("limit"),
             month=month_date,
         )
-        return redirect("/budgets/")
+        return redirect("web-budgets")
     return render(request, "budget_form.html")
 
 
