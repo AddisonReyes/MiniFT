@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load money %}
+
 {% block title %}
   Category Summary
 {% endblock %}
@@ -27,7 +29,7 @@
             {% for c in categories %}
               <tr class="hover:bg-black/5 dark:hover:bg-white/10">
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ c.category }}</td>
-                <td class="border-b border-black/10 p-3 dark:border-white/10">{{ c.total }}</td>
+                <td class="border-b border-black/10 p-3 dark:border-white/10">{{ c.total|money:user.currency }}</td>
               </tr>
             {% empty %}
               <tr>

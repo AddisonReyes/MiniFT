@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load money %}
+
 {% block title %}
   Budgets
 {% endblock %}
@@ -28,7 +30,7 @@
             {% for b in budgets %}
               <tr class="hover:bg-black/5 dark:hover:bg-white/10">
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ b.category }}</td>
-                <td class="border-b border-black/10 p-3 dark:border-white/10">{{ b.limit }}</td>
+                <td class="border-b border-black/10 p-3 dark:border-white/10">{{ b.limit|money:user.currency }}</td>
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ b.month|date:"F" }}</td>
                 <td class="border-b border-black/10 p-3 dark:border-white/10">
                   <div class="flex flex-wrap gap-2">

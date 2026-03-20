@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load money %}
+
 {% block title %}
   Transactions
 {% endblock %}
@@ -66,7 +68,7 @@
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.date }}</td>
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.type }}</td>
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.category }}</td>
-                <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.amount }}</td>
+                <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.amount|money:user.currency }}</td>
                 <td class="border-b border-black/10 p-3 dark:border-white/10">{{ t.note|default:'' }}</td>
                 <td class="border-b border-black/10 p-3 dark:border-white/10">
                   <div class="flex flex-wrap gap-2">
