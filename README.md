@@ -2,6 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=plastic&logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-092E20?style=plastic&logo=django&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=plastic&logo=tailwindcss&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=plastic&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=plastic&logo=docker&logoColor=white)
 
@@ -22,6 +23,7 @@ Minimalist finance tracker app focused on helping you manage your personal finan
 - **Backend**: Python / Django 6.0
 - **Database**: SQLite (default) / PostgreSQL (production)
 - **Authentication**: Session-based auth
+- **Frontend**: Django templates + Tailwind CSS (CDN) with light/dark themes (default: dark)
 
 ## Setup
 
@@ -49,14 +51,13 @@ pip install -r requirements.txt
 ### 4. Run migrations
 
 ```bash
-cd minift
-python manage.py migrate
+python minift/manage.py migrate
 ```
 
 ### 5. Start development server
 
 ```bash
-python manage.py runserver
+python minift/manage.py runserver
 ```
 
 Visit `http://localhost:8000` in your browser.
@@ -78,8 +79,8 @@ minift/
 
 ### Auth
 
-| Method | Endpoint          | Description          |
-| ------ | ----------------- | -------------------- |
+| Method | Endpoint              | Description          |
+| ------ | --------------------- | -------------------- |
 | POST   | `/api/auth/register/` | Register new user    |
 | POST   | `/api/auth/login/`    | Login user           |
 | POST   | `/api/auth/logout/`   | Logout user          |
@@ -88,8 +89,8 @@ minift/
 
 ### Transactions
 
-| Method | Endpoint                            | Description                                                           |
-| ------ | ----------------------------------- | --------------------------------------------------------------------- |
+| Method | Endpoint                                | Description                                                           |
+| ------ | --------------------------------------- | --------------------------------------------------------------------- |
 | GET    | `/api/transactions/`                    | List transactions (filters: `?type=`, `?category=`, `?from=`, `?to=`) |
 | POST   | `/api/transactions/`                    | Create transaction                                                    |
 | GET    | `/api/transactions/:id/`                | Get transaction                                                       |
@@ -100,38 +101,93 @@ minift/
 
 ### Budgets
 
-| Method | Endpoint        | Description   |
-| ------ | --------------- | ------------- |
+| Method | Endpoint            | Description   |
+| ------ | ------------------- | ------------- |
 | GET    | `/api/budgets/`     | List budgets  |
 | POST   | `/api/budgets/`     | Create budget |
 | PATCH  | `/api/budgets/:id/` | Update budget |
 | DELETE | `/api/budgets/:id/` | Delete budget |
 
+Note: API endpoints require an authenticated session (login via web or `/api/auth/login/`).
+
 ## Web Interface
 
 Access via browser at:
 
-- `/` - Dashboard (transactions)
+- `/` - Landing page (logged out) / Dashboard (logged in)
 - `/auth/register/` - Registration
 - `/auth/login/` - Login
+- `/auth/logout/` - Logout
+- `/auth/me/` - Account settings
+- `/transactions/` - Transactions list
 - `/transactions/create/` - Add transaction
+- `/transactions/<id>/edit/` - Edit transaction
+- `/transactions/<id>/delete/` - Delete transaction
 - `/budgets/` - Budgets
 - `/budgets/create/` - Add budget
+- `/budgets/<id>/edit/` - Edit budget
+- `/budgets/<id>/delete/` - Delete budget
 - `/transactions/summary/month/` - Monthly summary
 - `/transactions/summary/categories/` - Category breakdown
-- `/auth/me/` - Account settings
+
+UI themes:
+
+- Default theme is dark.
+- Use the `Theme` button in the navbar to toggle light/dark (saved in `localStorage`).
+
+## Environment Variables
+
+Local development works with defaults, but for production (Railway/Docker) set:
+
+- `DJANGO_SECRET_KEY`: required in production
+- `DJANGO_DEBUG`: `0`/`1`
+- `DJANGO_ALLOWED_HOSTS`: comma-separated (e.g. `minift.up.railway.app`)
+- `DJANGO_CSRF_TRUSTED_ORIGINS`: comma-separated (e.g. `https://minift.up.railway.app`)
+- `DATABASE_URL`: Postgres URL (recommended for production)
+
+## Docker
+
+Build the image:
+
+```bash
+docker build -t minift:local .
+```
+
+Run the full stack (Django + Postgres):
+
+```bash
+docker-compose up -d --build
+```
+
+App will be available at `http://localhost:8000`.
+
+Stop:
+
+```bash
+docker-compose down
+```
+
+Reset DB volume (destructive):
+
+```bash
+docker-compose down -v
+```
 
 ## Database Models
 
 ### users
 
-| Field         | Type      | Notes         |
-| ------------- | --------- | ------------- |
-| id            | UUID      | PK            |
-| email         | string    | unique        |
-| password_hash | string    |               |
-| currency      | string    | default "USD" |
-| created_at    | timestamp |               |
+| Field      | Type      | Notes                      |
+| ---------- | --------- | -------------------------- |
+| id         | UUID      | PK                         |
+| email      | string    | unique                     |
+| password   | string    | hashed (Django auth field) |
+| currency   | string    | default "USD"              |
+| created_at | timestamp | default "USD"              |
+| created_at | timestamp |                            |
+| last_login | timestamp | nullable                   |
+| is_active  | bool      | default true               |
+| is_staff   | bool      | default false              |
 
 ### transactions
 
@@ -155,3 +211,5 @@ Access via browser at:
 | category | string        | matches transaction categories |
 | limit    | decimal(10,2) | monthly spend cap              |
 | month    | date          | first day of the month         |
+
+In the web UI, budgets use a month name selector; internally it is stored as the first day of that month.
