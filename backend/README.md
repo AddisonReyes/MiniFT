@@ -12,9 +12,12 @@ JWT_SECRET=change-me
 ACCESS_TOKEN_TTL_MINUTES=15
 REFRESH_TOKEN_TTL_DAYS=30
 RECURRING_WORKER_INTERVAL_SECONDS=60
+CORS_ALLOWED_ORIGINS=["http://localhost:3000","https://minift.pages.dev"]
 ROCKET_ADDRESS=0.0.0.0
 ROCKET_PORT=8000
 ```
+
+`CORS_ALLOWED_ORIGINS` accepts a JSON array of allowed frontend origins. Trailing slashes are normalized, so `http://localhost:3000/` and `http://localhost:3000` are treated the same.
 
 ## Run Locally
 
@@ -39,4 +42,3 @@ The backend applies SQL migrations automatically on startup.
 - A default `Cash` account is created for every new user.
 - Transfers are stored in `transfers` and mirrored into `transactions`.
 - The recurring worker runs inside the API process and checks due items on an interval.
-

@@ -59,6 +59,10 @@ Build the frontend from `frontend/` with:
 - Output directory: `out`
 - Environment variable: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
 
+Set the Railway backend allowlist with:
+
+- `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000"]`
+
 ## Local Development Without Docker
 
 - Backend instructions: [backend/README.md](/home/dakotitah/github/MiniFT/backend/README.md)

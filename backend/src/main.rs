@@ -14,7 +14,7 @@ mod services;
 
 use std::env;
 
-use config::{AppState, AuthConfig, WorkerConfig};
+use config::{AppState, AuthConfig, CorsConfig, WorkerConfig};
 use rocket::fairing::AdHoc;
 
 async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::error::Error>> {
@@ -27,6 +27,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
     let state = AppState {
         pool,
         auth: AuthConfig::from_env(),
+        cors: CorsConfig::from_env(),
         worker: WorkerConfig::from_env(),
     };
 

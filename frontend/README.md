@@ -29,6 +29,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - Build command: `npm run build`
 - Build output directory: `out`
 - Required build env: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
+- Backend env: `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000"]`
 
 ## Notes
 
