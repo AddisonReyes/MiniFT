@@ -19,7 +19,6 @@ pub enum AccountType {
 #[derive(Debug, Clone, FromRow)]
 pub struct AccountRecord {
     pub id: Uuid,
-    pub user_id: Uuid,
     pub name: String,
     pub r#type: AccountType,
     pub created_at: DateTime<Utc>,

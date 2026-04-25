@@ -3,9 +3,10 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { FormError } from "@/components/form-error";
 import { PageFrame } from "@/components/page-frame";
 import { Button, Card, Input, Modal, Select } from "@/components/ui";
-import { api, ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import { formatCurrency } from "@/lib/format";
 import type { Account, AccountType } from "@/lib/types";
@@ -44,7 +45,8 @@ export default function AccountsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (accountId: string) => api.delete<{ message: string }>(`/accounts/${accountId}`),
+    mutationFn: (accountId: string) =>
+      api.delete<{ message: string }>(`/accounts/${accountId}`),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
@@ -82,7 +84,9 @@ export default function AccountsPage() {
         {(accountsQuery.data || []).map((account) => (
           <Card key={account.id} className="space-y-5">
             <div className="space-y-2">
-              <div className="text-xs uppercase tracking-[0.22em] text-mist">{account.type}</div>
+              <div className="text-xs uppercase tracking-[0.22em] text-mist">
+                {account.type}
+              </div>
               <h2 className="text-2xl font-semibold">{account.name}</h2>
               <p className="text-sm text-mist">Current balance</p>
               <div className="text-3xl font-semibold text-white">
@@ -91,7 +95,11 @@ export default function AccountsPage() {
             </div>
 
             <div className="flex gap-3">
-              <Button className="flex-1" variant="secondary" onClick={() => openEdit(account)}>
+              <Button
+                className="flex-1"
+                variant="secondary"
+                onClick={() => openEdit(account)}
+              >
                 Edit
               </Button>
               <Button
@@ -126,7 +134,9 @@ export default function AccountsPage() {
             <Input
               id="name"
               value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, name: event.target.value }))
+              }
               placeholder="Banco Popular"
               required
             />
@@ -138,7 +148,10 @@ export default function AccountsPage() {
               id="type"
               value={form.type}
               onChange={(event) =>
-                setForm((current) => ({ ...current, type: event.target.value as AccountType }))
+                setForm((current) => ({
+                  ...current,
+                  type: event.target.value as AccountType,
+                }))
               }
             >
               <option value="bank">Bank</option>
@@ -146,13 +159,10 @@ export default function AccountsPage() {
             </Select>
           </div>
 
-          {saveMutation.error ? (
-            <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-              {saveMutation.error instanceof ApiError
-                ? saveMutation.error.message
-                : "Unable to save account"}
-            </div>
-          ) : null}
+          <FormError
+            error={saveMutation.error}
+            fallbackMessage="Unable to save account"
+          />
 
           <div className="flex justify-end gap-3">
             <Button
@@ -167,7 +177,11 @@ export default function AccountsPage() {
               Cancel
             </Button>
             <Button type="submit">
-              {saveMutation.isPending ? "Saving..." : editing ? "Save changes" : "Create account"}
+              {saveMutation.isPending
+                ? "Saving..."
+                : editing
+                  ? "Save changes"
+                  : "Create account"}
             </Button>
           </div>
         </form>
@@ -175,4 +189,3 @@ export default function AccountsPage() {
     </PageFrame>
   );
 }
-

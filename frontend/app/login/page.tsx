@@ -50,8 +50,9 @@ function LoginPageContent() {
                 Track cash, accounts, budgets, and reports without the clutter.
               </h1>
               <p className="max-w-lg text-base text-mist">
-                MiniFT keeps the first release tight: accounts, transactions, transfers,
-                recurring entries, and monthly reporting in one dark, focused workspace.
+                MiniFT keeps the first release tight: accounts, transactions,
+                transfers, recurring entries, and monthly reporting in one dark,
+                focused workspace.
               </p>
             </div>
             <div className="grid gap-4 text-sm text-mist sm:grid-cols-3">
@@ -71,7 +72,9 @@ function LoginPageContent() {
         <Card className="p-8">
           <div className="mb-8 space-y-2">
             <h2 className="text-3xl font-semibold">Sign in</h2>
-            <p className="text-sm text-mist">Use your MiniFT account to continue.</p>
+            <p className="text-sm text-mist">
+              Use your MiniFT account to continue.
+            </p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
@@ -101,7 +104,9 @@ function LoginPageContent() {
 
             {mutation.error ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-                {mutation.error instanceof ApiError ? mutation.error.message : "Unable to sign in"}
+                {mutation.error instanceof ApiError
+                  ? mutation.error.message
+                  : "Unable to sign in"}
               </div>
             ) : null}
 

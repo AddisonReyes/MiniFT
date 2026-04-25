@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
@@ -51,7 +50,7 @@ pub async fn resolve_account_or_default_cash(
     match account_id {
         Some(account_id) => ensure_account_ownership(pool, user_id, account_id).await,
         None => sqlx::query_as::<_, AccountRecord>(
-            "SELECT id, user_id, name, type, created_at
+            "SELECT id, name, type, created_at
              FROM accounts
              WHERE user_id = $1 AND type = 'cash'
              ORDER BY created_at ASC
@@ -70,7 +69,7 @@ async fn find_transaction(
     transaction_id: Uuid,
 ) -> Result<TransactionRecord, ApiError> {
     sqlx::query_as::<_, TransactionRecord>(
-        "SELECT id, user_id, account_id, transfer_id, amount, type, category, note, date, created_at
+        "SELECT transfer_id
          FROM transactions
          WHERE id = $1 AND user_id = $2",
     )

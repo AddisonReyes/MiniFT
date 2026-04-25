@@ -17,16 +17,20 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "MiniFT",
-  description: "Minimal personal finance tracking with accounts, budgets, transfers, and recurring transactions.",
+  description:
+    "Minimal personal finance tracking with accounts, budgets, transfers, and recurring transactions.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${ibmPlexMono.variable} font-sans antialiased`}>
+      <body
+        className={`${spaceGrotesk.variable} ${ibmPlexMono.variable} font-sans antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
-

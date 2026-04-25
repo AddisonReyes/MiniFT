@@ -6,7 +6,6 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow)]
 pub struct TransferRecord {
     pub id: Uuid,
-    pub user_id: Uuid,
     pub from_account_id: Uuid,
     pub to_account_id: Uuid,
     pub amount: Decimal,

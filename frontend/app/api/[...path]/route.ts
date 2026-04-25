@@ -14,7 +14,10 @@ function backendBaseUrl() {
 }
 
 function shouldAttachToken(path: string[]) {
-  return !(path[0] === "auth" && ["login", "register", "refresh"].includes(path[1] ?? ""));
+  return !(
+    path[0] === "auth" &&
+    ["login", "register", "refresh"].includes(path[1] ?? "")
+  );
 }
 
 function isTokenPayload(value: unknown): value is {
@@ -30,7 +33,11 @@ function isTokenPayload(value: unknown): value is {
   );
 }
 
-function applyAuthCookies(response: NextResponse, accessToken: string, refreshToken: string) {
+function applyAuthCookies(
+  response: NextResponse,
+  accessToken: string,
+  refreshToken: string,
+) {
   const secure = process.env.NODE_ENV === "production";
 
   response.cookies.set(ACCESS_COOKIE, accessToken, {
@@ -145,18 +152,33 @@ async function toClientResponse(source: Response) {
   });
 }
 
-async function proxy(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+async function proxy(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> },
+) {
   const path = (await params).path;
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_COOKIE)?.value;
   const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value;
-  let bodyText = BODY_METHODS.has(request.method) ? await request.text() : undefined;
+  let bodyText = BODY_METHODS.has(request.method)
+    ? await request.text()
+    : undefined;
 
-  if (path[0] === "auth" && path[1] === "refresh" && !bodyText && refreshToken) {
+  if (
+    path[0] === "auth" &&
+    path[1] === "refresh" &&
+    !bodyText &&
+    refreshToken
+  ) {
     bodyText = JSON.stringify({ refresh_token: refreshToken });
   }
 
-  const initialResponse = await callBackend(request, path, bodyText, accessToken);
+  const initialResponse = await callBackend(
+    request,
+    path,
+    bodyText,
+    accessToken,
+  );
 
   if (initialResponse.status !== 401 || !refreshToken || path[0] === "auth") {
     return toClientResponse(initialResponse);
@@ -170,7 +192,12 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     return response;
   }
 
-  const retriedResponse = await callBackend(request, path, bodyText, refreshed.access_token);
+  const retriedResponse = await callBackend(
+    request,
+    path,
+    bodyText,
+    refreshed.access_token,
+  );
   const response = await toClientResponse(retriedResponse);
   applyAuthCookies(response, refreshed.access_token, refreshed.refresh_token);
   return response;

@@ -8,20 +8,31 @@ import { SummaryCard } from "@/components/summary-card";
 import { Card, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
-import { currentMonthInput, formatCurrency, monthInputToDate } from "@/lib/format";
-import type { CategorySummary, MonthlySummary, TransactionType } from "@/lib/types";
+import {
+  currentMonthInput,
+  formatCurrency,
+  monthInputToDate,
+} from "@/lib/format";
+import type {
+  CategorySummary,
+  MonthlySummary,
+  TransactionType,
+} from "@/lib/types";
 
 export default function ReportsPage() {
   const session = useSessionQuery();
   const [month, setMonth] = useState(currentMonthInput());
-  const [type, setType] = useState<Exclude<TransactionType, "transfer">>("expense");
+  const [type, setType] =
+    useState<Exclude<TransactionType, "transfer">>("expense");
   const monthDate = monthInputToDate(month);
   const currency = session.data?.currency || "USD";
 
   const summaryQuery = useQuery({
     queryKey: ["reports", "summary", monthDate],
     queryFn: () =>
-      api.get<MonthlySummary>(`/transactions/summary/month?month=${encodeURIComponent(monthDate)}`),
+      api.get<MonthlySummary>(
+        `/transactions/summary/month?month=${encodeURIComponent(monthDate)}`,
+      ),
   });
 
   const categoryQuery = useQuery({
@@ -38,10 +49,18 @@ export default function ReportsPage() {
       description="Review monthly performance and category concentration without leaving the main app."
       actions={
         <div className="flex flex-wrap gap-3">
-          <Input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
+          <Input
+            type="month"
+            value={month}
+            onChange={(event) => setMonth(event.target.value)}
+          />
           <Select
             value={type}
-            onChange={(event) => setType(event.target.value as Exclude<TransactionType, "transfer">)}
+            onChange={(event) =>
+              setType(
+                event.target.value as Exclude<TransactionType, "transfer">,
+              )
+            }
           >
             <option value="expense">Expenses</option>
             <option value="income">Income</option>
@@ -57,7 +76,10 @@ export default function ReportsPage() {
         />
         <SummaryCard
           label="Expenses"
-          value={formatCurrency(summaryQuery.data?.expense_total || 0, currency)}
+          value={formatCurrency(
+            summaryQuery.data?.expense_total || 0,
+            currency,
+          )}
           meta="Monthly total"
         />
         <SummaryCard
@@ -78,11 +100,15 @@ export default function ReportsPage() {
         <div className="space-y-4">
           {categoryQuery.data?.items.length ? (
             categoryQuery.data.items.map((item) => (
-              <div key={item.category} className="space-y-2 rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+              <div
+                key={item.category}
+                className="space-y-2 rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
+              >
                 <div className="flex items-center justify-between gap-4">
                   <div className="font-medium text-white">{item.category}</div>
                   <div className="text-sm text-mist">
-                    {formatCurrency(item.total, currency)} · {item.percentage.toFixed(2)}%
+                    {formatCurrency(item.total, currency)} ·{" "}
+                    {item.percentage.toFixed(2)}%
                   </div>
                 </div>
                 <div className="h-3 overflow-hidden rounded-full bg-white/10">
@@ -103,4 +129,3 @@ export default function ReportsPage() {
     </PageFrame>
   );
 }
-

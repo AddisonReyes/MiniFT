@@ -37,7 +37,10 @@ export function PageFrame({
     );
   }
 
-  if (session.error && !(session.error instanceof ApiError && session.error.status === 401)) {
+  if (
+    session.error &&
+    !(session.error instanceof ApiError && session.error.status === 401)
+  ) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Card className="space-y-3">
@@ -53,9 +56,13 @@ export function PageFrame({
   }
 
   return (
-    <AppShell user={session.data} title={title} description={description} actions={actions}>
+    <AppShell
+      user={session.data}
+      title={title}
+      description={description}
+      actions={actions}
+    >
       {children}
     </AppShell>
   );
 }
-

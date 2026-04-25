@@ -48,9 +48,12 @@ function RegisterPageContent() {
             <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-signal">
               New workspace
             </div>
-            <h1 className="text-3xl font-semibold">Create your MiniFT account</h1>
+            <h1 className="text-3xl font-semibold">
+              Create your MiniFT account
+            </h1>
             <p className="text-sm text-mist">
-              We create a default Cash account automatically so you can start tracking immediately.
+              We create a default Cash account automatically so you can start
+              tracking immediately.
             </p>
           </div>
 
@@ -117,10 +120,13 @@ function RegisterPageContent() {
 
         <section className="panel flex flex-col justify-between p-8 sm:p-10">
           <div className="space-y-6">
-            <h2 className="text-4xl font-semibold">Built for fast monthly control.</h2>
+            <h2 className="text-4xl font-semibold">
+              Built for fast monthly control.
+            </h2>
             <p className="max-w-lg text-base text-mist">
-              Keep income, expenses, transfers, budgets, and recurring activity in one place. The
-              reporting view stays readable because the app keeps the model simple.
+              Keep income, expenses, transfers, budgets, and recurring activity
+              in one place. The reporting view stays readable because the app
+              keeps the model simple.
             </p>
           </div>
 

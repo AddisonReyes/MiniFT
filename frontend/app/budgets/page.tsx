@@ -3,11 +3,17 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { FormError } from "@/components/form-error";
 import { PageFrame } from "@/components/page-frame";
 import { Button, Card, Input, Modal } from "@/components/ui";
-import { api, ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
-import { currentMonthInput, firstDayToMonthInput, formatCurrency, monthInputToDate } from "@/lib/format";
+import {
+  currentMonthInput,
+  firstDayToMonthInput,
+  formatCurrency,
+  monthInputToDate,
+} from "@/lib/format";
 import type { Budget } from "@/lib/types";
 
 const createInitialForm = (month: string) => ({
@@ -26,7 +32,10 @@ export default function BudgetsPage() {
 
   const budgetsQuery = useQuery({
     queryKey: ["budgets", month],
-    queryFn: () => api.get<Budget[]>(`/budgets?month=${encodeURIComponent(monthInputToDate(month))}`),
+    queryFn: () =>
+      api.get<Budget[]>(
+        `/budgets?month=${encodeURIComponent(monthInputToDate(month))}`,
+      ),
   });
 
   const saveMutation = useMutation({
@@ -52,7 +61,8 @@ export default function BudgetsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (budgetId: string) => api.delete<{ message: string }>(`/budgets/${budgetId}`),
+    mutationFn: (budgetId: string) =>
+      api.delete<{ message: string }>(`/budgets/${budgetId}`),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
@@ -107,8 +117,12 @@ export default function BudgetsPage() {
             <Card key={budget.id} className="space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.22em] text-mist">{budget.month}</div>
-                  <h2 className="mt-2 text-2xl font-semibold">{budget.category}</h2>
+                  <div className="text-xs uppercase tracking-[0.22em] text-mist">
+                    {budget.month}
+                  </div>
+                  <h2 className="mt-2 text-2xl font-semibold">
+                    {budget.category}
+                  </h2>
                 </div>
                 <div className="text-right text-sm text-mist">
                   <div>Spent</div>
@@ -121,7 +135,9 @@ export default function BudgetsPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-mist">Limit</span>
-                  <span className="text-white">{formatCurrency(budget.limit_amount, currency)}</span>
+                  <span className="text-white">
+                    {formatCurrency(budget.limit_amount, currency)}
+                  </span>
                 </div>
                 <div className="h-3 overflow-hidden rounded-full bg-white/10">
                   <div
@@ -135,14 +151,20 @@ export default function BudgetsPage() {
               </div>
 
               <div className="flex gap-3">
-                <Button className="flex-1" variant="secondary" onClick={() => handleEdit(budget)}>
+                <Button
+                  className="flex-1"
+                  variant="secondary"
+                  onClick={() => handleEdit(budget)}
+                >
                   Edit
                 </Button>
                 <Button
                   className="flex-1"
                   variant="ghost"
                   onClick={() => {
-                    if (window.confirm(`Delete budget for ${budget.category}?`)) {
+                    if (
+                      window.confirm(`Delete budget for ${budget.category}?`)
+                    ) {
                       deleteMutation.mutate(budget.id);
                     }
                   }}
@@ -157,7 +179,8 @@ export default function BudgetsPage() {
 
       {!budgetsQuery.data?.length ? (
         <Card className="mt-6 text-sm text-mist">
-          No budgets found for {month}. Create one to start tracking category caps.
+          No budgets found for {month}. Create one to start tracking category
+          caps.
         </Card>
       ) : null}
 
@@ -178,7 +201,10 @@ export default function BudgetsPage() {
               id="category"
               value={form.category}
               onChange={(event) =>
-                setForm((current) => ({ ...current, category: event.target.value }))
+                setForm((current) => ({
+                  ...current,
+                  category: event.target.value,
+                }))
               }
               placeholder="Groceries"
               required
@@ -192,7 +218,10 @@ export default function BudgetsPage() {
               inputMode="decimal"
               value={form.limit_amount}
               onChange={(event) =>
-                setForm((current) => ({ ...current, limit_amount: event.target.value }))
+                setForm((current) => ({
+                  ...current,
+                  limit_amount: event.target.value,
+                }))
               }
               placeholder="400.00"
               required
@@ -205,18 +234,20 @@ export default function BudgetsPage() {
               id="month"
               type="month"
               value={form.month}
-              onChange={(event) => setForm((current) => ({ ...current, month: event.target.value }))}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  month: event.target.value,
+                }))
+              }
               required
             />
           </div>
 
-          {saveMutation.error ? (
-            <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-              {saveMutation.error instanceof ApiError
-                ? saveMutation.error.message
-                : "Unable to save budget"}
-            </div>
-          ) : null}
+          <FormError
+            error={saveMutation.error}
+            fallbackMessage="Unable to save budget"
+          />
 
           <div className="flex justify-end gap-3">
             <Button
@@ -231,7 +262,11 @@ export default function BudgetsPage() {
               Cancel
             </Button>
             <Button type="submit">
-              {saveMutation.isPending ? "Saving..." : editing ? "Save changes" : "Create budget"}
+              {saveMutation.isPending
+                ? "Saving..."
+                : editing
+                  ? "Save changes"
+                  : "Create budget"}
             </Button>
           </div>
         </form>
@@ -239,4 +274,3 @@ export default function BudgetsPage() {
     </PageFrame>
   );
 }
-

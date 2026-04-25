@@ -10,4 +10,3 @@ export const DEFAULT_CATEGORIES = [
   "Savings",
   "Entertainment",
 ];
-

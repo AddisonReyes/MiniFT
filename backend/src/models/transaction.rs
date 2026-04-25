@@ -19,16 +19,7 @@ pub enum TransactionType {
 
 #[derive(Debug, Clone, FromRow)]
 pub struct TransactionRecord {
-    pub id: Uuid,
-    pub user_id: Uuid,
-    pub account_id: Option<Uuid>,
     pub transfer_id: Option<Uuid>,
-    pub amount: Decimal,
-    pub r#type: TransactionType,
-    pub category: String,
-    pub note: Option<String>,
-    pub date: NaiveDate,
-    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, FromRow)]

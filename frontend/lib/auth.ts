@@ -34,4 +34,3 @@ export function register(payload: {
 export function logout() {
   return api.post<{ message: string }>("/auth/logout");
 }
-

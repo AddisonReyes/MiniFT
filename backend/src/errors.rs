@@ -28,10 +28,6 @@ impl ApiError {
         Self::new(Status::Unauthorized, message)
     }
 
-    pub fn forbidden(message: impl Into<String>) -> Self {
-        Self::new(Status::Forbidden, message)
-    }
-
     pub fn not_found(message: impl Into<String>) -> Self {
         Self::new(Status::NotFound, message)
     }

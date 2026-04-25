@@ -75,7 +75,7 @@ pub async fn create_transfer(
     let transfer = sqlx::query_as::<_, TransferRecord>(
         "INSERT INTO transfers (user_id, from_account_id, to_account_id, amount, date, note)
          VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, user_id, from_account_id, to_account_id, amount, date, note, created_at",
+         RETURNING id, from_account_id, to_account_id, amount, date, note, created_at",
     )
     .bind(user_id)
     .bind(from_account.id)

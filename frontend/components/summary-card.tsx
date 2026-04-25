@@ -17,4 +17,3 @@ export function SummaryCard({
     </Card>
   );
 }
-

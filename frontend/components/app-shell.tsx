@@ -57,7 +57,9 @@ export function AppShell({
 
           <div className="flex flex-col items-start gap-3 lg:items-end">
             <div className="text-right">
-              <div className="font-mono text-xs uppercase tracking-[0.25em] text-mist">Signed In</div>
+              <div className="font-mono text-xs uppercase tracking-[0.25em] text-mist">
+                Signed In
+              </div>
               <div className="mt-1 text-sm text-white">{user.email}</div>
             </div>
             <Button variant="ghost" onClick={() => logoutMutation.mutate()}>
@@ -76,7 +78,9 @@ export function AppShell({
                 href={item.href}
                 className={cn(
                   "rounded-full px-4 py-2 text-sm transition",
-                  active ? "bg-white text-ink" : "bg-white/5 text-mist hover:bg-white/10 hover:text-white",
+                  active
+                    ? "bg-white text-ink"
+                    : "bg-white/5 text-mist hover:bg-white/10 hover:text-white",
                 )}
               >
                 {item.label}
@@ -86,10 +90,11 @@ export function AppShell({
         </nav>
       </header>
 
-      {actions ? <div className="mb-6 flex flex-wrap gap-3">{actions}</div> : null}
+      {actions ? (
+        <div className="mb-6 flex flex-wrap gap-3">{actions}</div>
+      ) : null}
 
       <main className="flex-1">{children}</main>
     </div>
   );
 }
-

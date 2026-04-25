@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use chrono::{Months, NaiveDate, Utc};
-use sqlx::PgPool;
+use rust_decimal::Decimal;
+use sqlx::{PgPool, Postgres, Transaction as DbTransaction};
 use uuid::Uuid;
 
 use crate::{
@@ -21,6 +22,19 @@ use crate::{
     },
 };
 
+const RECURRING_TRANSFER_ERROR: &str = "Recurring transfers are not supported";
+
+struct RecurringWriteInput {
+    account_id: Uuid,
+    account_name: String,
+    amount: Decimal,
+    transaction_type: TransactionType,
+    category: String,
+    note: Option<String>,
+    frequency: RecurringFrequency,
+    next_run_date: NaiveDate,
+}
+
 fn advance_date(date: NaiveDate, frequency: RecurringFrequency) -> Result<NaiveDate, ApiError> {
     match frequency {
         RecurringFrequency::Daily => date
@@ -32,6 +46,47 @@ fn advance_date(date: NaiveDate, frequency: RecurringFrequency) -> Result<NaiveD
         RecurringFrequency::Monthly => date
             .checked_add_months(Months::new(1))
             .ok_or_else(|| ApiError::bad_request("Invalid monthly recurrence date")),
+    }
+}
+
+fn ensure_supported_recurring_type(transaction_type: TransactionType) -> Result<(), ApiError> {
+    if transaction_type == TransactionType::Transfer {
+        return Err(ApiError::bad_request(RECURRING_TRANSFER_ERROR));
+    }
+
+    Ok(())
+}
+
+fn map_recurring_record(
+    record: RecurringTransactionRecord,
+    account_name: String,
+) -> RecurringTransactionResponse {
+    RecurringTransactionResponse {
+        id: record.id,
+        account_id: record.account_id,
+        account_name,
+        amount: record.amount,
+        r#type: record.r#type,
+        category: record.category,
+        note: record.note,
+        frequency: record.frequency,
+        next_run_date: record.next_run_date,
+        created_at: record.created_at,
+    }
+}
+
+fn map_recurring_row(row: RecurringTransactionRow) -> RecurringTransactionResponse {
+    RecurringTransactionResponse {
+        id: row.id,
+        account_id: row.account_id,
+        account_name: row.account_name,
+        amount: row.amount,
+        r#type: row.r#type,
+        category: row.category,
+        note: row.note,
+        frequency: row.frequency,
+        next_run_date: row.next_run_date,
+        created_at: row.created_at,
     }
 }
 
@@ -62,22 +117,87 @@ async fn get_recurring(
     .ok_or_else(|| ApiError::not_found("Recurring transaction not found"))
 }
 
-fn map_recurring(
-    record: RecurringTransactionRecord,
-    account_name: String,
-) -> RecurringTransactionResponse {
-    RecurringTransactionResponse {
-        id: record.id,
-        account_id: record.account_id,
-        account_name,
-        amount: record.amount,
-        r#type: record.r#type,
-        category: record.category,
-        note: record.note,
-        frequency: record.frequency,
-        next_run_date: record.next_run_date,
-        created_at: record.created_at,
+async fn build_recurring_write_input(
+    pool: &PgPool,
+    user_id: Uuid,
+    account_id: Uuid,
+    amount: Decimal,
+    transaction_type: TransactionType,
+    category: &str,
+    note: &Option<String>,
+    frequency: RecurringFrequency,
+    next_run_date: NaiveDate,
+) -> Result<RecurringWriteInput, ApiError> {
+    ensure_supported_recurring_type(transaction_type)?;
+    ensure_positive_amount(amount, "Amount")?;
+
+    let account = ensure_account_ownership(pool, user_id, account_id).await?;
+
+    Ok(RecurringWriteInput {
+        account_id: account.id,
+        account_name: account.name,
+        amount,
+        transaction_type,
+        category: normalize_required_text(category, "Category")?,
+        note: normalize_optional_text(note),
+        frequency,
+        next_run_date,
+    })
+}
+
+async fn insert_materialized_transaction(
+    transaction: &mut DbTransaction<'_, Postgres>,
+    recurring: &RecurringTransactionRecord,
+    run_date: NaiveDate,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        "INSERT INTO transactions (user_id, account_id, amount, type, category, note, date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)",
+    )
+    .bind(recurring.user_id)
+    .bind(recurring.account_id)
+    .bind(recurring.amount)
+    .bind(recurring.r#type)
+    .bind(&recurring.category)
+    .bind(&recurring.note)
+    .bind(run_date)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn update_next_run_date(
+    transaction: &mut DbTransaction<'_, Postgres>,
+    recurring_id: Uuid,
+    next_run_date: NaiveDate,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        "UPDATE recurring_transactions
+         SET next_run_date = $1
+         WHERE id = $2",
+    )
+    .bind(next_run_date)
+    .bind(recurring_id)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn materialize_due_occurrences(
+    transaction: &mut DbTransaction<'_, Postgres>,
+    recurring: &RecurringTransactionRecord,
+    today: NaiveDate,
+) -> Result<NaiveDate, ApiError> {
+    let mut next_run_date = recurring.next_run_date;
+
+    while next_run_date <= today {
+        insert_materialized_transaction(transaction, recurring, next_run_date).await?;
+        next_run_date = advance_date(next_run_date, recurring.frequency)?;
     }
+
+    Ok(next_run_date)
 }
 
 pub async fn list_recurring_transactions(
@@ -87,7 +207,6 @@ pub async fn list_recurring_transactions(
     let rows = sqlx::query_as::<_, RecurringTransactionRow>(
         "SELECT
             rt.id,
-            rt.user_id,
             rt.account_id,
             rt.amount,
             rt.type,
@@ -106,26 +225,7 @@ pub async fn list_recurring_transactions(
     .fetch_all(pool)
     .await?;
 
-    Ok(rows
-        .into_iter()
-        .map(|row| {
-            map_recurring(
-                RecurringTransactionRecord {
-                    id: row.id,
-                    user_id: row.user_id,
-                    account_id: row.account_id,
-                    amount: row.amount,
-                    r#type: row.r#type,
-                    category: row.category,
-                    note: row.note,
-                    frequency: row.frequency,
-                    next_run_date: row.next_run_date,
-                    created_at: row.created_at,
-                },
-                row.account_name,
-            )
-        })
-        .collect())
+    Ok(rows.into_iter().map(map_recurring_row).collect())
 }
 
 pub async fn create_recurring_transaction(
@@ -133,16 +233,18 @@ pub async fn create_recurring_transaction(
     user_id: Uuid,
     payload: CreateRecurringTransactionRequest,
 ) -> Result<RecurringTransactionResponse, ApiError> {
-    if payload.r#type == TransactionType::Transfer {
-        return Err(ApiError::bad_request(
-            "Recurring transfers are not supported",
-        ));
-    }
-
-    ensure_positive_amount(payload.amount, "Amount")?;
-    let category = normalize_required_text(&payload.category, "Category")?;
-    let note = normalize_optional_text(&payload.note);
-    let account = ensure_account_ownership(pool, user_id, payload.account_id).await?;
+    let input = build_recurring_write_input(
+        pool,
+        user_id,
+        payload.account_id,
+        payload.amount,
+        payload.r#type,
+        &payload.category,
+        &payload.note,
+        payload.frequency,
+        payload.next_run_date,
+    )
+    .await?;
 
     let record = sqlx::query_as::<_, RecurringTransactionRecord>(
         "INSERT INTO recurring_transactions
@@ -161,17 +263,17 @@ pub async fn create_recurring_transaction(
            created_at",
     )
     .bind(user_id)
-    .bind(account.id)
-    .bind(payload.amount)
-    .bind(payload.r#type)
-    .bind(category)
-    .bind(note)
-    .bind(payload.frequency)
-    .bind(payload.next_run_date)
+    .bind(input.account_id)
+    .bind(input.amount)
+    .bind(input.transaction_type)
+    .bind(input.category)
+    .bind(input.note)
+    .bind(input.frequency)
+    .bind(input.next_run_date)
     .fetch_one(pool)
     .await?;
 
-    Ok(map_recurring(record, account.name))
+    Ok(map_recurring_record(record, input.account_name))
 }
 
 pub async fn update_recurring_transaction(
@@ -182,16 +284,18 @@ pub async fn update_recurring_transaction(
 ) -> Result<RecurringTransactionResponse, ApiError> {
     get_recurring(pool, user_id, recurring_id).await?;
 
-    if payload.r#type == TransactionType::Transfer {
-        return Err(ApiError::bad_request(
-            "Recurring transfers are not supported",
-        ));
-    }
-
-    ensure_positive_amount(payload.amount, "Amount")?;
-    let category = normalize_required_text(&payload.category, "Category")?;
-    let note = normalize_optional_text(&payload.note);
-    let account = ensure_account_ownership(pool, user_id, payload.account_id).await?;
+    let input = build_recurring_write_input(
+        pool,
+        user_id,
+        payload.account_id,
+        payload.amount,
+        payload.r#type,
+        &payload.category,
+        &payload.note,
+        payload.frequency,
+        payload.next_run_date,
+    )
+    .await?;
 
     sqlx::query(
         "UPDATE recurring_transactions
@@ -204,20 +308,20 @@ pub async fn update_recurring_transaction(
              next_run_date = $7
          WHERE id = $8 AND user_id = $9",
     )
-    .bind(account.id)
-    .bind(payload.amount)
-    .bind(payload.r#type)
-    .bind(category)
-    .bind(note)
-    .bind(payload.frequency)
-    .bind(payload.next_run_date)
+    .bind(input.account_id)
+    .bind(input.amount)
+    .bind(input.transaction_type)
+    .bind(input.category)
+    .bind(input.note)
+    .bind(input.frequency)
+    .bind(input.next_run_date)
     .bind(recurring_id)
     .bind(user_id)
     .execute(pool)
     .await?;
 
     let record = get_recurring(pool, user_id, recurring_id).await?;
-    Ok(map_recurring(record, account.name))
+    Ok(map_recurring_record(record, input.account_name))
 }
 
 pub async fn delete_recurring_transaction(
@@ -275,35 +379,8 @@ pub async fn process_due_transactions(pool: &PgPool) -> Result<(), ApiError> {
     .await?;
 
     for recurring in rows {
-        let mut next_run_date = recurring.next_run_date;
-
-        while next_run_date <= today {
-            sqlx::query(
-                "INSERT INTO transactions (user_id, account_id, amount, type, category, note, date)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)",
-            )
-            .bind(recurring.user_id)
-            .bind(recurring.account_id)
-            .bind(recurring.amount)
-            .bind(recurring.r#type)
-            .bind(&recurring.category)
-            .bind(&recurring.note)
-            .bind(next_run_date)
-            .execute(&mut *transaction)
-            .await?;
-
-            next_run_date = advance_date(next_run_date, recurring.frequency)?;
-        }
-
-        sqlx::query(
-            "UPDATE recurring_transactions
-             SET next_run_date = $1
-             WHERE id = $2",
-        )
-        .bind(next_run_date)
-        .bind(recurring.id)
-        .execute(&mut *transaction)
-        .await?;
+        let next_run_date = materialize_due_occurrences(&mut transaction, &recurring, today).await?;
+        update_next_run_date(&mut transaction, recurring.id, next_run_date).await?;
     }
 
     transaction.commit().await?;

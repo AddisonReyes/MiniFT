@@ -7,7 +7,12 @@ import { SummaryCard } from "@/components/summary-card";
 import { Card, Badge } from "@/components/ui";
 import { useSessionQuery } from "@/lib/auth";
 import { api } from "@/lib/api";
-import { currentMonthInput, formatCurrency, formatDate, monthInputToDate } from "@/lib/format";
+import {
+  currentMonthInput,
+  formatCurrency,
+  formatDate,
+  monthInputToDate,
+} from "@/lib/format";
 import type { Account, Budget, MonthlySummary, Transaction } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -18,7 +23,9 @@ export default function DashboardPage() {
   const summaryQuery = useQuery({
     queryKey: ["dashboard", "summary", monthDate],
     queryFn: () =>
-      api.get<MonthlySummary>(`/transactions/summary/month?month=${encodeURIComponent(monthDate)}`),
+      api.get<MonthlySummary>(
+        `/transactions/summary/month?month=${encodeURIComponent(monthDate)}`,
+      ),
   });
 
   const accountsQuery = useQuery({
@@ -28,7 +35,8 @@ export default function DashboardPage() {
 
   const budgetsQuery = useQuery({
     queryKey: ["dashboard", "budgets", monthDate],
-    queryFn: () => api.get<Budget[]>(`/budgets?month=${encodeURIComponent(monthDate)}`),
+    queryFn: () =>
+      api.get<Budget[]>(`/budgets?month=${encodeURIComponent(monthDate)}`),
   });
 
   const transactionsQuery = useQuery({
@@ -60,7 +68,11 @@ export default function DashboardPage() {
         <SummaryCard
           label="Net"
           value={formatCurrency(summary?.net_total || 0, currency)}
-          meta={summary && Number(summary.net_total) >= 0 ? "Positive month" : "Watch spending"}
+          meta={
+            summary && Number(summary.net_total) >= 0
+              ? "Positive month"
+              : "Watch spending"
+          }
         />
       </section>
 
@@ -69,7 +81,9 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Recent transactions</h2>
-              <p className="mt-1 text-sm text-mist">Latest activity across your accounts.</p>
+              <p className="mt-1 text-sm text-mist">
+                Latest activity across your accounts.
+              </p>
             </div>
             <Badge tone="neutral">{recentTransactions.length} shown</Badge>
           </div>
@@ -88,7 +102,10 @@ export default function DashboardPage() {
               <tbody>
                 {recentTransactions.length ? (
                   recentTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b border-white/5 last:border-0">
+                    <tr
+                      key={transaction.id}
+                      className="border-b border-white/5 last:border-0"
+                    >
                       <td className="px-4 py-4">
                         <Badge
                           tone={
@@ -103,13 +120,21 @@ export default function DashboardPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="font-medium text-white">{transaction.category}</div>
+                        <div className="font-medium text-white">
+                          {transaction.category}
+                        </div>
                         {transaction.note ? (
-                          <div className="mt-1 text-xs text-mist">{transaction.note}</div>
+                          <div className="mt-1 text-xs text-mist">
+                            {transaction.note}
+                          </div>
                         ) : null}
                       </td>
-                      <td className="px-4 py-4 text-mist">{transaction.account_name || "Cash"}</td>
-                      <td className="px-4 py-4 text-mist">{formatDate(transaction.date)}</td>
+                      <td className="px-4 py-4 text-mist">
+                        {transaction.account_name || "Cash"}
+                      </td>
+                      <td className="px-4 py-4 text-mist">
+                        {formatDate(transaction.date)}
+                      </td>
                       <td className="px-4 py-4 text-right font-medium text-white">
                         {formatCurrency(transaction.amount, currency)}
                       </td>
@@ -131,7 +156,9 @@ export default function DashboardPage() {
           <Card className="space-y-5">
             <div>
               <h2 className="text-xl font-semibold">Accounts</h2>
-              <p className="mt-1 text-sm text-mist">Balances update directly from transaction flow.</p>
+              <p className="mt-1 text-sm text-mist">
+                Balances update directly from transaction flow.
+              </p>
             </div>
 
             <div className="space-y-3">
@@ -157,7 +184,9 @@ export default function DashboardPage() {
           <Card className="space-y-5">
             <div>
               <h2 className="text-xl font-semibold">Budget watch</h2>
-              <p className="mt-1 text-sm text-mist">Current-month categories with progress.</p>
+              <p className="mt-1 text-sm text-mist">
+                Current-month categories with progress.
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -168,9 +197,14 @@ export default function DashboardPage() {
                   const progress = Math.min((spent / limit) * 100, 100);
 
                   return (
-                    <div key={budget.id} className="space-y-2 rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+                    <div
+                      key={budget.id}
+                      className="space-y-2 rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
+                    >
                       <div className="flex items-center justify-between gap-4">
-                        <div className="font-medium text-white">{budget.category}</div>
+                        <div className="font-medium text-white">
+                          {budget.category}
+                        </div>
                         <div className="text-sm text-mist">
                           {formatCurrency(budget.spent_amount, currency)} /{" "}
                           {formatCurrency(budget.limit_amount, currency)}
@@ -197,4 +231,3 @@ export default function DashboardPage() {
     </PageFrame>
   );
 }
-

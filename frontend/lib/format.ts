@@ -47,4 +47,3 @@ export function firstDayToMonthInput(date: string): string {
 export function currentMonthInput(): string {
   return firstDayToMonthInput(new Date().toISOString().slice(0, 10));
 }
-

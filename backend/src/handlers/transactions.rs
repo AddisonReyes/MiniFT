@@ -23,18 +23,8 @@ pub async fn list(
     filters: Option<TransactionFilters>,
 ) -> Result<Json<Vec<TransactionResponse>>, ApiError> {
     Ok(Json(
-        transactions::list_transactions(
-            &state.pool,
-            user.user_id,
-            filters.unwrap_or(TransactionFilters {
-                r#type: None,
-                category: None,
-                account_id: None,
-                start_date: None,
-                end_date: None,
-            }),
-        )
-        .await?,
+        transactions::list_transactions(&state.pool, user.user_id, filters.unwrap_or_default())
+            .await?,
     ))
 }
 
@@ -115,14 +105,7 @@ pub async fn category_summary(
     query: Option<CategorySummaryQuery>,
 ) -> Result<Json<CategorySummaryResponse>, ApiError> {
     Ok(Json(
-        transactions::category_summary(
-            &state.pool,
-            user.user_id,
-            query.unwrap_or(CategorySummaryQuery {
-                month: None,
-                r#type: None,
-            }),
-        )
-        .await?,
+        transactions::category_summary(&state.pool, user.user_id, query.unwrap_or_default())
+            .await?,
     ))
 }

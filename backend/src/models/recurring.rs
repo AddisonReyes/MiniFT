@@ -36,7 +36,6 @@ pub struct RecurringTransactionRecord {
 #[derive(Debug, Clone, FromRow)]
 pub struct RecurringTransactionRow {
     pub id: Uuid,
-    pub user_id: Uuid,
     pub account_id: Uuid,
     pub amount: Decimal,
     pub r#type: TransactionType,

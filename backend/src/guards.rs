@@ -14,7 +14,6 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct AuthUser {
     pub user_id: Uuid,
-    pub email: String,
 }
 
 #[rocket::async_trait]
@@ -69,7 +68,6 @@ impl<'r> FromRequest<'r> for AuthUser {
 
         Outcome::Success(AuthUser {
             user_id: claims.sub,
-            email: claims.email,
         })
     }
 }

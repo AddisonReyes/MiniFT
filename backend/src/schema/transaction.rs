@@ -26,7 +26,7 @@ pub struct UpdateTransactionRequest {
     pub date: NaiveDate,
 }
 
-#[derive(Debug, Clone, FromForm)]
+#[derive(Debug, Clone, Default, FromForm)]
 pub struct TransactionFilters {
     pub r#type: Option<TransactionType>,
     pub category: Option<String>,
@@ -58,7 +58,7 @@ pub struct MonthlySummaryResponse {
     pub net_total: Decimal,
 }
 
-#[derive(Debug, Clone, FromForm)]
+#[derive(Debug, Clone, Default, FromForm)]
 pub struct CategorySummaryQuery {
     pub month: Option<String>,
     pub r#type: Option<TransactionType>,

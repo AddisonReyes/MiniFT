@@ -1,6 +1,13 @@
 "use client";
 
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -63,7 +70,12 @@ export function Badge({
   };
 
   return (
-    <span className={cn("inline-flex rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]", tones[tone])}>
+    <span
+      className={cn(
+        "inline-flex rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]",
+        tones[tone],
+      )}
+    >
       {children}
     </span>
   );
@@ -92,7 +104,9 @@ export function Modal({
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold">{title}</h2>
-            {subtitle ? <p className="mt-2 text-sm text-mist">{subtitle}</p> : null}
+            {subtitle ? (
+              <p className="mt-2 text-sm text-mist">{subtitle}</p>
+            ) : null}
           </div>
           <Button variant="ghost" onClick={onClose}>
             Close
@@ -103,4 +117,3 @@ export function Modal({
     </div>
   );
 }
-
