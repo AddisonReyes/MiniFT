@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #090c11;
+  --background-2: #121722;
+  --foreground: #f3f5f7;
+  --muted: #99a3ba;
+  --line: #2a3144;
+  --signal: #7ae7b9;
+  --hazard: #ff8b8b;
+  --amber: #f7c267;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(122, 231, 185, 0.18), transparent 30%),
+    radial-gradient(circle at 85% 10%, rgba(247, 194, 103, 0.13), transparent 28%),
+    linear-gradient(180deg, #101520 0%, #090c11 38%, #07090d 100%);
+}
+
+body {
+  min-height: 100vh;
+  color: var(--foreground);
+  background: transparent;
+}
+
+::selection {
+  background: rgba(122, 231, 185, 0.35);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight text-white;
+  }
+
+  p {
+    @apply text-slate-300;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply w-full rounded-2xl border border-line bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-signal/70 focus:bg-white/[0.07];
+  }
+
+  label {
+    @apply text-xs uppercase tracking-[0.22em] text-mist;
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-[28px] border border-white/10 bg-surface/80 shadow-panel backdrop-blur;
+  }
+
+  .metric-grid {
+    @apply grid gap-4 md:grid-cols-3;
+  }
+
+  .table-shell {
+    @apply overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03];
+  }
+}
+

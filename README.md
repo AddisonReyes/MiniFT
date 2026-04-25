@@ -1,215 +1,55 @@
-# MiniFT (Minimalist Finance Tracker)
+# MiniFT
 
-![Python](https://img.shields.io/badge/Python-3776AB?style=plastic&logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/Django-092E20?style=plastic&logo=django&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=plastic&logo=tailwindcss&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=plastic&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=plastic&logo=docker&logoColor=white)
+MiniFT is a minimalist personal finance tracker built as a full-stack MVP with a Rust API, Next.js frontend, PostgreSQL persistence, JWT auth, recurring transaction processing, budgets, and reporting.
 
-Minimalist finance tracker app focused on helping you manage your personal finances.
+## Stack
 
-## Features
+- Frontend: Next.js App Router, TypeScript, React, TailwindCSS, TanStack Query
+- Backend: Rust, Rocket, SQLx, PostgreSQL
+- Infra: Docker, docker-compose
 
-- User authentication (register, login, logout)
-- Track income and expenses with categories
-- Filter transactions by type, category, and date range
-- Monthly spending summaries
-- Category-based spending breakdown
-- Set monthly budget limits per category
-- User preferences (currency settings)
+## Architecture
 
-## Tech Stack
+- `frontend/` serves the UI and exposes same-origin `/api/*` proxy routes.
+- `backend/` exposes the Rocket API under `/api/*`.
+- `postgres` stores users, accounts, transactions, transfers, recurring rules, and budgets.
+- The backend runs a background worker to materialize due recurring transactions.
 
-- **Backend**: Python / Django 6.0
-- **Database**: SQLite (default) / PostgreSQL (production)
-- **Authentication**: Session-based auth
-- **Frontend**: Django templates + Tailwind CSS (CDN) with light/dark themes (default: dark)
-
-## Setup
-
-### 1. Clone and navigate to project
+## Run The MVP
 
 ```bash
-cd MiniFT
+docker-compose up --build
 ```
 
-### 2. Create virtual environment
+Once the stack is ready:
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate  # Windows
-```
+- Frontend: `http://localhost:3000`
+- Backend health: `http://localhost:8000/health`
+- PostgreSQL: `localhost:5432`
 
-### 3. Install dependencies
+## First Use
 
-```bash
-pip install -r requirements.txt
-```
+1. Open `http://localhost:3000/register`
+2. Create an account
+3. Sign in and start adding accounts, transactions, transfers, budgets, and recurring entries
 
-### 4. Run migrations
+## Backend Highlights
 
-```bash
-python minift/manage.py migrate
-```
+- JWT auth with access and refresh tokens
+- Argon2 password hashing
+- Default `Cash` account created at registration
+- Transfer mirroring into transaction records
+- Monthly and category summary endpoints
+- SQL migrations applied automatically on startup
 
-### 5. Start development server
+## Frontend Highlights
 
-```bash
-python minift/manage.py runserver
-```
+- Dark-mode-first UI
+- Cookie-based session handling through the frontend proxy
+- CRUD screens for accounts, transactions, budgets, and recurring transactions
+- Reports page for monthly totals and category breakdowns
 
-Visit `http://localhost:8000` in your browser.
+## Local Development Without Docker
 
-## Project Structure
-
-```cmd
-minift/
-├── apps/
-│   ├── users/        # User models, views, serializers
-│   ├── transactions/ # Transaction models, views, serializers
-│   └── budgets/     # Budget models, views, serializers
-├── config/           # Django settings, URLs
-├── templates/       # HTML templates
-└── manage.py
-```
-
-## API Endpoints
-
-### Auth
-
-| Method | Endpoint              | Description          |
-| ------ | --------------------- | -------------------- |
-| POST   | `/api/auth/register/` | Register new user    |
-| POST   | `/api/auth/login/`    | Login user           |
-| POST   | `/api/auth/logout/`   | Logout user          |
-| GET    | `/api/auth/me/`       | Get current user     |
-| PATCH  | `/api/auth/me/`       | Update user settings |
-
-### Transactions
-
-| Method | Endpoint                                | Description                                                           |
-| ------ | --------------------------------------- | --------------------------------------------------------------------- |
-| GET    | `/api/transactions/`                    | List transactions (filters: `?type=`, `?category=`, `?from=`, `?to=`) |
-| POST   | `/api/transactions/`                    | Create transaction                                                    |
-| GET    | `/api/transactions/:id/`                | Get transaction                                                       |
-| PATCH  | `/api/transactions/:id/`                | Update transaction                                                    |
-| DELETE | `/api/transactions/:id/`                | Delete transaction                                                    |
-| GET    | `/api/transactions/summary/month/`      | Monthly totals                                                        |
-| GET    | `/api/transactions/summary/categories/` | Spending by category                                                  |
-
-### Budgets
-
-| Method | Endpoint            | Description   |
-| ------ | ------------------- | ------------- |
-| GET    | `/api/budgets/`     | List budgets  |
-| POST   | `/api/budgets/`     | Create budget |
-| PATCH  | `/api/budgets/:id/` | Update budget |
-| DELETE | `/api/budgets/:id/` | Delete budget |
-
-Note: API endpoints require an authenticated session (login via web or `/api/auth/login/`).
-
-## Web Interface
-
-Access via browser at:
-
-- `/` - Landing page (logged out) / Dashboard (logged in)
-- `/auth/register/` - Registration
-- `/auth/login/` - Login
-- `/auth/logout/` - Logout
-- `/auth/me/` - Account settings
-- `/transactions/` - Transactions list
-- `/transactions/create/` - Add transaction
-- `/transactions/<id>/edit/` - Edit transaction
-- `/transactions/<id>/delete/` - Delete transaction
-- `/budgets/` - Budgets
-- `/budgets/create/` - Add budget
-- `/budgets/<id>/edit/` - Edit budget
-- `/budgets/<id>/delete/` - Delete budget
-- `/transactions/summary/month/` - Monthly summary
-- `/transactions/summary/categories/` - Category breakdown
-
-UI themes:
-
-- Default theme is dark.
-- Use the `Theme` button in the navbar to toggle light/dark (saved in `localStorage`).
-
-## Environment Variables
-
-Local development works with defaults, but for production (Railway/Docker) set:
-
-- `DJANGO_SECRET_KEY`: required in production
-- `DJANGO_DEBUG`: `0`/`1`
-- `DJANGO_ALLOWED_HOSTS`: comma-separated (e.g. `minift.up.railway.app`)
-- `DJANGO_CSRF_TRUSTED_ORIGINS`: comma-separated (e.g. `https://minift.up.railway.app`)
-- `DATABASE_URL`: Postgres URL (recommended for production)
-
-## Docker
-
-Build the image:
-
-```bash
-docker build -t minift:local .
-```
-
-Run the full stack (Django + Postgres):
-
-```bash
-docker-compose up -d --build
-```
-
-App will be available at `http://localhost:8000`.
-
-Stop:
-
-```bash
-docker-compose down
-```
-
-Reset DB volume (destructive):
-
-```bash
-docker-compose down -v
-```
-
-## Database Models
-
-### users
-
-| Field      | Type      | Notes                      |
-| ---------- | --------- | -------------------------- |
-| id         | UUID      | PK                         |
-| email      | string    | unique                     |
-| password   | string    | hashed (Django auth field) |
-| currency   | string    | default "USD"              |
-| created_at | timestamp | default "USD"              |
-| created_at | timestamp |                            |
-| last_login | timestamp | nullable                   |
-| is_active  | bool      | default true               |
-| is_staff   | bool      | default false              |
-
-### transactions
-
-| Field      | Type          | Notes                 |
-| ---------- | ------------- | --------------------- |
-| id         | UUID          | PK                    |
-| user_id    | UUID          | FK -> users           |
-| amount     | decimal(10,2) | always positive       |
-| type       | enum          | "income" or "expense" |
-| category   | string        | e.g. "food", "salary" |
-| note       | string        | nullable              |
-| date       | date          | defaults to today     |
-| created_at | timestamp     |                       |
-
-### budgets
-
-| Field    | Type          | Notes                          |
-| -------- | ------------- | ------------------------------ |
-| id       | UUID          | PK                             |
-| user_id  | UUID          | FK -> users                    |
-| category | string        | matches transaction categories |
-| limit    | decimal(10,2) | monthly spend cap              |
-| month    | date          | first day of the month         |
-
-In the web UI, budgets use a month name selector; internally it is stored as the first day of that month.
+- Backend instructions: [backend/README.md](/home/dakotitah/github/MiniFT/backend/README.md)
+- Frontend instructions: [frontend/README.md](/home/dakotitah/github/MiniFT/frontend/README.md)
