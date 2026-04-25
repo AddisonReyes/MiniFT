@@ -4,6 +4,7 @@ use crate::handlers;
 
 pub fn all() -> Vec<Route> {
     routes![
+        crate::cors::preflight,
         handlers::health::health,
         handlers::auth::register,
         handlers::auth::login,

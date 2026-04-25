@@ -1,28 +1,37 @@
 # MiniFT Frontend
 
-Next.js App Router frontend for MiniFT. It renders the dashboard, CRUD pages, reports, and a same-origin API proxy that stores JWTs in secure cookies.
+Next.js App Router frontend for MiniFT. It renders the dashboard, CRUD pages, and reports, then exports to static HTML for Cloudflare Pages.
 
 ## Environment Variables
 
 ```bash
-BACKEND_INTERNAL_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 NODE_ENV=development
 ```
 
-`BACKEND_INTERNAL_URL` is used by the local proxy route handlers to forward requests to the Rocket API.
+`NEXT_PUBLIC_API_BASE_URL` is the public backend origin the browser will call directly.
 
 ## Run Locally
 
 ```bash
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-The frontend expects the backend API to be available and reachable through `BACKEND_INTERNAL_URL`.
+The frontend expects the backend API to be available and reachable through `NEXT_PUBLIC_API_BASE_URL`.
+
+## Cloudflare Pages
+
+Use the `Next.js (Static HTML Export)` preset or equivalent settings:
+
+- Root directory: `frontend`
+- Build command: `npm run build`
+- Build output directory: `out`
+- Required build env: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
 
 ## Notes
 
-- The browser talks to `/api/*` on the frontend origin.
-- Route handlers forward requests to the backend and refresh access tokens when possible.
-- Auth cookies are `httpOnly`, which keeps tokens out of browser JavaScript.
-
+- `next.config.ts` uses `output: "export"` so `npm run build` emits a deploy-ready `out/` folder.
+- The frontend stores JWTs in browser storage and automatically refreshes access tokens when the backend returns `401`.
+- The backend must allow cross-origin requests from the Cloudflare Pages site.

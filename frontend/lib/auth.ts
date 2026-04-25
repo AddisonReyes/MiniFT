@@ -3,9 +3,28 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
+import { clearAuthTokens, storeAuthTokens } from "@/lib/auth-storage";
 import type { AuthSessionResponse, User } from "@/lib/types";
 
 export const sessionQueryKey = ["auth", "session"];
+
+type AuthResponsePayload = {
+  user: User;
+  access_token: string;
+  refresh_token: string;
+};
+
+async function authenticate(
+  path: "/auth/login" | "/auth/register",
+  payload: { email: string; password: string; currency?: string },
+) {
+  const response = await api.post<AuthResponsePayload>(path, payload);
+  storeAuthTokens(response.access_token, response.refresh_token);
+
+  return {
+    user: response.user,
+  } satisfies AuthSessionResponse;
+}
 
 export function useSessionQuery() {
   return useQuery({
@@ -20,7 +39,7 @@ export function useSessionQuery() {
 }
 
 export function login(payload: { email: string; password: string }) {
-  return api.post<AuthSessionResponse>("/auth/login", payload);
+  return authenticate("/auth/login", payload);
 }
 
 export function register(payload: {
@@ -28,9 +47,11 @@ export function register(payload: {
   password: string;
   currency: string;
 }) {
-  return api.post<AuthSessionResponse>("/auth/register", payload);
+  return authenticate("/auth/register", payload);
 }
 
 export function logout() {
-  return api.post<{ message: string }>("/auth/logout");
+  clearAuthTokens();
+
+  return Promise.resolve({ message: "Signed out" });
 }

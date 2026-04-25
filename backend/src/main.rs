@@ -2,6 +2,7 @@
 extern crate rocket;
 
 mod config;
+mod cors;
 mod db;
 mod errors;
 mod guards;
@@ -31,6 +32,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
 
     let rocket = rocket::build()
         .manage(state.clone())
+        .attach(cors::Cors)
         .mount("/", routes::all())
         .attach(AdHoc::on_liftoff("Recurring Worker", |rocket| {
             Box::pin(async move {

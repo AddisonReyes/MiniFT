@@ -10,10 +10,12 @@ MiniFT is a minimalist personal finance tracker built as a full-stack MVP with a
 
 ## Architecture
 
-- `frontend/` serves the UI and exposes same-origin `/api/*` proxy routes.
+- `frontend/` builds to a static `out/` export for Cloudflare Pages.
+- The browser calls the backend API directly using `NEXT_PUBLIC_API_BASE_URL`.
 - `backend/` exposes the Rocket API under `/api/*`.
 - `postgres` stores users, accounts, transactions, transfers, recurring rules, and budgets.
 - The backend runs a background worker to materialize due recurring transactions.
+- The backend adds CORS headers so the static frontend can authenticate and query data from a different origin.
 
 ## Run The MVP
 
@@ -25,7 +27,6 @@ Once the stack is ready:
 
 - Frontend: `http://localhost:3000`
 - Backend health: `http://localhost:8000/health`
-- PostgreSQL: `localhost:5432`
 
 ## First Use
 
@@ -45,9 +46,18 @@ Once the stack is ready:
 ## Frontend Highlights
 
 - Dark-mode-first UI
-- Cookie-based session handling through the frontend proxy
+- Static HTML export compatible with Cloudflare Pages
+- Browser-managed JWT session with automatic refresh
 - CRUD screens for accounts, transactions, budgets, and recurring transactions
 - Reports page for monthly totals and category breakdowns
+
+## Cloudflare Pages
+
+Build the frontend from `frontend/` with:
+
+- Build command: `npm run build`
+- Output directory: `out`
+- Environment variable: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
 
 ## Local Development Without Docker
 

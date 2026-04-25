@@ -1,4 +1,10 @@
 import type { ApiMessage } from "@/lib/types";
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  storeAuthTokens,
+} from "@/lib/auth-storage";
 
 export class ApiError extends Error {
   status: number;
@@ -26,20 +32,121 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return (await response.text()) as T;
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+function apiBaseUrl() {
+  return (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api").replace(
+    /\/$/,
+    "",
+  );
+}
+
+function normalizePath(path: string) {
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function buildApiUrl(path: string) {
+  return `${apiBaseUrl()}${normalizePath(path)}`;
+}
+
+function shouldAttachToken(path: string) {
+  return !["/auth/login", "/auth/register", "/auth/refresh"].includes(normalizePath(path));
+}
+
+type AuthResponsePayload = {
+  access_token: string;
+  refresh_token: string;
+};
+
+let refreshRequest: Promise<string | null> | null = null;
+
+async function refreshAccessToken() {
+  if (refreshRequest) {
+    return refreshRequest;
+  }
+
+  refreshRequest = (async () => {
+    const refreshToken = getRefreshToken();
+
+    if (!refreshToken) {
+      clearAuthTokens();
+      return null;
+    }
+
+    const response = await fetch(buildApiUrl("/auth/refresh"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      clearAuthTokens();
+      return null;
+    }
+
+    const payload = (await response.json()) as AuthResponsePayload;
+    storeAuthTokens(payload.access_token, payload.refresh_token);
+    return payload.access_token;
+  })();
+
+  try {
+    return await refreshRequest;
+  } finally {
+    refreshRequest = null;
+  }
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  allowRefresh = true,
+): Promise<T> {
   const headers = new Headers(init.headers);
   const hasBody = init.body !== undefined && init.body !== null;
+  const normalizedPath = normalizePath(path);
 
   if (hasBody && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(path.startsWith("/api") ? path : `/api${path}`, {
+  if (shouldAttachToken(normalizedPath)) {
+    const accessToken = getAccessToken();
+
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
+  }
+
+  const response = await fetch(buildApiUrl(normalizedPath), {
     ...init,
     headers,
     cache: "no-store",
-    credentials: "include",
   });
+
+  if (response.status === 401 && allowRefresh && shouldAttachToken(normalizedPath)) {
+    const refreshedAccessToken = await refreshAccessToken();
+
+    if (refreshedAccessToken) {
+      const retryHeaders = new Headers(init.headers);
+
+      if (hasBody && !retryHeaders.has("Content-Type")) {
+        retryHeaders.set("Content-Type", "application/json");
+      }
+
+      retryHeaders.set("Authorization", `Bearer ${refreshedAccessToken}`);
+
+      return request<T>(
+        normalizedPath,
+        {
+          ...init,
+          headers: retryHeaders,
+        },
+        false,
+      );
+    }
+  }
 
   if (!response.ok) {
     const details = await parseResponse<Partial<ApiMessage> | string>(response);
