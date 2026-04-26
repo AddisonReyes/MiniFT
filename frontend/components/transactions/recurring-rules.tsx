@@ -21,8 +21,8 @@ export function RecurringRulesSection({
 }) {
   return (
     <Card className="mt-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold">Recurring transactions</h2>
           <p className="mt-1 text-sm text-mist">
             The backend worker materializes entries when their next run date
@@ -47,8 +47,8 @@ export function RecurringRulesSection({
               key={recurringTransaction.id}
               className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0">
                   <div className="font-medium text-white">
                     {recurringTransaction.category}
                   </div>
@@ -81,7 +81,7 @@ export function RecurringRulesSection({
                 ) : null}
               </div>
 
-              <div className="mt-5 flex gap-3">
+              <div className="mt-5 grid grid-cols-2 gap-3">
                 <Button
                   className="flex-1"
                   variant="secondary"

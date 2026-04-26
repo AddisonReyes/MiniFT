@@ -14,7 +14,9 @@ export function cn(...classes: Array<string | false | null | undefined>) {
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("panel p-6", className)} {...props} />;
+  return (
+    <div className={cn("panel min-w-0 p-4 sm:p-6", className)} {...props} />
+  );
 }
 
 export function Button({
@@ -72,7 +74,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]",
+        "inline-flex max-w-full rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]",
         tones[tone],
       )}
     >
@@ -99,11 +101,11 @@ export function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-[32px] border border-white/10 bg-[#0f1420] p-6 shadow-panel">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-3 backdrop-blur-sm sm:p-4">
+      <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[24px] border border-white/10 bg-[#0f1420] p-5 shadow-panel sm:max-h-[calc(100dvh-2rem)] sm:rounded-[32px] sm:p-6">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">{title}</h2>
+            <h2 className="text-xl font-semibold sm:text-2xl">{title}</h2>
             {subtitle ? (
               <p className="mt-2 text-sm text-mist">{subtitle}</p>
             ) : null}

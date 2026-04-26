@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "MiniFT",
   description:
     "Minimal personal finance tracking with accounts, budgets, transfers, and recurring transactions.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

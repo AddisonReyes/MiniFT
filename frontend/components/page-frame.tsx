@@ -56,12 +56,7 @@ export function PageFrame({
   }
 
   return (
-    <AppShell
-      user={session.data}
-      title={title}
-      description={description}
-      actions={actions}
-    >
+    <AppShell title={title} description={description} actions={actions}>
       {children}
     </AppShell>
   );

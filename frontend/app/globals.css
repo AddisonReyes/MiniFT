@@ -19,7 +19,9 @@
 }
 
 html {
+  width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
   background:
     radial-gradient(
       circle at top left,
@@ -35,9 +37,17 @@ html {
 }
 
 body {
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
   color: var(--foreground);
   background: transparent;
+}
+
+body > div {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 ::selection {
@@ -73,7 +83,7 @@ body {
 
 @layer components {
   .panel {
-    @apply rounded-[28px] border border-white/10 bg-surface/80 shadow-panel backdrop-blur;
+    @apply rounded-[24px] border border-white/10 bg-surface/80 shadow-panel backdrop-blur sm:rounded-[28px];
   }
 
   .metric-grid {
@@ -81,6 +91,6 @@ body {
   }
 
   .table-shell {
-    @apply overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03];
+    @apply w-full max-w-full overflow-x-auto rounded-[22px] border border-white/10 bg-white/[0.03] sm:rounded-[24px];
   }
 }

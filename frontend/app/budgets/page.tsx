@@ -98,7 +98,7 @@ export default function BudgetsPage() {
       actions={
         <div className="flex flex-wrap gap-3">
           <Input
-            className="min-w-[180px]"
+            className="min-w-0 sm:min-w-[180px]"
             type="month"
             value={month}
             onChange={(event) => setMonth(event.target.value)}
@@ -115,8 +115,8 @@ export default function BudgetsPage() {
 
           return (
             <Card key={budget.id} className="space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0">
                   <div className="text-xs uppercase tracking-[0.22em] text-mist">
                     {budget.month}
                   </div>
@@ -124,7 +124,7 @@ export default function BudgetsPage() {
                     {budget.category}
                   </h2>
                 </div>
-                <div className="text-right text-sm text-mist">
+                <div className="text-sm text-mist sm:text-right">
                   <div>Spent</div>
                   <div className="mt-1 font-medium text-white">
                     {formatCurrency(budget.spent_amount, currency)}
@@ -133,7 +133,7 @@ export default function BudgetsPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-mist">Limit</span>
                   <span className="text-white">
                     {formatCurrency(budget.limit_amount, currency)}

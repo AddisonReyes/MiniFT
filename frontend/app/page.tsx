@@ -78,8 +78,8 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <h2 className="text-xl font-semibold">Recent transactions</h2>
               <p className="mt-1 text-sm text-mist">
                 Latest activity across your accounts.
@@ -88,15 +88,66 @@ export default function DashboardPage() {
             <Badge tone="neutral">{recentTransactions.length} shown</Badge>
           </div>
 
-          <div className="table-shell">
-            <table className="min-w-full text-left text-sm">
+          <div className="space-y-3 sm:hidden">
+            {recentTransactions.length ? (
+              recentTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-white">
+                        {transaction.category}
+                      </div>
+                      <div className="mt-1 text-xs text-mist">
+                        {transaction.account_name || "Cash"} ·{" "}
+                        {formatDate(transaction.date)}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right font-semibold text-white">
+                      {formatCurrency(transaction.amount, currency)}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <Badge
+                      tone={
+                        transaction.display_type === "income"
+                          ? "success"
+                          : transaction.display_type === "expense"
+                            ? "danger"
+                            : "amber"
+                      }
+                    >
+                      {transaction.display_type}
+                    </Badge>
+                    {transaction.note ? (
+                      <span className="truncate text-xs text-mist">
+                        {transaction.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
+                No transactions recorded yet.
+              </div>
+            )}
+          </div>
+
+          <div className="table-shell hidden sm:block">
+            <table className="min-w-[760px] text-left text-sm">
               <thead className="border-b border-white/10 bg-white/[0.03] text-mist">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Type</th>
-                  <th className="px-4 py-3 font-medium">Category</th>
-                  <th className="px-4 py-3 font-medium">Account</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 text-right font-medium">Amount</th>
+                  <th className="px-3 py-3 font-medium sm:px-4">Type</th>
+                  <th className="px-3 py-3 font-medium sm:px-4">Category</th>
+                  <th className="px-3 py-3 font-medium sm:px-4">Account</th>
+                  <th className="px-3 py-3 font-medium sm:px-4">Date</th>
+                  <th className="px-3 py-3 text-right font-medium sm:px-4">
+                    Amount
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -106,7 +157,7 @@ export default function DashboardPage() {
                       key={transaction.id}
                       className="border-b border-white/5 last:border-0"
                     >
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-4 sm:px-4">
                         <Badge
                           tone={
                             transaction.display_type === "income"
@@ -119,7 +170,7 @@ export default function DashboardPage() {
                           {transaction.display_type}
                         </Badge>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-4 sm:px-4">
                         <div className="font-medium text-white">
                           {transaction.category}
                         </div>
@@ -129,13 +180,13 @@ export default function DashboardPage() {
                           </div>
                         ) : null}
                       </td>
-                      <td className="px-4 py-4 text-mist">
+                      <td className="px-3 py-4 text-mist sm:px-4">
                         {transaction.account_name || "Cash"}
                       </td>
-                      <td className="px-4 py-4 text-mist">
+                      <td className="px-3 py-4 text-mist sm:px-4">
                         {formatDate(transaction.date)}
                       </td>
-                      <td className="px-4 py-4 text-right font-medium text-white">
+                      <td className="px-3 py-4 text-right font-medium text-white sm:px-4">
                         {formatCurrency(transaction.amount, currency)}
                       </td>
                     </tr>
@@ -165,15 +216,15 @@ export default function DashboardPage() {
               {(accountsQuery.data || []).map((account) => (
                 <div
                   key={account.id}
-                  className="flex items-center justify-between rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4"
+                  className="flex flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-medium text-white">{account.name}</div>
                     <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
                       {account.type}
                     </div>
                   </div>
-                  <div className="text-right font-semibold text-white">
+                  <div className="break-words font-semibold text-white sm:text-right">
                     {formatCurrency(account.balance, currency)}
                   </div>
                 </div>
