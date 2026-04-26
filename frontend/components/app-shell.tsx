@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { BrandLink } from "@/components/brand-link";
+import { SiteFooter } from "@/components/site-footer";
 import { cn } from "@/components/ui";
 
 const navigation = [
@@ -33,14 +35,10 @@ export function AppShell({
     <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-3 pb-0 pt-3 sm:px-6 sm:pt-6 lg:px-8">
       <header className="mb-6 space-y-5">
         <div className="flex items-center justify-between gap-3">
-          <Link
+          <BrandLink
             href="/dashboard"
-            className="inline-flex shrink-0 rounded-full border border-white/10 bg-ink/60 px-3 py-1.5 text-xs uppercase tracking-[0.28em] text-signal shadow-soft backdrop-blur transition hover:border-signal/40 hover:bg-signal/10 hover:text-white"
             onClick={() => setMobileNavOpen(false)}
-          >
-            <span className="sm:hidden">MiniFT</span>
-            <span className="hidden sm:inline">Mini Finance Tracker</span>
-          </Link>
+          />
 
           <nav className="hidden rounded-full border border-white/10 bg-ink/55 p-1 shadow-soft backdrop-blur xl:flex xl:items-center xl:gap-1">
             {navigation.map((item) => {
@@ -126,22 +124,7 @@ export function AppShell({
 
       <main className="min-w-0 flex-1 pb-10">{children}</main>
 
-      <footer className="mt-auto px-4 py-6 text-center text-sm text-mist">
-        <p>
-          Copyright © {new Date().getFullYear()} MiniFT. All rights reserved.
-        </p>
-        <p className="mt-2">
-          Made by{" "}
-          <a
-            className="text-signal transition hover:text-white"
-            href="https://addisonreyes.com"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Addison Reyes
-          </a>
-        </p>
-      </footer>
+      <SiteFooter className="mt-auto" />
     </div>
   );
 }

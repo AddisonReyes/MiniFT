@@ -6,6 +6,8 @@ MiniFT is a two-app repository:
 
 - `backend/`: Rust + Rocket API. Core code lives in `src/` and is split into `handlers/`, `services/`, `models/`, `routes/`, `schema/`, and `db/`. SQL migrations live in `backend/migrations/`.
 - `frontend/`: Next.js App Router app. Pages live in `frontend/app/`, shared UI in `frontend/components/`, and client utilities in `frontend/lib/`.
+- Frontend route intent: `/` is the public landing page; `/dashboard`, `/transactions`, `/accounts`, `/budgets`, `/reports`, and `/settings` are protected app routes wrapped by `PageFrame`.
+- Shared frontend widgets should live in `frontend/components/`. Prefer reusing existing primitives such as `BrandLink`, `SiteFooter`, `MonthPicker`, `SummaryCard`, `FinanceSnapshot`, and `components/ui.tsx` before creating page-local duplicates.
 - Root files: `docker-compose.yml` wires local services together; `README.md` documents the full-stack setup.
 
 ## Build, Test, and Development Commands
@@ -24,6 +26,8 @@ MiniFT is a two-app repository:
 Use 4-space indentation in Rust and 2-space indentation in TypeScript, JSX, JSON, and config files. Keep Rust modules focused by responsibility and prefer explicit service-layer logic over handler-heavy routes. Use `snake_case` for Rust functions, fields, and file names; use `PascalCase` for React components; use lowercase route segments such as `app/transactions`. Tailwind is the only styling layer; keep reusable UI in `frontend/components/`.
 
 Write code for human readers first: prefer clear names, small functions, straightforward control flow, and comments only where intent is not obvious from the code itself. Favor clean, maintainable implementations over clever shortcuts, and follow the existing stack conventions and standard best practices for Rust, React, and SQLx.
+
+For frontend changes, avoid duplicating display logic in pages. Put shared formatting/state-free view helpers in `frontend/lib/` and reusable UI in `frontend/components/`. Keep page files focused on data fetching, mutations, and route-specific composition.
 
 ## Testing Guidelines
 

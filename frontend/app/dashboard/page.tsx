@@ -13,18 +13,11 @@ import {
   formatDate,
   monthInputToDate,
 } from "@/lib/format";
+import {
+  transactionAmountClass,
+  transactionTone,
+} from "@/lib/transaction-display";
 import type { Account, Budget, MonthlySummary, Transaction } from "@/lib/types";
-
-function transactionAmountClass(displayType: Transaction["display_type"]) {
-  switch (displayType) {
-    case "income":
-      return "text-signal";
-    case "expense":
-      return "text-hazard";
-    default:
-      return "text-amber";
-  }
-}
 
 export default function DashboardPage() {
   const session = useSessionQuery();
@@ -128,13 +121,7 @@ export default function DashboardPage() {
 
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <Badge
-                      tone={
-                        transaction.display_type === "income"
-                          ? "success"
-                          : transaction.display_type === "expense"
-                            ? "danger"
-                            : "amber"
-                      }
+                      tone={transactionTone(transaction.display_type)}
                     >
                       {transaction.display_type}
                     </Badge>
@@ -179,13 +166,7 @@ export default function DashboardPage() {
                     >
                       <td className="px-3 py-4 sm:px-4">
                         <Badge
-                          tone={
-                            transaction.display_type === "income"
-                              ? "success"
-                              : transaction.display_type === "expense"
-                                ? "danger"
-                                : "amber"
-                          }
+                          tone={transactionTone(transaction.display_type)}
                         >
                           {transaction.display_type}
                         </Badge>

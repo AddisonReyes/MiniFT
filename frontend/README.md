@@ -1,6 +1,18 @@
 # MiniFT Frontend
 
-Next.js App Router frontend for MiniFT. It renders the dashboard, CRUD pages, and reports, then exports to static HTML for Cloudflare Pages.
+Next.js App Router frontend for MiniFT. It renders the public landing page, protected dashboard workspace, CRUD pages, and reports, then exports to static HTML for Cloudflare Pages.
+
+## Route Map
+
+- `/`: public landing page.
+- `/login`: sign in page.
+- `/register`: account creation page.
+- `/dashboard`: protected monthly overview.
+- `/transactions`: protected transaction, transfer, and recurring workspace.
+- `/accounts`: protected account management.
+- `/budgets`: protected monthly budget management.
+- `/reports`: protected monthly reporting.
+- `/settings`: protected profile/session settings.
 
 ## Environment Variables
 
@@ -36,3 +48,4 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - `next.config.ts` uses `output: "export"` so `npm run build` emits a deploy-ready `out/` folder.
 - The frontend stores JWTs in browser storage and automatically refreshes access tokens when the backend returns `401`.
 - The backend must allow cross-origin requests from the Cloudflare Pages site.
+- Shared UI primitives live in `components/`; reusable product widgets include `BrandLink`, `SiteFooter`, `MonthPicker`, and `FinanceSnapshot`.

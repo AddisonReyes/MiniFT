@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
 import { Card, Button, Input } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
@@ -122,56 +123,7 @@ function LoginPageContent() {
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-ink/45 p-5 shadow-soft">
-              <div className="mb-5 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-mist">
-                    April overview
-                  </p>
-                  <h3 className="mt-2 text-2xl font-semibold">Cash flow</h3>
-                </div>
-                <div className="rounded-full border border-signal/20 bg-signal/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-signal">
-                  Healthy
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-mist">
-                    Income
-                  </p>
-                  <div className="mt-2 font-semibold text-signal">
-                    USD 4,200
-                  </div>
-                </div>
-                <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-mist">
-                    Expenses
-                  </p>
-                  <div className="mt-2 font-semibold text-hazard">
-                    USD 1,845
-                  </div>
-                </div>
-                <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-mist">
-                    Net
-                  </p>
-                  <div className="mt-2 font-semibold text-white">
-                    USD 2,355
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-mist">Budget health</span>
-                  <span className="text-white">68% used</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full w-[68%] rounded-full bg-signal" />
-                </div>
-              </div>
-            </div>
+            <FinanceSnapshot />
 
             <div className="grid gap-3 text-sm text-mist sm:grid-cols-4">
               {["Accounts", "Budgets", "Recurring", "Reports"].map((item) => (

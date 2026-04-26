@@ -2,29 +2,11 @@
 
 import { Badge, Button, Card, cn } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/format";
+import {
+  transactionAmountClass,
+  transactionTone,
+} from "@/lib/transaction-display";
 import type { Transaction } from "@/lib/types";
-
-function transactionTone(displayType: Transaction["display_type"]) {
-  switch (displayType) {
-    case "income":
-      return "success";
-    case "expense":
-      return "danger";
-    default:
-      return "amber";
-  }
-}
-
-function transactionAmountClass(displayType: Transaction["display_type"]) {
-  switch (displayType) {
-    case "income":
-      return "text-signal";
-    case "expense":
-      return "text-hazard";
-    default:
-      return "text-amber";
-  }
-}
 
 export function TransactionListSection({
   transactions,
