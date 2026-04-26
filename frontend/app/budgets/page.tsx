@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { FormError } from "@/components/form-error";
+import { MonthPicker } from "@/components/month-picker";
 import { PageFrame } from "@/components/page-frame";
 import { Button, Card, Input, Modal } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -97,11 +98,10 @@ export default function BudgetsPage() {
       description="Set category caps per month and compare them against live expense totals."
       actions={
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-          <Input
-            className="min-w-0 sm:min-w-[180px]"
-            type="month"
+          <MonthPicker
+            className="min-w-0 sm:min-w-[280px]"
             value={month}
-            onChange={(event) => setMonth(event.target.value)}
+            onChange={setMonth}
           />
           <Button onClick={handleCreate}>New budget</Button>
         </div>
@@ -235,18 +235,15 @@ export default function BudgetsPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="month">Month</label>
-            <Input
-              id="month"
-              type="month"
+            <label>Month</label>
+            <MonthPicker
               value={form.month}
-              onChange={(event) =>
+              onChange={(value) =>
                 setForm((current) => ({
                   ...current,
-                  month: event.target.value,
+                  month: value,
                 }))
               }
-              required
             />
           </div>
 

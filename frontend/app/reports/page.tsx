@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import { MonthPicker } from "@/components/month-picker";
 import { PageFrame } from "@/components/page-frame";
 import { SummaryCard } from "@/components/summary-card";
-import { Card, Input, Select } from "@/components/ui";
+import { Card, Select } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import {
@@ -49,10 +50,10 @@ export default function ReportsPage() {
       description="Review monthly performance and category concentration without leaving the main app."
       actions={
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-          <Input
-            type="month"
+          <MonthPicker
+            className="min-w-0 sm:min-w-[280px]"
             value={month}
-            onChange={(event) => setMonth(event.target.value)}
+            onChange={setMonth}
           />
           <Select
             value={type}
