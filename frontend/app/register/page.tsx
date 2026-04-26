@@ -41,20 +41,22 @@ function RegisterPageContent() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-10 sm:px-6 lg:px-8">
-      <div className="grid w-full gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card className="p-8">
-          <div className="mb-8 space-y-2">
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-signal">
-              New workspace
+    <main className="mx-auto flex min-h-dvh w-full max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
+      <div className="grid w-full gap-6 lg:grid-cols-[0.86fr_1.14fr]">
+        <Card className="p-6 sm:p-8">
+          <div className="mb-8 space-y-5">
+            <div className="inline-flex rounded-full border border-white/10 bg-ink/45 px-4 py-2 text-xs uppercase tracking-[0.28em] text-signal">
+              MiniFT
             </div>
-            <h1 className="text-3xl font-semibold">
-              Create your MiniFT account
-            </h1>
-            <p className="text-sm text-mist">
-              We create a default Cash account automatically so you can start
-              tracking immediately.
-            </p>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-semibold sm:text-4xl">
+                Create your workspace
+              </h1>
+              <p className="text-sm leading-6 text-mist">
+                Set up a focused finance workspace with a default Cash account
+                ready to use.
+              </p>
+            </div>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
@@ -66,6 +68,7 @@ function RegisterPageContent() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
@@ -78,6 +81,7 @@ function RegisterPageContent() {
                 placeholder="Minimum 8 characters"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
                 required
               />
             </div>
@@ -99,13 +103,16 @@ function RegisterPageContent() {
 
             {mutation.error ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-                {mutation.error instanceof ApiError
-                  ? mutation.error.message
-                  : "Unable to register"}
+                <div className="font-medium">Registration failed</div>
+                <p className="mt-1 text-hazard/90">
+                  {mutation.error instanceof ApiError
+                    ? mutation.error.message
+                    : "Unable to register"}
+                </p>
               </div>
             ) : null}
 
-            <Button className="w-full" type="submit">
+            <Button className="w-full" type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? "Creating account..." : "Create account"}
             </Button>
           </form>
@@ -118,30 +125,64 @@ function RegisterPageContent() {
           </p>
         </Card>
 
-        <section className="panel flex flex-col justify-between p-8 sm:p-10">
-          <div className="space-y-6">
-            <h2 className="text-4xl font-semibold">
-              Built for fast monthly control.
-            </h2>
-            <p className="max-w-lg text-base text-mist">
-              Keep income, expenses, transfers, budgets, and recurring activity
-              in one place. The reporting view stays readable because the app
-              keeps the model simple.
-            </p>
-          </div>
+        <section className="panel hidden overflow-hidden p-8 lg:block lg:p-10">
+          <div className="flex h-full flex-col justify-between gap-10">
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-[0.28em] text-signal">
+                Fast monthly control
+              </p>
+              <h2 className="max-w-xl text-4xl font-semibold">
+                Start with the essentials, then build your money map.
+              </h2>
+              <p className="max-w-lg text-sm leading-6 text-mist">
+                MiniFT keeps the model simple: accounts, transfers, budgets,
+                recurring entries, and reports that stay readable.
+              </p>
+            </div>
 
-          <div className="grid gap-4 text-sm text-mist sm:grid-cols-2">
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-              Automatic cash account on signup
+            <div className="rounded-[24px] border border-white/10 bg-ink/45 p-5 shadow-soft">
+              <div className="mb-5">
+                <p className="text-xs uppercase tracking-[0.22em] text-mist">
+                  Workspace setup
+                </p>
+                <h3 className="mt-2 text-2xl font-semibold">
+                  What happens next
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  "Default Cash account is created automatically",
+                  "Choose your preferred reporting currency",
+                  "Add budgets and recurring rules when you are ready",
+                ].map((item, index) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4"
+                  >
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-signal/15 text-sm font-semibold text-signal">
+                      {index + 1}
+                    </div>
+                    <div className="text-sm text-white">{item}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-              Transfer mirroring between accounts
-            </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-              Budget tracking per category
-            </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-              Recurring transactions with background execution
+
+            <div className="grid gap-3 text-sm text-mist sm:grid-cols-2">
+              {[
+                "Transfer mirroring between accounts",
+                "Budget tracking per category",
+                "Recurring transactions",
+                "Monthly reporting",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
+                >
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
         </section>
