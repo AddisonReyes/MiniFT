@@ -19,7 +19,7 @@ async function authenticate(
   payload: { email: string; password: string; currency?: string },
 ) {
   const response = await api.post<AuthResponsePayload>(path, payload);
-  storeAuthTokens(response.access_token, response.refresh_token);
+  await storeAuthTokens(response.access_token, response.refresh_token);
 
   return {
     user: response.user,
@@ -38,11 +38,11 @@ export function useSessionQuery() {
   });
 }
 
-export function login(payload: { email: string; password: string }) {
+export async function login(payload: { email: string; password: string }) {
   return authenticate("/auth/login", payload);
 }
 
-export function register(payload: {
+export async function register(payload: {
   email: string;
   password: string;
   currency: string;
@@ -50,7 +50,7 @@ export function register(payload: {
   return authenticate("/auth/register", payload);
 }
 
-export function logout() {
+export async function logout() {
   clearAuthTokens();
 
   return Promise.resolve({ message: "Signed out" });
