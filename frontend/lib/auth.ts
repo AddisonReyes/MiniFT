@@ -18,6 +18,7 @@ async function authenticate(
   path: "/auth/login" | "/auth/register",
   payload: { email: string; password: string; currency?: string },
 ) {
+  clearAuthTokens();
   const response = await api.post<AuthResponsePayload>(path, payload);
   await storeAuthTokens(response.access_token, response.refresh_token);
 

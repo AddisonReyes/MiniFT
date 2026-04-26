@@ -33,10 +33,9 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 function apiBaseUrl() {
-  return (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api").replace(
-    /\/$/,
-    "",
-  );
+  return (
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api"
+  ).replace(/\/$/, "");
 }
 
 function normalizePath(path: string) {
@@ -48,7 +47,9 @@ function buildApiUrl(path: string) {
 }
 
 function shouldAttachToken(path: string) {
-  return !["/auth/login", "/auth/register", "/auth/refresh"].includes(normalizePath(path));
+  return !["/auth/login", "/auth/register", "/auth/refresh"].includes(
+    normalizePath(path),
+  );
 }
 
 type AuthResponsePayload = {
@@ -125,7 +126,11 @@ async function request<T>(
     cache: "no-store",
   });
 
-  if (response.status === 401 && allowRefresh && shouldAttachToken(normalizedPath)) {
+  if (
+    response.status === 401 &&
+    allowRefresh &&
+    shouldAttachToken(normalizedPath)
+  ) {
     const refreshedAccessToken = await refreshAccessToken();
 
     if (refreshedAccessToken) {
