@@ -119,7 +119,7 @@ export function AppShell({
 
       <main className="min-w-0 flex-1 pb-10">{children}</main>
 
-      <footer className="mt-auto border-t border-white/10 px-4 py-6 text-center text-sm text-mist">
+      <footer className="mt-auto px-4 py-6 text-center text-sm text-mist">
         <p>
           Copyright © {new Date().getFullYear()} MiniFT. All rights reserved.
         </p>

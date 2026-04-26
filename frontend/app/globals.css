@@ -23,17 +23,22 @@ html {
   min-height: 100%;
   overflow-x: hidden;
   background:
-    radial-gradient(
-      circle at top left,
-      rgba(122, 231, 185, 0.18),
-      transparent 30%
+    linear-gradient(
+      120deg,
+      rgba(122, 231, 185, 0.12),
+      transparent 32%
     ),
-    radial-gradient(
-      circle at 85% 10%,
-      rgba(247, 194, 103, 0.13),
-      transparent 28%
+    linear-gradient(
+      rgba(255, 255, 255, 0.026) 1px,
+      transparent 1px
     ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px),
     linear-gradient(180deg, #101520 0%, #090c11 38%, #07090d 100%);
+  background-size:
+    100% 100%,
+    42px 42px,
+    42px 42px,
+    100% 100%;
 }
 
 body {

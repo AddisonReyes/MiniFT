@@ -138,7 +138,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="table-shell hidden sm:block">
-            <table className="min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="border-b border-white/10 bg-white/[0.03] text-mist">
                 <tr>
                   <th className="px-3 py-3 font-medium sm:px-4">Type</th>
