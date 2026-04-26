@@ -35,7 +35,7 @@ export function useSessionQuery() {
       return user;
     },
     retry: false,
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

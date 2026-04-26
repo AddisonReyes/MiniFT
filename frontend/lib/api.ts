@@ -150,6 +150,11 @@ async function request<T>(
         },
         false,
       );
+    } else {
+      if (typeof window !== "undefined") {
+        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+      }
+      throw new ApiError("Session expired", 401);
     }
   }
 
