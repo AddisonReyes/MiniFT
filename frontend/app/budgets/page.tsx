@@ -96,7 +96,7 @@ export default function BudgetsPage() {
       title="Budgets"
       description="Set category caps per month and compare them against live expense totals."
       actions={
-        <div className="flex flex-wrap gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <Input
             className="min-w-0 sm:min-w-[180px]"
             type="month"
@@ -114,7 +114,10 @@ export default function BudgetsPage() {
           const progress = Math.min((spent / limit) * 100, 100);
 
           return (
-            <Card key={budget.id} className="space-y-5">
+            <Card
+              key={budget.id}
+              className="space-y-5 transition hover:border-white/15 hover:bg-white/[0.035]"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <div className="text-xs uppercase tracking-[0.22em] text-mist">
@@ -178,9 +181,12 @@ export default function BudgetsPage() {
       </div>
 
       {!budgetsQuery.data?.length ? (
-        <Card className="mt-6 text-sm text-mist">
-          No budgets found for {month}. Create one to start tracking category
-          caps.
+        <Card className="empty-state mt-6">
+          <div className="font-medium text-white">No budgets for {month}</div>
+          <p className="mt-1 text-sm text-mist">
+            Create a category cap to compare planned spending against real
+            expenses.
+          </p>
         </Card>
       ) : null}
 

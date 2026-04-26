@@ -19,6 +19,7 @@ const config: Config = {
       },
       boxShadow: {
         panel: "0 18px 50px rgba(0, 0, 0, 0.35)",
+        soft: "0 12px 34px rgba(0, 0, 0, 0.24)",
       },
     },
   },
@@ -26,4 +27,3 @@ const config: Config = {
 };
 
 export default config;
-

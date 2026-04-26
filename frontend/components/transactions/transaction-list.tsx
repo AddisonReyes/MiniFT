@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Card } from "@/components/ui";
+import { Badge, Button, Card, cn } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 
@@ -12,6 +12,17 @@ function transactionTone(displayType: Transaction["display_type"]) {
       return "danger";
     default:
       return "amber";
+  }
+}
+
+function transactionAmountClass(displayType: Transaction["display_type"]) {
+  switch (displayType) {
+    case "income":
+      return "text-signal";
+    case "expense":
+      return "text-hazard";
+    default:
+      return "text-amber";
   }
 }
 
@@ -44,8 +55,11 @@ export function TransactionListSection({
 
       <div className="space-y-3 sm:hidden">
         {isLoading ? (
-          <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-            Loading transactions...
+          <div className="empty-state">
+            <div className="font-medium text-white">Loading transactions...</div>
+            <p className="mt-1 text-sm text-mist">
+              Pulling the latest entries for your filters.
+            </p>
           </div>
         ) : errorMessage ? (
           <div className="rounded-[20px] border border-hazard/20 bg-hazard/10 px-4 py-6 text-sm text-hazard">
@@ -67,7 +81,12 @@ export function TransactionListSection({
                     {formatDate(transaction.date)}
                   </div>
                 </div>
-                <div className="shrink-0 text-right font-semibold text-white">
+                <div
+                  className={cn(
+                    "shrink-0 text-right font-semibold",
+                    transactionAmountClass(transaction.display_type),
+                  )}
+                >
                   {formatCurrency(transaction.amount, currency)}
                 </div>
               </div>
@@ -107,15 +126,19 @@ export function TransactionListSection({
             </div>
           ))
         ) : (
-          <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-            No transactions match the current filters.
+          <div className="empty-state">
+            <div className="font-medium text-white">No matching transactions</div>
+            <p className="mt-1 text-sm text-mist">
+              Adjust your filters or create a new entry to start tracking cash
+              flow.
+            </p>
           </div>
         )}
       </div>
 
       <div className="table-shell hidden sm:block">
         <table className="w-full min-w-[860px] text-left text-sm">
-          <thead className="border-b border-white/10 bg-white/[0.03] text-mist">
+          <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
             <tr>
               <th className="px-3 py-3 font-medium sm:px-4">Type</th>
               <th className="px-3 py-3 font-medium sm:px-4">Category</th>
@@ -132,8 +155,13 @@ export function TransactionListSection({
           <tbody>
             {isLoading ? (
               <tr>
-                <td className="px-3 py-6 text-mist sm:px-4" colSpan={6}>
-                  Loading transactions...
+                <td className="px-4 py-7" colSpan={6}>
+                  <div className="font-medium text-white">
+                    Loading transactions...
+                  </div>
+                  <p className="mt-1 text-sm text-mist">
+                    Pulling the latest entries for your filters.
+                  </p>
                 </td>
               </tr>
             ) : errorMessage ? (
@@ -146,7 +174,7 @@ export function TransactionListSection({
               transactions.map((transaction) => (
                 <tr
                   key={transaction.id}
-                  className="border-b border-white/5 last:border-0"
+                  className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                 >
                   <td className="px-3 py-4 sm:px-4">
                     <Badge tone={transactionTone(transaction.display_type)}>
@@ -169,7 +197,12 @@ export function TransactionListSection({
                   <td className="px-3 py-4 text-mist sm:px-4">
                     {formatDate(transaction.date)}
                   </td>
-                  <td className="px-3 py-4 text-right font-medium text-white sm:px-4">
+                  <td
+                    className={cn(
+                      "px-3 py-4 text-right font-medium sm:px-4",
+                      transactionAmountClass(transaction.display_type),
+                    )}
+                  >
                     {formatCurrency(transaction.amount, currency)}
                   </td>
                   <td className="px-3 py-4 sm:px-4">
@@ -194,8 +227,14 @@ export function TransactionListSection({
               ))
             ) : (
               <tr>
-                <td className="px-4 py-6 text-mist" colSpan={6}>
-                  No transactions match the current filters.
+                <td className="px-4 py-7" colSpan={6}>
+                  <div className="font-medium text-white">
+                    No matching transactions
+                  </div>
+                  <p className="mt-1 text-sm text-mist">
+                    Adjust your filters or create a new entry to start tracking
+                    cash flow.
+                  </p>
                 </td>
               </tr>
             )}

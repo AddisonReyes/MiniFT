@@ -10,7 +10,7 @@ export function SummaryCard({
   meta?: string;
 }) {
   return (
-    <Card className="space-y-3 p-5 sm:p-6">
+    <Card className="space-y-3 p-5 transition hover:border-white/15 hover:bg-white/[0.035] sm:p-6">
       <p className="text-xs uppercase tracking-[0.22em] text-mist">{label}</p>
       <div className="break-words text-2xl font-semibold text-white sm:text-3xl">
         {value}

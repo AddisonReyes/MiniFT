@@ -18,7 +18,7 @@ export function TransactionFiltersCard({
       <div>
         <h2 className="text-xl font-semibold">Filters</h2>
         <p className="mt-1 text-sm text-mist">
-          Narrow the transaction list by type, category, account, or date range.
+          Narrow entries by type, category, account, or date range.
         </p>
       </div>
 

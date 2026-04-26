@@ -33,8 +33,13 @@ export function RecurringRulesSection({
       </div>
 
       {isLoading ? (
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-          Loading recurring transactions...
+        <div className="empty-state">
+          <div className="font-medium text-white">
+            Loading recurring transactions...
+          </div>
+          <p className="mt-1 text-sm text-mist">
+            Checking scheduled rules for upcoming entries.
+          </p>
         </div>
       ) : errorMessage ? (
         <div className="rounded-[24px] border border-hazard/20 bg-hazard/10 px-4 py-6 text-sm text-hazard">
@@ -45,7 +50,7 @@ export function RecurringRulesSection({
           {recurringTransactions.map((recurringTransaction) => (
             <div
               key={recurringTransaction.id}
-              className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5"
+              className="rounded-[20px] border border-white/10 bg-white/[0.03] p-5 transition hover:bg-white/[0.045]"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
@@ -101,8 +106,12 @@ export function RecurringRulesSection({
           ))}
         </div>
       ) : (
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-          No recurring transactions configured.
+        <div className="empty-state">
+          <div className="font-medium text-white">No recurring rules yet</div>
+          <p className="mt-1 text-sm text-mist">
+            Schedule repeated income or expenses to keep future cash flow
+            predictable.
+          </p>
         </div>
       )}
     </Card>

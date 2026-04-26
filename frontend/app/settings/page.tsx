@@ -8,7 +8,7 @@ import { Button, Card } from "@/components/ui";
 import { logout, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 
-export default function AccountPage() {
+export default function SettingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const session = useSessionQuery();
@@ -25,8 +25,8 @@ export default function AccountPage() {
 
   return (
     <PageFrame
-      title="Account"
-      description="Review your profile details and manage your current session."
+      title="Settings"
+      description="Review profile details, preferences, and your current session."
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_0.75fr]">
         <Card className="space-y-5">
@@ -41,7 +41,7 @@ export default function AccountPage() {
           </div>
 
           <div className="grid gap-3">
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+            <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
               <div className="text-xs uppercase tracking-[0.18em] text-mist">
                 Email
               </div>
@@ -51,7 +51,7 @@ export default function AccountPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-mist">
                   Currency
                 </div>
@@ -60,7 +60,7 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-mist">
                   Joined
                 </div>

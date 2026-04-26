@@ -82,7 +82,10 @@ export default function AccountsPage() {
     >
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {(accountsQuery.data || []).map((account) => (
-          <Card key={account.id} className="space-y-5">
+          <Card
+            key={account.id}
+            className="space-y-5 transition hover:border-white/15 hover:bg-white/[0.035]"
+          >
             <div className="space-y-2">
               <div className="text-xs uppercase tracking-[0.22em] text-mist">
                 {account.type}
@@ -117,6 +120,16 @@ export default function AccountsPage() {
           </Card>
         ))}
       </div>
+
+      {!accountsQuery.data?.length ? (
+        <Card className="empty-state mt-6">
+          <div className="font-medium text-white">No accounts yet</div>
+          <p className="mt-1 text-sm text-mist">
+            Add a cash or bank account to start separating balances and tracking
+            transfers.
+          </p>
+        </Card>
+      ) : null}
 
       <Modal
         open={open}

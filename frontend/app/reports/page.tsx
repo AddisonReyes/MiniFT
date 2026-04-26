@@ -48,7 +48,7 @@ export default function ReportsPage() {
       title="Reports"
       description="Review monthly performance and category concentration without leaving the main app."
       actions={
-        <div className="flex flex-wrap gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <Input
             type="month"
             value={month}
@@ -102,7 +102,7 @@ export default function ReportsPage() {
             categoryQuery.data.items.map((item) => (
               <div
                 key={item.category}
-                className="space-y-2 rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
+                className="space-y-2 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.045]"
               >
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div className="min-w-0 font-medium text-white">
@@ -122,8 +122,11 @@ export default function ReportsPage() {
               </div>
             ))
           ) : (
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-              No {type} data found for this month.
+            <div className="empty-state">
+              <div className="font-medium text-white">No {type} data yet</div>
+              <p className="mt-1 text-sm text-mist">
+                Add transactions for this month to see category concentration.
+              </p>
             </div>
           )}
         </div>

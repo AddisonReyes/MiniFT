@@ -27,16 +27,16 @@ export function Button({
   variant?: "primary" | "secondary" | "ghost" | "danger";
 }) {
   const styles = {
-    primary: "bg-signal text-ink hover:bg-signal/90",
-    secondary: "border border-white/10 bg-white/5 text-white hover:bg-white/10",
-    ghost: "bg-transparent text-mist hover:bg-white/5 hover:text-white",
-    danger: "bg-hazard text-ink hover:bg-hazard/90",
+    primary: "bg-signal text-ink shadow-soft hover:bg-signal/90",
+    secondary: "border border-white/10 bg-white/[0.055] text-white hover:border-white/15 hover:bg-white/10",
+    ghost: "border border-transparent bg-transparent text-mist hover:border-white/10 hover:bg-white/[0.055] hover:text-white",
+    danger: "bg-hazard text-ink shadow-soft hover:bg-hazard/90",
   };
 
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition",
+        "inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-signal/40 focus:ring-offset-2 focus:ring-offset-ink",
         styles[variant],
         className,
       )}
@@ -65,16 +65,16 @@ export function Badge({
   tone?: "neutral" | "success" | "danger" | "amber";
 }) {
   const tones = {
-    neutral: "bg-white/10 text-white",
-    success: "bg-signal/15 text-signal",
-    danger: "bg-hazard/15 text-hazard",
-    amber: "bg-amber/15 text-amber",
+    neutral: "border-white/10 bg-white/[0.055] text-white",
+    success: "border-signal/20 bg-signal/10 text-signal",
+    danger: "border-hazard/20 bg-hazard/10 text-hazard",
+    amber: "border-amber/20 bg-amber/10 text-amber",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex max-w-full rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]",
+        "inline-flex max-w-full rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em]",
         tones[tone],
       )}
     >

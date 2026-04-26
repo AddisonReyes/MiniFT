@@ -206,7 +206,7 @@ export default function TransactionsPage() {
       title="Transactions"
       description="Track one-off entries, internal transfers, and recurring items from the same workspace."
       actions={
-        <div className="flex flex-wrap gap-3">
+        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap">
           <Button onClick={() => openNewTransaction("expense")}>
             New expense
           </Button>

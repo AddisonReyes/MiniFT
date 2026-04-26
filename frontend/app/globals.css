@@ -12,6 +12,8 @@
   --signal: #7ae7b9;
   --hazard: #ff8b8b;
   --amber: #f7c267;
+  --panel: rgba(18, 23, 34, 0.72);
+  --panel-soft: rgba(255, 255, 255, 0.035);
 }
 
 * {
@@ -74,7 +76,7 @@ body > div {
   input,
   select,
   textarea {
-    @apply w-full rounded-2xl border border-line bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-signal/70 focus:bg-white/[0.07];
+    @apply w-full rounded-2xl border border-white/10 bg-ink/45 px-4 py-3 text-sm text-white outline-none transition placeholder:text-mist/60 focus:border-signal/70 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(122,231,185,0.1)];
   }
 
   label {
@@ -88,7 +90,7 @@ body > div {
 
 @layer components {
   .panel {
-    @apply rounded-[24px] border border-white/10 bg-surface/80 shadow-panel backdrop-blur sm:rounded-[28px];
+    @apply rounded-[22px] border border-white/10 bg-[var(--panel)] shadow-soft backdrop-blur-xl sm:rounded-[24px];
   }
 
   .metric-grid {
@@ -96,6 +98,10 @@ body > div {
   }
 
   .table-shell {
-    @apply w-full max-w-full overflow-x-auto rounded-[22px] border border-white/10 bg-white/[0.03] sm:rounded-[24px];
+    @apply w-full max-w-full overflow-x-auto rounded-[20px] border border-white/10 bg-ink/30 sm:rounded-[22px];
+  }
+
+  .empty-state {
+    @apply rounded-[20px] border border-dashed border-white/10 bg-white/[0.025] px-4 py-7 text-sm text-mist;
   }
 }

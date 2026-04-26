@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { PageFrame } from "@/components/page-frame";
 import { SummaryCard } from "@/components/summary-card";
-import { Card, Badge } from "@/components/ui";
+import { Card, Badge, cn } from "@/components/ui";
 import { useSessionQuery } from "@/lib/auth";
 import { api } from "@/lib/api";
 import {
@@ -14,6 +14,17 @@ import {
   monthInputToDate,
 } from "@/lib/format";
 import type { Account, Budget, MonthlySummary, Transaction } from "@/lib/types";
+
+function transactionAmountClass(displayType: Transaction["display_type"]) {
+  switch (displayType) {
+    case "income":
+      return "text-signal";
+    case "expense":
+      return "text-hazard";
+    default:
+      return "text-amber";
+  }
+}
 
 export default function DashboardPage() {
   const session = useSessionQuery();
@@ -105,7 +116,12 @@ export default function DashboardPage() {
                         {formatDate(transaction.date)}
                       </div>
                     </div>
-                    <div className="shrink-0 text-right font-semibold text-white">
+                    <div
+                      className={cn(
+                        "shrink-0 text-right font-semibold",
+                        transactionAmountClass(transaction.display_type),
+                      )}
+                    >
                       {formatCurrency(transaction.amount, currency)}
                     </div>
                   </div>
@@ -131,15 +147,19 @@ export default function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-                No transactions recorded yet.
+              <div className="empty-state">
+                <div className="font-medium text-white">No transactions yet</div>
+                <p className="mt-1 text-sm text-mist">
+                  Create your first income, expense, or transfer to bring the
+                  dashboard to life.
+                </p>
               </div>
             )}
           </div>
 
           <div className="table-shell hidden sm:block">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-white/10 bg-white/[0.03] text-mist">
+              <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
                 <tr>
                   <th className="px-3 py-3 font-medium sm:px-4">Type</th>
                   <th className="px-3 py-3 font-medium sm:px-4">Category</th>
@@ -155,7 +175,7 @@ export default function DashboardPage() {
                   recentTransactions.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="border-b border-white/5 last:border-0"
+                      className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                     >
                       <td className="px-3 py-4 sm:px-4">
                         <Badge
@@ -186,15 +206,26 @@ export default function DashboardPage() {
                       <td className="px-3 py-4 text-mist sm:px-4">
                         {formatDate(transaction.date)}
                       </td>
-                      <td className="px-3 py-4 text-right font-medium text-white sm:px-4">
+                      <td
+                        className={cn(
+                          "px-3 py-4 text-right font-medium sm:px-4",
+                          transactionAmountClass(transaction.display_type),
+                        )}
+                      >
                         {formatCurrency(transaction.amount, currency)}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-6 text-mist" colSpan={5}>
-                      No transactions recorded yet.
+                    <td className="px-4 py-7" colSpan={5}>
+                      <div className="font-medium text-white">
+                        No transactions yet
+                      </div>
+                      <p className="mt-1 text-sm text-mist">
+                        Create your first income, expense, or transfer to bring
+                        the dashboard to life.
+                      </p>
                     </td>
                   </tr>
                 )}
@@ -216,7 +247,7 @@ export default function DashboardPage() {
               {(accountsQuery.data || []).map((account) => (
                 <div
                   key={account.id}
-                  className="flex flex-col gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4 transition hover:bg-white/[0.045] sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="font-medium text-white">{account.name}</div>
@@ -250,7 +281,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={budget.id}
-                      className="space-y-2 rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
+                      className="space-y-2 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.045]"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div className="font-medium text-white">
@@ -271,8 +302,11 @@ export default function DashboardPage() {
                   );
                 })
               ) : (
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-mist">
-                  No budgets set for this month yet.
+                <div className="empty-state">
+                  <div className="font-medium text-white">No budgets yet</div>
+                  <p className="mt-1 text-sm text-mist">
+                    Add monthly category caps to see progress here.
+                  </p>
                 </div>
               )}
             </div>
