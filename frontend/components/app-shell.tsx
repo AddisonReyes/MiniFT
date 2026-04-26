@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui";
 
 const navigation = [
-  { href: "/", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
   { href: "/accounts", label: "Accounts" },
   { href: "/budgets", label: "Budgets" },
@@ -34,7 +34,7 @@ export function AppShell({
       <header className="mb-6 space-y-5">
         <div className="flex items-center justify-between gap-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="inline-flex shrink-0 rounded-full border border-white/10 bg-ink/60 px-3 py-1.5 text-xs uppercase tracking-[0.28em] text-signal shadow-soft backdrop-blur transition hover:border-signal/40 hover:bg-signal/10 hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >

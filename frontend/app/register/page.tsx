@@ -14,7 +14,7 @@ const currencies = ["USD", "EUR", "DOP", "GBP", "CAD"];
 function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/";
+  const nextPath = searchParams.get("next") || "/dashboard";
   const queryClient = useQueryClient();
   const session = useSessionQuery();
   const [email, setEmail] = useState("");

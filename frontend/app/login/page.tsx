@@ -12,7 +12,7 @@ import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/";
+  const nextPath = searchParams.get("next") || "/dashboard";
   const queryClient = useQueryClient();
   const session = useSessionQuery();
   const [email, setEmail] = useState("");

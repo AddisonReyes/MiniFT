@@ -1,318 +1,206 @@
-"use client";
+import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui";
 
-import { PageFrame } from "@/components/page-frame";
-import { SummaryCard } from "@/components/summary-card";
-import { Card, Badge, cn } from "@/components/ui";
-import { useSessionQuery } from "@/lib/auth";
-import { api } from "@/lib/api";
-import {
-  currentMonthInput,
-  formatCurrency,
-  formatDate,
-  monthInputToDate,
-} from "@/lib/format";
-import type { Account, Budget, MonthlySummary, Transaction } from "@/lib/types";
+const features = [
+  {
+    title: "Accounts",
+    description: "Keep cash and bank balances separated without spreadsheet drift.",
+  },
+  {
+    title: "Budgets",
+    description: "Set monthly category caps and track remaining spend in context.",
+  },
+  {
+    title: "Recurring",
+    description: "Schedule repeated income and expenses so your month stays current.",
+  },
+  {
+    title: "Reports",
+    description: "Review income, expenses, net cash flow, and category concentration.",
+  },
+];
 
-function transactionAmountClass(displayType: Transaction["display_type"]) {
-  switch (displayType) {
-    case "income":
-      return "text-signal";
-    case "expense":
-      return "text-hazard";
-    default:
-      return "text-amber";
-  }
-}
+const activity = [
+  { label: "Salary", meta: "Income · Main account", amount: "+$4,200" },
+  { label: "Groceries", meta: "Expense · Food", amount: "-$184" },
+  { label: "Savings move", meta: "Transfer · Internal", amount: "$750" },
+];
 
-export default function DashboardPage() {
-  const session = useSessionQuery();
-  const month = currentMonthInput();
-  const monthDate = monthInputToDate(month);
-
-  const summaryQuery = useQuery({
-    queryKey: ["dashboard", "summary", monthDate],
-    queryFn: () =>
-      api.get<MonthlySummary>(
-        `/transactions/summary/month?month=${encodeURIComponent(monthDate)}`,
-      ),
-  });
-
-  const accountsQuery = useQuery({
-    queryKey: ["dashboard", "accounts"],
-    queryFn: () => api.get<Account[]>("/accounts"),
-  });
-
-  const budgetsQuery = useQuery({
-    queryKey: ["dashboard", "budgets", monthDate],
-    queryFn: () =>
-      api.get<Budget[]>(`/budgets?month=${encodeURIComponent(monthDate)}`),
-  });
-
-  const transactionsQuery = useQuery({
-    queryKey: ["dashboard", "transactions"],
-    queryFn: () => api.get<Transaction[]>("/transactions"),
-  });
-
-  const currency = session.data?.currency || "USD";
-  const summary = summaryQuery.data;
-  const recentTransactions = (transactionsQuery.data || []).slice(0, 6);
-  const topBudgets = (budgetsQuery.data || []).slice(0, 4);
-
+export default function LandingPage() {
   return (
-    <PageFrame
-      title="Dashboard"
-      description="A compact monthly view across balances, spending, and the transactions that need attention."
-    >
-      <section className="metric-grid">
-        <SummaryCard
-          label="Income"
-          value={formatCurrency(summary?.income_total || 0, currency)}
-          meta="Current month"
-        />
-        <SummaryCard
-          label="Expenses"
-          value={formatCurrency(summary?.expense_total || 0, currency)}
-          meta="Current month"
-        />
-        <SummaryCard
-          label="Net"
-          value={formatCurrency(summary?.net_total || 0, currency)}
-          meta={
-            summary && Number(summary.net_total) >= 0
-              ? "Positive month"
-              : "Watch spending"
-          }
-        />
-      </section>
+    <main className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <nav className="flex items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="inline-flex rounded-full border border-white/10 bg-ink/60 px-3 py-1.5 text-xs uppercase tracking-[0.28em] text-signal shadow-soft backdrop-blur transition hover:border-signal/40 hover:bg-signal/10 hover:text-white"
+        >
+          <span className="sm:hidden">MiniFT</span>
+          <span className="hidden sm:inline">Mini Finance Tracker</span>
+        </Link>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="space-y-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h2 className="text-xl font-semibold">Recent transactions</h2>
-              <p className="mt-1 text-sm text-mist">
-                Latest activity across your accounts.
-              </p>
-            </div>
-            <Badge tone="neutral">{recentTransactions.length} shown</Badge>
+        <div className="flex items-center gap-2">
+          <Link
+            className="rounded-2xl px-4 py-2 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white"
+            href="/login"
+          >
+            Sign in
+          </Link>
+          <Link
+            className="inline-flex items-center justify-center rounded-2xl bg-signal px-4 py-2 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90"
+            href="/register"
+          >
+            Get started
+          </Link>
+        </div>
+      </nav>
+
+      <section className="grid min-h-[calc(100dvh-5rem)] items-center gap-10 py-12 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
+        <div className="space-y-8">
+          <div className="space-y-5">
+            <p className="text-xs uppercase tracking-[0.28em] text-signal">
+              Focused personal finance
+            </p>
+            <h1 className="max-w-3xl text-5xl font-semibold leading-[0.95] sm:text-6xl lg:text-7xl">
+              Your month, finally readable.
+            </h1>
+            <p className="max-w-2xl text-base leading-7 text-mist sm:text-lg">
+              MiniFT brings accounts, transactions, transfers, budgets,
+              recurring entries, and reports into one quiet workspace built for
+              monthly control.
+            </p>
           </div>
 
-          <div className="space-y-3 sm:hidden">
-            {recentTransactions.length ? (
-              recentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-white">
-                        {transaction.category}
-                      </div>
-                      <div className="mt-1 text-xs text-mist">
-                        {transaction.account_name || "Cash"} ·{" "}
-                        {formatDate(transaction.date)}
-                      </div>
-                    </div>
-                    <div
-                      className={cn(
-                        "shrink-0 text-right font-semibold",
-                        transactionAmountClass(transaction.display_type),
-                      )}
-                    >
-                      {formatCurrency(transaction.amount, currency)}
-                    </div>
-                  </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-signal px-4 py-3 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90 sm:w-auto"
+              href="/register"
+            >
+              Create your workspace
+            </Link>
+            <Link
+              className="inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/10 sm:w-auto"
+              href="/login"
+            >
+              Sign in
+            </Link>
+          </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <Badge
-                      tone={
-                        transaction.display_type === "income"
-                          ? "success"
-                          : transaction.display_type === "expense"
-                            ? "danger"
-                            : "amber"
-                      }
-                    >
-                      {transaction.display_type}
-                    </Badge>
-                    {transaction.note ? (
-                      <span className="truncate text-xs text-mist">
-                        {transaction.note}
-                      </span>
-                    ) : null}
-                  </div>
+          <div className="grid gap-3 text-sm text-mist sm:grid-cols-3">
+            {["No spreadsheet drift", "Monthly budget clarity", "Clean reports"].map(
+              (item) => (
+                <div
+                  key={item}
+                  className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
+                >
+                  {item}
                 </div>
-              ))
-            ) : (
-              <div className="empty-state">
-                <div className="font-medium text-white">No transactions yet</div>
-                <p className="mt-1 text-sm text-mist">
-                  Create your first income, expense, or transfer to bring the
-                  dashboard to life.
-                </p>
-              </div>
+              ),
             )}
           </div>
+        </div>
 
-          <div className="table-shell hidden sm:block">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
-                <tr>
-                  <th className="px-3 py-3 font-medium sm:px-4">Type</th>
-                  <th className="px-3 py-3 font-medium sm:px-4">Category</th>
-                  <th className="px-3 py-3 font-medium sm:px-4">Account</th>
-                  <th className="px-3 py-3 font-medium sm:px-4">Date</th>
-                  <th className="px-3 py-3 text-right font-medium sm:px-4">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.length ? (
-                  recentTransactions.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
-                    >
-                      <td className="px-3 py-4 sm:px-4">
-                        <Badge
-                          tone={
-                            transaction.display_type === "income"
-                              ? "success"
-                              : transaction.display_type === "expense"
-                                ? "danger"
-                                : "amber"
-                          }
-                        >
-                          {transaction.display_type}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="font-medium text-white">
-                          {transaction.category}
-                        </div>
-                        {transaction.note ? (
-                          <div className="mt-1 text-xs text-mist">
-                            {transaction.note}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-4 text-mist sm:px-4">
-                        {transaction.account_name || "Cash"}
-                      </td>
-                      <td className="px-3 py-4 text-mist sm:px-4">
-                        {formatDate(transaction.date)}
-                      </td>
-                      <td
-                        className={cn(
-                          "px-3 py-4 text-right font-medium sm:px-4",
-                          transactionAmountClass(transaction.display_type),
-                        )}
-                      >
-                        {formatCurrency(transaction.amount, currency)}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="px-4 py-7" colSpan={5}>
-                      <div className="font-medium text-white">
-                        No transactions yet
-                      </div>
-                      <p className="mt-1 text-sm text-mist">
-                        Create your first income, expense, or transfer to bring
-                        the dashboard to life.
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="space-y-5">
-            <div>
-              <h2 className="text-xl font-semibold">Accounts</h2>
-              <p className="mt-1 text-sm text-mist">
-                Balances update directly from transaction flow.
-              </p>
+        <div className="panel p-4 sm:p-6">
+          <div className="rounded-[24px] border border-white/10 bg-ink/45 p-5 shadow-soft">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-mist">
+                  April overview
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">Cash flow</h2>
+              </div>
+              <div className="rounded-full border border-signal/20 bg-signal/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-signal">
+                Healthy
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {(accountsQuery.data || []).map((account) => (
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-mist">
+                  Income
+                </p>
+                <div className="mt-2 text-lg font-semibold text-signal">
+                  $4,200
+                </div>
+              </div>
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-mist">
+                  Expenses
+                </p>
+                <div className="mt-2 text-lg font-semibold text-hazard">
+                  $1,845
+                </div>
+              </div>
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-mist">
+                  Net
+                </p>
+                <div className="mt-2 text-lg font-semibold text-white">
+                  $2,355
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-mist">Budget health</span>
+                <span className="text-white">68% used</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-[68%] rounded-full bg-signal" />
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {activity.map((item) => (
                 <div
-                  key={account.id}
-                  className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4 transition hover:bg-white/[0.045] sm:flex-row sm:items-center sm:justify-between"
+                  key={item.label}
+                  className="flex items-center justify-between gap-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium text-white">{account.name}</div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
-                      {account.type}
+                    <div className="font-medium text-white">{item.label}</div>
+                    <div className="mt-1 truncate text-xs text-mist">
+                      {item.meta}
                     </div>
                   </div>
-                  <div className="break-words font-semibold text-white sm:text-right">
-                    {formatCurrency(account.balance, currency)}
+                  <div className="shrink-0 font-semibold text-white">
+                    {item.amount}
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
-
-          <Card className="space-y-5">
-            <div>
-              <h2 className="text-xl font-semibold">Budget watch</h2>
-              <p className="mt-1 text-sm text-mist">
-                Current-month categories with progress.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {topBudgets.length ? (
-                topBudgets.map((budget) => {
-                  const spent = Number(budget.spent_amount);
-                  const limit = Math.max(Number(budget.limit_amount), 1);
-                  const progress = Math.min((spent / limit) * 100, 100);
-
-                  return (
-                    <div
-                      key={budget.id}
-                      className="space-y-2 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.045]"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="font-medium text-white">
-                          {budget.category}
-                        </div>
-                        <div className="text-sm text-mist">
-                          {formatCurrency(budget.spent_amount, currency)} /{" "}
-                          {formatCurrency(budget.limit_amount, currency)}
-                        </div>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-signal transition"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="empty-state">
-                  <div className="font-medium text-white">No budgets yet</div>
-                  <p className="mt-1 text-sm text-mist">
-                    Add monthly category caps to see progress here.
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
+          </div>
         </div>
-      </div>
-    </PageFrame>
+      </section>
+
+      <section className="grid gap-4 pb-16 md:grid-cols-2 xl:grid-cols-4">
+        {features.map((feature) => (
+          <Card
+            key={feature.title}
+            className="space-y-3 transition hover:border-white/15 hover:bg-white/[0.035]"
+          >
+            <h3 className="text-xl font-semibold">{feature.title}</h3>
+            <p className="text-sm leading-6 text-mist">{feature.description}</p>
+          </Card>
+        ))}
+      </section>
+
+      <footer className="px-4 pb-6 text-center text-sm text-mist">
+        <p>
+          Copyright © {new Date().getFullYear()} MiniFT. All rights reserved.
+        </p>
+        <p className="mt-2">
+          Made by{" "}
+          <a
+            className="text-signal transition hover:text-white"
+            href="https://addisonreyes.com"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Addison Reyes
+          </a>
+        </p>
+      </footer>
+    </main>
   );
 }
