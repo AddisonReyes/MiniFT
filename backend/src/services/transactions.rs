@@ -50,7 +50,7 @@ pub async fn resolve_account_or_default_cash(
     match account_id {
         Some(account_id) => ensure_account_ownership(pool, user_id, account_id).await,
         None => sqlx::query_as::<_, AccountRecord>(
-            "SELECT id, name, type, created_at
+            "SELECT id, name, type, currency, created_at
              FROM accounts
              WHERE user_id = $1 AND type = 'cash'
              ORDER BY created_at ASC

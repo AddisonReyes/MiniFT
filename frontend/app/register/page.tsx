@@ -8,8 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Button, Input, Select } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { register, sessionQueryKey, useSessionQuery } from "@/lib/auth";
-
-const currencies = ["USD", "EUR", "DOP", "GBP", "CAD"];
+import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 
 function RegisterPageContent() {
   const router = useRouter();
@@ -93,7 +92,7 @@ function RegisterPageContent() {
                 value={currency}
                 onChange={(event) => setCurrency(event.target.value)}
               >
-                {currencies.map((item) => (
+                {SUPPORTED_CURRENCIES.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
@@ -153,7 +152,7 @@ function RegisterPageContent() {
               <div className="space-y-3">
                 {[
                   "Default Cash account is created automatically",
-                  "Choose your preferred reporting currency",
+                  "Choose your preferred default account currency",
                   "Add budgets and recurring rules when you are ready",
                 ].map((item, index) => (
                   <div

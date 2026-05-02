@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageFrame } from "@/components/page-frame";
 import { SummaryCard } from "@/components/summary-card";
 import { Card, Badge, cn } from "@/components/ui";
+import { formatAccountTypeLabel } from "@/lib/accounts";
 import { useSessionQuery } from "@/lib/auth";
 import { api } from "@/lib/api";
 import {
@@ -231,16 +232,16 @@ export default function DashboardPage() {
                   className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4 transition hover:bg-white/[0.045] sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium text-white">{account.name}</div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
-                      {account.type}
-                    </div>
-                  </div>
-                  <div className="break-words font-semibold text-white sm:text-right">
-                    {formatCurrency(account.balance, currency)}
+                  <div className="font-medium text-white">{account.name}</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
+                      {formatAccountTypeLabel(account.type)} · {account.currency}
                   </div>
                 </div>
-              ))}
+                <div className="break-words font-semibold text-white sm:text-right">
+                    {formatCurrency(account.balance, account.currency)}
+                </div>
+              </div>
+            ))}
             </div>
           </Card>
 

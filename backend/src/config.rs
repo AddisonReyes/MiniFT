@@ -108,11 +108,33 @@ impl WorkerConfig {
 }
 
 #[derive(Debug, Clone)]
+pub struct SeedConfig {
+    pub enabled: bool,
+}
+
+impl SeedConfig {
+    pub fn from_env() -> Self {
+        Self {
+            enabled: env::var("SEED_DEV_DATA")
+                .ok()
+                .map(|value| {
+                    matches!(
+                        value.trim().to_ascii_lowercase().as_str(),
+                        "1" | "true" | "yes" | "on"
+                    )
+                })
+                .unwrap_or(false),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct AppState {
     pub pool: PgPool,
     pub auth: AuthConfig,
     pub cors: CorsConfig,
     pub worker: WorkerConfig,
+    pub seed: SeedConfig,
 }
 
 #[cfg(test)]
@@ -135,8 +157,7 @@ mod tests {
 
     #[test]
     fn accepts_csv_fallback_format() {
-        let origins =
-            parse_allowed_origins("https://minift.pages.dev, http://localhost:3000/");
+        let origins = parse_allowed_origins("https://minift.pages.dev, http://localhost:3000/");
 
         assert_eq!(
             origins,

@@ -6,13 +6,14 @@ use crate::{
     errors::ApiError,
     models::account::{AccountBalanceRow, AccountRecord, AccountType},
     schema::account::{AccountResponse, CreateAccountRequest, UpdateAccountRequest},
-    services::normalize_required_text,
+    services::{normalize_currency_code, normalize_required_text},
 };
 
 const LIST_ACCOUNTS_QUERY: &str = "SELECT
     a.id,
     a.name,
     a.type,
+    a.currency,
     a.created_at,
     COALESCE(
       SUM(
@@ -27,13 +28,22 @@ const LIST_ACCOUNTS_QUERY: &str = "SELECT
  LEFT JOIN transactions t
    ON t.account_id = a.id
  WHERE a.user_id = $1
- GROUP BY a.id, a.name, a.type, a.created_at
- ORDER BY CASE WHEN a.type = 'cash' THEN 0 ELSE 1 END, a.created_at ASC";
+ GROUP BY a.id, a.name, a.type, a.currency, a.created_at
+ ORDER BY
+   CASE
+     WHEN a.type = 'cash' THEN 0
+     WHEN a.type = 'bank_account' THEN 1
+     WHEN a.type = 'credit_card' THEN 2
+     WHEN a.type = 'loan' THEN 3
+     ELSE 4
+   END,
+   a.created_at ASC";
 
 const GET_ACCOUNT_QUERY: &str = "SELECT
     a.id,
     a.name,
     a.type,
+    a.currency,
     a.created_at,
     COALESCE(
       SUM(
@@ -49,13 +59,14 @@ const GET_ACCOUNT_QUERY: &str = "SELECT
    ON t.account_id = a.id
  WHERE a.user_id = $1
    AND a.id = $2
- GROUP BY a.id, a.name, a.type, a.created_at";
+ GROUP BY a.id, a.name, a.type, a.currency, a.created_at";
 
 fn map_account(row: AccountBalanceRow) -> AccountResponse {
     AccountResponse {
         id: row.id,
         name: row.name,
         r#type: row.r#type,
+        currency: row.currency,
         created_at: row.created_at,
         balance: row.balance,
     }
@@ -66,6 +77,7 @@ fn map_new_account(record: AccountRecord) -> AccountResponse {
         id: record.id,
         name: record.name,
         r#type: record.r#type,
+        currency: record.currency,
         created_at: record.created_at,
         balance: Decimal::ZERO,
     }
@@ -77,7 +89,7 @@ async fn get_account_row(
     account_id: Uuid,
 ) -> Result<AccountRecord, ApiError> {
     sqlx::query_as::<_, AccountRecord>(
-        "SELECT id, name, type, created_at
+        "SELECT id, name, type, currency, created_at
          FROM accounts
          WHERE id = $1 AND user_id = $2",
     )
@@ -99,6 +111,18 @@ async fn get_account_balance_row(
         .fetch_optional(pool)
         .await?
         .ok_or_else(|| ApiError::not_found("Account not found"))
+}
+
+async fn get_user_default_currency(pool: &PgPool, user_id: Uuid) -> Result<String, ApiError> {
+    sqlx::query_scalar(
+        "SELECT currency
+         FROM users
+         WHERE id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await?
+    .ok_or_else(|| ApiError::not_found("User not found"))
 }
 
 async fn count_accounts(pool: &PgPool, user_id: Uuid) -> Result<i64, ApiError> {
@@ -193,15 +217,20 @@ pub async fn create_account(
     payload: CreateAccountRequest,
 ) -> Result<AccountResponse, ApiError> {
     let name = normalize_required_text(&payload.name, "Account name")?;
+    let currency = match payload.currency {
+        Some(currency) => normalize_currency_code(&currency, "Account currency")?,
+        None => get_user_default_currency(pool, user_id).await?,
+    };
 
     let account = sqlx::query_as::<_, AccountRecord>(
-        "INSERT INTO accounts (user_id, name, type)
-         VALUES ($1, $2, $3)
-         RETURNING id, name, type, created_at",
+        "INSERT INTO accounts (user_id, name, type, currency)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, type, currency, created_at",
     )
     .bind(user_id)
     .bind(name)
     .bind(payload.r#type)
+    .bind(currency)
     .fetch_one(pool)
     .await?;
 
@@ -216,6 +245,7 @@ pub async fn update_account(
 ) -> Result<AccountResponse, ApiError> {
     let existing = get_account_row(pool, user_id, account_id).await?;
     let name = normalize_required_text(&payload.name, "Account name")?;
+    let currency = normalize_currency_code(&payload.currency, "Account currency")?;
 
     let is_converting_last_cash_account =
         existing.r#type == AccountType::Cash && payload.r#type != AccountType::Cash;
@@ -226,11 +256,12 @@ pub async fn update_account(
 
     sqlx::query(
         "UPDATE accounts
-         SET name = $1, type = $2
-         WHERE id = $3 AND user_id = $4",
+         SET name = $1, type = $2, currency = $3
+         WHERE id = $4 AND user_id = $5",
     )
     .bind(name)
     .bind(payload.r#type)
+    .bind(currency)
     .bind(account_id)
     .bind(user_id)
     .execute(pool)

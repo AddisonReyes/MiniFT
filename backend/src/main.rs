@@ -14,7 +14,7 @@ mod services;
 
 use std::env;
 
-use config::{AppState, AuthConfig, CorsConfig, WorkerConfig};
+use config::{AppState, AuthConfig, CorsConfig, SeedConfig, WorkerConfig};
 use rocket::fairing::AdHoc;
 
 async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::error::Error>> {
@@ -29,7 +29,12 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         auth: AuthConfig::from_env(),
         cors: CorsConfig::from_env(),
         worker: WorkerConfig::from_env(),
+        seed: SeedConfig::from_env(),
     };
+
+    services::dev_seed::seed_dev_data(&state)
+        .await
+        .map_err(|error| std::io::Error::other(error.message.clone()))?;
 
     let rocket = rocket::build()
         .manage(state.clone())

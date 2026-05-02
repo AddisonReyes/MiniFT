@@ -379,7 +379,8 @@ pub async fn process_due_transactions(pool: &PgPool) -> Result<(), ApiError> {
     .await?;
 
     for recurring in rows {
-        let next_run_date = materialize_due_occurrences(&mut transaction, &recurring, today).await?;
+        let next_run_date =
+            materialize_due_occurrences(&mut transaction, &recurring, today).await?;
         update_next_run_date(&mut transaction, recurring.id, next_run_date).await?;
     }
 

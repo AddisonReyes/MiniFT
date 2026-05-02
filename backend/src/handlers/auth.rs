@@ -5,7 +5,9 @@ use crate::{
     errors::ApiError,
     guards::AuthUser,
     models::auth::UserProfile,
-    schema::auth::{AuthResponse, LoginRequest, RefreshRequest, RegisterRequest},
+    schema::auth::{
+        AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, UpdateDefaultCurrencyRequest,
+    },
     services::auth,
 };
 
@@ -43,5 +45,16 @@ pub async fn refresh(
 pub async fn me(state: &State<AppState>, user: AuthUser) -> Result<Json<UserProfile>, ApiError> {
     Ok(Json(
         auth::get_user_profile(&state.pool, user.user_id).await?,
+    ))
+}
+
+#[put("/api/auth/me", format = "json", data = "<payload>")]
+pub async fn update_me(
+    state: &State<AppState>,
+    user: AuthUser,
+    payload: Json<UpdateDefaultCurrencyRequest>,
+) -> Result<Json<UserProfile>, ApiError> {
+    Ok(Json(
+        auth::update_default_currency(&state.pool, user.user_id, payload.into_inner()).await?,
     ))
 }

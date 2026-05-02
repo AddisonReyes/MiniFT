@@ -20,6 +20,11 @@ pub struct RefreshRequest {
     pub refresh_token: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateDefaultCurrencyRequest {
+    pub currency: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub user: UserProfile,

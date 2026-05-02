@@ -8,7 +8,7 @@ import { Card } from "@/components/ui";
 const features = [
   {
     title: "Accounts",
-    description: "Keep cash and bank balances separated without spreadsheet drift.",
+    description: "Keep cash, bank, credit, and loan balances separated without spreadsheet drift.",
   },
   {
     title: "Budgets",

@@ -7,13 +7,17 @@ use uuid::Uuid;
 use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, FromFormField)]
-#[serde(rename_all = "lowercase")]
-#[sqlx(type_name = "account_type", rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "account_type", rename_all = "snake_case")]
 pub enum AccountType {
-    #[field(value = "bank")]
-    Bank,
     #[field(value = "cash")]
     Cash,
+    #[field(value = "bank_account")]
+    BankAccount,
+    #[field(value = "credit_card")]
+    CreditCard,
+    #[field(value = "loan")]
+    Loan,
 }
 
 #[derive(Debug, Clone, FromRow)]
@@ -21,6 +25,7 @@ pub struct AccountRecord {
     pub id: Uuid,
     pub name: String,
     pub r#type: AccountType,
+    pub currency: String,
     pub created_at: DateTime<Utc>,
 }
 
@@ -29,6 +34,7 @@ pub struct AccountBalanceRow {
     pub id: Uuid,
     pub name: String,
     pub r#type: AccountType,
+    pub currency: String,
     pub created_at: DateTime<Utc>,
     pub balance: Decimal,
 }

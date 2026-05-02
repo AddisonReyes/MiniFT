@@ -10,3 +10,15 @@ export const DEFAULT_CATEGORIES = [
   "Savings",
   "Entertainment",
 ];
+
+export const SUPPORTED_CURRENCIES = [
+  "USD",
+  "EUR",
+  "DOP",
+  "GBP",
+  "CAD",
+  "MXN",
+  "BRL",
+  "JPY",
+  "CHF",
+];

@@ -1,6 +1,10 @@
 export type MoneyValue = string | number;
 export type TransactionType = "income" | "expense" | "transfer";
-export type AccountType = "bank" | "cash";
+export type AccountType =
+  | "cash"
+  | "bank_account"
+  | "credit_card"
+  | "loan";
 export type RecurringFrequency = "daily" | "weekly" | "monthly";
 
 export interface User {
@@ -18,8 +22,15 @@ export interface Account {
   id: string;
   name: string;
   type: AccountType;
+  currency: string;
   created_at: string;
   balance: MoneyValue;
+}
+
+export interface ExchangeRate {
+  from_currency: string;
+  to_currency: string;
+  rate: MoneyValue;
 }
 
 export interface Transaction {

@@ -29,12 +29,19 @@ Once the stack is ready:
 - Frontend: `http://localhost:3000`
 - Backend health: `http://localhost:8000/health`
 
+When `SEED_DEV_DATA=true`, the backend also creates a demo workspace automatically:
+
+- Email: `demo@minift.local`
+- Password: `demo12345`
+
 ## First Use
 
 1. Open `http://localhost:3000/register`
 2. Create an account
 3. Sign in and continue to `/dashboard`
 4. Start adding accounts, transactions, transfers, budgets, and recurring entries
+
+Or, if development seed data is enabled, open `http://localhost:3000/login` and sign in with the demo credentials above.
 
 ## Backend Highlights
 

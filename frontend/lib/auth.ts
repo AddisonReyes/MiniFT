@@ -56,3 +56,7 @@ export async function logout() {
 
   return Promise.resolve({ message: "Signed out" });
 }
+
+export async function updateDefaultCurrency(payload: { currency: string }) {
+  return api.put<User>("/auth/me", payload);
+}

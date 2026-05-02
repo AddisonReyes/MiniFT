@@ -13,7 +13,10 @@ use crate::{
         account::AccountType,
         auth::{TokenClaims, TokenKind, UserProfile, UserRecord},
     },
-    schema::auth::{AuthResponse, LoginRequest, RefreshRequest, RegisterRequest},
+    schema::auth::{
+        AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, UpdateDefaultCurrencyRequest,
+    },
+    services::normalize_currency_code,
 };
 
 fn normalize_email(email: &str) -> Result<String, ApiError> {
@@ -112,15 +115,10 @@ pub async fn register_user(
 ) -> Result<AuthResponse, ApiError> {
     let email = normalize_email(&payload.email)?;
     validate_password(&payload.password)?;
-    let currency = payload
-        .currency
-        .unwrap_or_else(|| "USD".to_string())
-        .trim()
-        .to_uppercase();
-
-    if currency.is_empty() {
-        return Err(ApiError::bad_request("Currency is required"));
-    }
+    let currency = normalize_currency_code(
+        payload.currency.as_deref().unwrap_or("USD"),
+        "Default currency",
+    )?;
 
     let password_hash = hash_password(&payload.password)?;
     let mut transaction = pool.begin().await?;
@@ -132,7 +130,7 @@ pub async fn register_user(
     )
     .bind(email)
     .bind(password_hash)
-    .bind(currency)
+    .bind(&currency)
     .fetch_one(&mut *transaction)
     .await
     .map_err(|error| {
@@ -144,11 +142,12 @@ pub async fn register_user(
     })?;
 
     sqlx::query(
-        "INSERT INTO accounts (user_id, name, type)
-         VALUES ($1, 'Cash', $2)",
+        "INSERT INTO accounts (user_id, name, type, currency)
+         VALUES ($1, 'Cash', $2, $3)",
     )
     .bind(user.id)
     .bind(AccountType::Cash)
+    .bind(&currency)
     .execute(&mut *transaction)
     .await?;
 
@@ -225,4 +224,28 @@ pub async fn get_user_profile(pool: &PgPool, user_id: Uuid) -> Result<UserProfil
     .ok_or_else(|| ApiError::not_found("User not found"))?;
 
     Ok(UserProfile::from(&user))
+}
+
+pub async fn update_default_currency(
+    pool: &PgPool,
+    user_id: Uuid,
+    payload: UpdateDefaultCurrencyRequest,
+) -> Result<UserProfile, ApiError> {
+    let currency = normalize_currency_code(&payload.currency, "Default currency")?;
+
+    let result = sqlx::query(
+        "UPDATE users
+         SET currency = $1
+         WHERE id = $2",
+    )
+    .bind(currency)
+    .bind(user_id)
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(ApiError::not_found("User not found"));
+    }
+
+    get_user_profile(pool, user_id).await
 }

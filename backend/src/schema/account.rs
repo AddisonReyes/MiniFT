@@ -9,12 +9,14 @@ use crate::models::account::AccountType;
 pub struct CreateAccountRequest {
     pub name: String,
     pub r#type: AccountType,
+    pub currency: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateAccountRequest {
     pub name: String,
     pub r#type: AccountType,
+    pub currency: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -22,6 +24,7 @@ pub struct AccountResponse {
     pub id: Uuid,
     pub name: String,
     pub r#type: AccountType,
+    pub currency: String,
     pub created_at: DateTime<Utc>,
     pub balance: Decimal,
 }

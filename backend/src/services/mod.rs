@@ -1,6 +1,8 @@
 pub mod accounts;
 pub mod auth;
 pub mod budgets;
+pub mod dev_seed;
+pub mod exchange_rates;
 pub mod recurring;
 pub mod transactions;
 pub mod transfers;
@@ -18,6 +20,22 @@ pub fn normalize_required_text(value: &str, field_name: &str) -> Result<String, 
     }
 
     Ok(trimmed.to_string())
+}
+
+pub fn normalize_currency_code(value: &str, field_name: &str) -> Result<String, ApiError> {
+    let normalized = value.trim().to_uppercase();
+
+    if normalized.len() != 3
+        || !normalized
+            .chars()
+            .all(|character| character.is_ascii_alphabetic())
+    {
+        return Err(ApiError::bad_request(format!(
+            "{field_name} must be a 3-letter currency code"
+        )));
+    }
+
+    Ok(normalized)
 }
 
 pub fn normalize_optional_text(value: &Option<String>) -> Option<String> {

@@ -12,6 +12,7 @@ JWT_SECRET=change-me
 ACCESS_TOKEN_TTL_MINUTES=15
 REFRESH_TOKEN_TTL_DAYS=30
 RECURRING_WORKER_INTERVAL_SECONDS=60
+SEED_DEV_DATA=false
 CORS_ALLOWED_ORIGINS=["http://localhost:3000","https://minift.pages.dev"]
 ROCKET_ADDRESS=0.0.0.0
 ROCKET_PORT=8000
@@ -26,6 +27,11 @@ cargo run
 ```
 
 The backend applies SQL migrations automatically on startup.
+
+If `SEED_DEV_DATA=true`, startup also creates a demo user plus sample accounts, transactions, budgets, recurring rules, and exchange rates:
+
+- Email: `demo@minift.local`
+- Password: `demo12345`
 
 ## API Areas
 
