@@ -108,6 +108,30 @@ fn is_unique_violation(error: &sqlx::Error) -> bool {
     }
 }
 
+async fn find_user_by_email(pool: &PgPool, email: &str) -> Result<Option<UserRecord>, ApiError> {
+    sqlx::query_as::<_, UserRecord>(
+        "SELECT id, email, password_hash, currency, created_at
+         FROM users
+         WHERE email = $1",
+    )
+    .bind(email)
+    .fetch_optional(pool)
+    .await
+    .map_err(ApiError::from)
+}
+
+async fn find_user_by_id(pool: &PgPool, user_id: Uuid) -> Result<Option<UserRecord>, ApiError> {
+    sqlx::query_as::<_, UserRecord>(
+        "SELECT id, email, password_hash, currency, created_at
+         FROM users
+         WHERE id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(ApiError::from)
+}
+
 pub async fn register_user(
     pool: &PgPool,
     auth: &AuthConfig,
@@ -163,15 +187,9 @@ pub async fn login_user(
 ) -> Result<AuthResponse, ApiError> {
     let email = normalize_email(&payload.email)?;
 
-    let user = sqlx::query_as::<_, UserRecord>(
-        "SELECT id, email, password_hash, currency, created_at
-         FROM users
-         WHERE email = $1",
-    )
-    .bind(email)
-    .fetch_optional(pool)
-    .await?
-    .ok_or_else(|| ApiError::unauthorized("Invalid credentials"))?;
+    let user = find_user_by_email(pool, &email)
+        .await?
+        .ok_or_else(|| ApiError::unauthorized("Invalid credentials"))?;
 
     verify_password(&payload.password, &user.password_hash)?;
 
@@ -199,29 +217,17 @@ pub async fn refresh_session(
         return Err(ApiError::unauthorized("Refresh token required"));
     }
 
-    let user = sqlx::query_as::<_, UserRecord>(
-        "SELECT id, email, password_hash, currency, created_at
-         FROM users
-         WHERE id = $1",
-    )
-    .bind(claims.sub)
-    .fetch_optional(pool)
-    .await?
-    .ok_or_else(|| ApiError::unauthorized("User not found"))?;
+    let user = find_user_by_id(pool, claims.sub)
+        .await?
+        .ok_or_else(|| ApiError::unauthorized("User not found"))?;
 
     issue_auth_response(&user, auth)
 }
 
 pub async fn get_user_profile(pool: &PgPool, user_id: Uuid) -> Result<UserProfile, ApiError> {
-    let user = sqlx::query_as::<_, UserRecord>(
-        "SELECT id, email, password_hash, currency, created_at
-         FROM users
-         WHERE id = $1",
-    )
-    .bind(user_id)
-    .fetch_optional(pool)
-    .await?
-    .ok_or_else(|| ApiError::not_found("User not found"))?;
+    let user = find_user_by_id(pool, user_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("User not found"))?;
 
     Ok(UserProfile::from(&user))
 }
@@ -248,4 +254,30 @@ pub async fn update_default_currency(
     }
 
     get_user_profile(pool, user_id).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_email, validate_password};
+
+    #[test]
+    fn normalizes_email_by_trimming_and_lowercasing() {
+        let email = normalize_email("  USER@Example.COM  ").expect("email should normalize");
+
+        assert_eq!(email, "user@example.com");
+    }
+
+    #[test]
+    fn rejects_invalid_email_without_separator() {
+        let error = normalize_email("invalid-email").expect_err("email should fail");
+
+        assert_eq!(error.message, "A valid email address is required");
+    }
+
+    #[test]
+    fn validates_password_minimum_length() {
+        let error = validate_password("short").expect_err("password should fail");
+
+        assert_eq!(error.message, "Password must be at least 8 characters long");
+    }
 }

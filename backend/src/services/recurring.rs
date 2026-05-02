@@ -388,3 +388,46 @@ pub async fn process_due_transactions(pool: &PgPool) -> Result<(), ApiError> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use chrono::NaiveDate;
+
+    use super::{advance_date, ensure_supported_recurring_type};
+    use crate::models::{recurring::RecurringFrequency, transaction::TransactionType};
+
+    #[test]
+    fn advances_daily_recurring_date_by_one_day() {
+        let date = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
+
+        let next_date = advance_date(date, RecurringFrequency::Daily).expect("daily date");
+
+        assert_eq!(next_date, NaiveDate::from_ymd_opt(2026, 5, 2).unwrap());
+    }
+
+    #[test]
+    fn advances_weekly_recurring_date_by_seven_days() {
+        let date = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
+
+        let next_date = advance_date(date, RecurringFrequency::Weekly).expect("weekly date");
+
+        assert_eq!(next_date, NaiveDate::from_ymd_opt(2026, 5, 8).unwrap());
+    }
+
+    #[test]
+    fn advances_monthly_recurring_date_by_one_month() {
+        let date = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+
+        let next_date = advance_date(date, RecurringFrequency::Monthly).expect("monthly date");
+
+        assert_eq!(next_date, NaiveDate::from_ymd_opt(2026, 2, 28).unwrap());
+    }
+
+    #[test]
+    fn rejects_recurring_transfer_type() {
+        let error = ensure_supported_recurring_type(TransactionType::Transfer)
+            .expect_err("transfer should fail");
+
+        assert_eq!(error.message, "Recurring transfers are not supported");
+    }
+}

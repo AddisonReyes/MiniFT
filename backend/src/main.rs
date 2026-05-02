@@ -1,20 +1,9 @@
-#[macro_use]
-extern crate rocket;
-
-mod config;
-mod cors;
-mod db;
-mod errors;
-mod guards;
-mod handlers;
-mod models;
-mod routes;
-mod schema;
-mod services;
-
 use std::env;
 
-use config::{AppState, AuthConfig, CorsConfig, SeedConfig, WorkerConfig};
+use minift_backend::{
+    config::{AppState, AuthConfig, CorsConfig, SeedConfig, WorkerConfig},
+    cors, db, routes, services,
+};
 use rocket::fairing::AdHoc;
 
 async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::error::Error>> {

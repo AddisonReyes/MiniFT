@@ -107,3 +107,51 @@ pub async fn replace_exchange_rates(
 
     list_exchange_rates(pool, user_id).await
 }
+
+#[cfg(test)]
+mod tests {
+    use rust_decimal::Decimal;
+
+    use super::normalize_exchange_rate_input;
+    use crate::schema::exchange_rate::ExchangeRateInput;
+
+    #[test]
+    fn normalizes_exchange_rate_currency_codes() {
+        let normalized = normalize_exchange_rate_input(ExchangeRateInput {
+            from_currency: " usd ".to_string(),
+            to_currency: " eur ".to_string(),
+            rate: Decimal::new(109, 2),
+        })
+        .expect("rate should normalize");
+
+        assert_eq!(normalized.from_currency, "USD");
+        assert_eq!(normalized.to_currency, "EUR");
+    }
+
+    #[test]
+    fn rejects_exchange_rate_same_currency_pair() {
+        let error = normalize_exchange_rate_input(ExchangeRateInput {
+            from_currency: "USD".to_string(),
+            to_currency: "usd".to_string(),
+            rate: Decimal::ONE,
+        })
+        .expect_err("same currencies should fail");
+
+        assert_eq!(
+            error.message,
+            "Exchange rates must connect two different currencies"
+        );
+    }
+
+    #[test]
+    fn rejects_non_positive_exchange_rate() {
+        let error = normalize_exchange_rate_input(ExchangeRateInput {
+            from_currency: "USD".to_string(),
+            to_currency: "EUR".to_string(),
+            rate: Decimal::ZERO,
+        })
+        .expect_err("non-positive rate should fail");
+
+        assert_eq!(error.message, "Exchange rate must be greater than zero");
+    }
+}

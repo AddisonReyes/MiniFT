@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use sqlx::{migrate::Migrator, postgres::PgPoolOptions, PgPool};
 
-static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
+pub static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
 pub async fn connect_and_migrate(database_url: &str) -> Result<PgPool, sqlx::Error> {
     let mut attempts = 0u8;

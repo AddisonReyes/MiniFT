@@ -83,3 +83,50 @@ pub fn parse_optional_date(
         _ => Ok(None),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use chrono::NaiveDate;
+
+    use super::{month_bounds, normalize_currency_code, parse_optional_date};
+
+    #[test]
+    fn normalizes_currency_codes_to_uppercase() {
+        let currency =
+            normalize_currency_code(" dop ", "Currency").expect("currency should normalize");
+
+        assert_eq!(currency, "DOP");
+    }
+
+    #[test]
+    fn rejects_invalid_currency_codes() {
+        let error = normalize_currency_code("usd1", "Currency").expect_err("currency should fail");
+
+        assert_eq!(error.message, "Currency must be a 3-letter currency code");
+    }
+
+    #[test]
+    fn parses_optional_date_when_valid() {
+        let date = parse_optional_date(Some("2026-05-01".to_string()), "start date")
+            .expect("date should parse");
+
+        assert_eq!(date, Some(NaiveDate::from_ymd_opt(2026, 5, 1).unwrap()));
+    }
+
+    #[test]
+    fn returns_none_for_blank_optional_date() {
+        let date =
+            parse_optional_date(Some("   ".to_string()), "start date").expect("blank is valid");
+
+        assert_eq!(date, None);
+    }
+
+    #[test]
+    fn returns_first_day_and_next_month_bounds() {
+        let input_month = NaiveDate::from_ymd_opt(2026, 5, 18).unwrap();
+        let (month_start, next_month) = month_bounds(Some(input_month)).expect("bounds");
+
+        assert_eq!(month_start, NaiveDate::from_ymd_opt(2026, 5, 1).unwrap());
+        assert_eq!(next_month, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap());
+    }
+}

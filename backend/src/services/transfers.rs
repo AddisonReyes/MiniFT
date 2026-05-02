@@ -3,14 +3,13 @@ use uuid::Uuid;
 
 use crate::{
     errors::ApiError,
+    models::account::AccountRecord,
     models::{
         transaction::TransactionType,
         transfer::{TransferRecord, TransferRow},
     },
     schema::transfer::{CreateTransferRequest, TransferResponse},
-    services::{
-        accounts::ensure_account_ownership, ensure_positive_amount, normalize_optional_text,
-    },
+    services::{ensure_positive_amount, normalize_optional_text},
 };
 
 fn map_transfer(row: TransferRow) -> TransferResponse {
@@ -25,6 +24,47 @@ fn map_transfer(row: TransferRow) -> TransferResponse {
         note: row.note,
         created_at: row.created_at,
     }
+}
+
+async fn get_transfer_accounts(
+    pool: &PgPool,
+    user_id: Uuid,
+    from_account_id: Uuid,
+    to_account_id: Uuid,
+) -> Result<(AccountRecord, AccountRecord), ApiError> {
+    let rows = sqlx::query_as::<_, AccountRecord>(
+        "SELECT id, name, type, currency, created_at
+         FROM accounts
+         WHERE user_id = $1
+           AND (id = $2 OR id = $3)",
+    )
+    .bind(user_id)
+    .bind(from_account_id)
+    .bind(to_account_id)
+    .fetch_all(pool)
+    .await?;
+
+    if rows.len() != 2 {
+        return Err(ApiError::not_found("One or both accounts not found"));
+    }
+
+    let from_account = rows
+        .iter()
+        .find(|account| account.id == from_account_id)
+        .cloned()
+        .ok_or_else(|| ApiError::not_found("Source account not found"))?;
+    let to_account = rows
+        .iter()
+        .find(|account| account.id == to_account_id)
+        .cloned()
+        .ok_or_else(|| ApiError::not_found("Destination account not found"))?;
+
+    Ok((from_account, to_account))
+}
+
+fn build_transfer_note(note: &Option<String>, fallback_label: &str, account_name: &str) -> String {
+    note.clone()
+        .unwrap_or_else(|| format!("{fallback_label} {account_name}"))
 }
 
 pub async fn list_transfers(
@@ -66,8 +106,13 @@ pub async fn create_transfer(
 
     ensure_positive_amount(payload.amount, "Amount")?;
 
-    let from_account = ensure_account_ownership(pool, user_id, payload.from_account_id).await?;
-    let to_account = ensure_account_ownership(pool, user_id, payload.to_account_id).await?;
+    let (from_account, to_account) = get_transfer_accounts(
+        pool,
+        user_id,
+        payload.from_account_id,
+        payload.to_account_id,
+    )
+    .await?;
     let note = normalize_optional_text(&payload.note);
 
     let mut transaction = pool.begin().await?;
@@ -97,17 +142,11 @@ pub async fn create_transfer(
     .bind(transfer.id)
     .bind(payload.amount)
     .bind(TransactionType::Expense)
-    .bind(
-        note.clone()
-            .unwrap_or_else(|| format!("Transfer to {}", to_account.name)),
-    )
+    .bind(build_transfer_note(&note, "Transfer to", &to_account.name))
     .bind(payload.date)
     .bind(to_account.id)
     .bind(TransactionType::Income)
-    .bind(
-        note.clone()
-            .unwrap_or_else(|| format!("Transfer from {}", from_account.name)),
-    )
+    .bind(build_transfer_note(&note, "Transfer from", &from_account.name))
     .execute(&mut *transaction)
     .await?;
 
@@ -142,4 +181,29 @@ pub async fn delete_transfer(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_transfer_note;
+
+    #[test]
+    fn reuses_custom_transfer_note_when_present() {
+        let note = Some("Manual transfer memo".to_string());
+
+        assert_eq!(
+            build_transfer_note(&note, "Transfer to", "Savings"),
+            "Manual transfer memo"
+        );
+    }
+
+    #[test]
+    fn builds_fallback_transfer_note_from_label_and_account_name() {
+        let note = None;
+
+        assert_eq!(
+            build_transfer_note(&note, "Transfer from", "Checking"),
+            "Transfer from Checking"
+        );
+    }
 }
