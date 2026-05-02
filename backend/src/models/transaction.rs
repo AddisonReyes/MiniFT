@@ -34,6 +34,7 @@ pub struct TransactionRow {
     pub date: NaiveDate,
     pub created_at: DateTime<Utc>,
     pub account_name: Option<String>,
+    pub account_currency: Option<String>,
 }
 
 #[derive(Debug, Clone, FromRow)]

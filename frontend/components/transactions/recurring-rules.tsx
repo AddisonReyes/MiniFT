@@ -76,7 +76,10 @@ export function RecurringRulesSection({
               <div className="mt-4 space-y-2 text-sm text-mist">
                 <div>
                   Amount:{" "}
-                  {formatCurrency(recurringTransaction.amount, currency)}
+                  {formatCurrency(
+                    recurringTransaction.amount,
+                    recurringTransaction.account_currency || currency,
+                  )}
                 </div>
                 <div>
                   Next run: {formatDate(recurringTransaction.next_run_date)}

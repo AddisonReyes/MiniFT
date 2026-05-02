@@ -27,6 +27,7 @@ const RECURRING_TRANSFER_ERROR: &str = "Recurring transfers are not supported";
 struct RecurringWriteInput {
     account_id: Uuid,
     account_name: String,
+    account_currency: String,
     amount: Decimal,
     transaction_type: TransactionType,
     category: String,
@@ -60,11 +61,13 @@ fn ensure_supported_recurring_type(transaction_type: TransactionType) -> Result<
 fn map_recurring_record(
     record: RecurringTransactionRecord,
     account_name: String,
+    account_currency: String,
 ) -> RecurringTransactionResponse {
     RecurringTransactionResponse {
         id: record.id,
         account_id: record.account_id,
         account_name,
+        account_currency,
         amount: record.amount,
         r#type: record.r#type,
         category: record.category,
@@ -80,6 +83,7 @@ fn map_recurring_row(row: RecurringTransactionRow) -> RecurringTransactionRespon
         id: row.id,
         account_id: row.account_id,
         account_name: row.account_name,
+        account_currency: row.account_currency,
         amount: row.amount,
         r#type: row.r#type,
         category: row.category,
@@ -136,6 +140,7 @@ async fn build_recurring_write_input(
     Ok(RecurringWriteInput {
         account_id: account.id,
         account_name: account.name,
+        account_currency: account.currency,
         amount,
         transaction_type,
         category: normalize_required_text(category, "Category")?,
@@ -215,7 +220,8 @@ pub async fn list_recurring_transactions(
             rt.frequency,
             rt.next_run_date,
             rt.created_at,
-            a.name AS account_name
+            a.name AS account_name,
+            a.currency AS account_currency
          FROM recurring_transactions rt
          INNER JOIN accounts a ON a.id = rt.account_id
          WHERE rt.user_id = $1
@@ -273,7 +279,11 @@ pub async fn create_recurring_transaction(
     .fetch_one(pool)
     .await?;
 
-    Ok(map_recurring_record(record, input.account_name))
+    Ok(map_recurring_record(
+        record,
+        input.account_name,
+        input.account_currency,
+    ))
 }
 
 pub async fn update_recurring_transaction(
@@ -321,7 +331,11 @@ pub async fn update_recurring_transaction(
     .await?;
 
     let record = get_recurring(pool, user_id, recurring_id).await?;
-    Ok(map_recurring_record(record, input.account_name))
+    Ok(map_recurring_record(
+        record,
+        input.account_name,
+        input.account_currency,
+    ))
 }
 
 pub async fn delete_recurring_transaction(

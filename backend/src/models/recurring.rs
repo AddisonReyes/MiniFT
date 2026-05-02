@@ -45,4 +45,5 @@ pub struct RecurringTransactionRow {
     pub next_run_date: NaiveDate,
     pub created_at: DateTime<Utc>,
     pub account_name: String,
+    pub account_currency: String,
 }

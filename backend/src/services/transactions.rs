@@ -27,6 +27,7 @@ fn map_transaction(row: TransactionRow) -> TransactionResponse {
         id: row.id,
         account_id: row.account_id,
         account_name: row.account_name,
+        account_currency: row.account_currency,
         amount: row.amount,
         r#type: row.r#type,
         display_type: if row.transfer_id.is_some() {
@@ -96,7 +97,8 @@ pub async fn list_transactions(
             t.note,
             t.date,
             t.created_at,
-            a.name AS account_name
+            a.name AS account_name,
+            a.currency AS account_currency
          FROM transactions t
          LEFT JOIN accounts a ON a.id = t.account_id
          WHERE t.user_id = ",
@@ -162,7 +164,8 @@ pub async fn get_transaction(
             t.note,
             t.date,
             t.created_at,
-            a.name AS account_name
+            a.name AS account_name,
+            a.currency AS account_currency
          FROM transactions t
          LEFT JOIN accounts a ON a.id = t.account_id
          WHERE t.user_id = $1 AND t.id = $2",
@@ -205,7 +208,8 @@ pub async fn create_transaction(
            note,
            date,
            created_at,
-           $8::text AS account_name",
+           $8::text AS account_name,
+           $9::text AS account_currency",
     )
     .bind(user_id)
     .bind(account.id)
@@ -215,6 +219,7 @@ pub async fn create_transaction(
     .bind(note)
     .bind(payload.date)
     .bind(account.name)
+    .bind(account.currency)
     .fetch_one(pool)
     .await?;
 

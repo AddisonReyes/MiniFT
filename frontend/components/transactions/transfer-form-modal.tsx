@@ -28,7 +28,7 @@ export function TransferFormModal({
     <Modal
       open={open}
       title="New transfer"
-      subtitle="Transfers create mirrored entries so account balances stay in sync."
+      subtitle="Transfers create mirrored entries so account balances stay in sync, and cross-currency moves convert automatically into the destination account currency."
       onClose={onClose}
     >
       <form
@@ -52,7 +52,7 @@ export function TransferFormModal({
               <option value="">Select source account</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name}
+                  {account.name} · {account.currency}
                 </option>
               ))}
             </Select>
@@ -71,7 +71,7 @@ export function TransferFormModal({
               <option value="">Select destination account</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name}
+                  {account.name} · {account.currency}
                 </option>
               ))}
             </Select>
@@ -89,6 +89,9 @@ export function TransferFormModal({
               placeholder="100.00"
               required
             />
+            <p className="text-xs text-mist">
+              Entered in the source account currency.
+            </p>
           </div>
 
           <div className="space-y-2">

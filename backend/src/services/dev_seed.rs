@@ -223,6 +223,7 @@ async fn create_demo_transactions(
     transfers::create_transfer(
         &state.pool,
         user_id,
+        &state.exchange_rates,
         CreateTransferRequest {
             from_account_id: accounts.checking_account_id,
             to_account_id: accounts.cash_account_id,

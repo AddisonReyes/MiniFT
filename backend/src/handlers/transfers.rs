@@ -29,7 +29,13 @@ pub async fn create(
     payload: Json<CreateTransferRequest>,
 ) -> Result<Json<TransferResponse>, ApiError> {
     Ok(Json(
-        transfers::create_transfer(&state.pool, user.user_id, payload.into_inner()).await?,
+        transfers::create_transfer(
+            &state.pool,
+            user.user_id,
+            &state.exchange_rates,
+            payload.into_inner(),
+        )
+        .await?,
     ))
 }
 

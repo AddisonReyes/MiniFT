@@ -69,7 +69,10 @@ export function TransactionListSection({
                     transactionAmountClass(transaction.display_type),
                   )}
                 >
-                  {formatCurrency(transaction.amount, currency)}
+                  {formatCurrency(
+                    transaction.amount,
+                    transaction.account_currency || currency,
+                  )}
                 </div>
               </div>
 
@@ -185,7 +188,10 @@ export function TransactionListSection({
                       transactionAmountClass(transaction.display_type),
                     )}
                   >
-                    {formatCurrency(transaction.amount, currency)}
+                    {formatCurrency(
+                      transaction.amount,
+                      transaction.account_currency || currency,
+                    )}
                   </td>
                   <td className="px-3 py-4 sm:px-4">
                     <div className="flex justify-end gap-2">

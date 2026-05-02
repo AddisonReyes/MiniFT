@@ -2,6 +2,7 @@ mod common;
 
 use common::{register_test_user, TestDatabase};
 use minift_backend::{
+    config::ExchangeRateProviderConfig,
     models::transaction::TransactionType,
     schema::account::CreateAccountRequest,
     schema::transaction::{CreateTransactionRequest, TransactionFilters},
@@ -9,6 +10,14 @@ use minift_backend::{
     services::{accounts, transactions, transfers},
 };
 use rust_decimal::Decimal;
+
+fn disabled_exchange_rate_provider_config() -> ExchangeRateProviderConfig {
+    ExchangeRateProviderConfig {
+        enabled: false,
+        frankfurter_base_url: "https://api.frankfurter.dev/v2".to_string(),
+        request_timeout_seconds: 10,
+    }
+}
 
 #[tokio::test]
 async fn create_transaction_without_account_uses_default_cash_account() {
@@ -107,6 +116,7 @@ async fn monthly_summary_excludes_transfer_rows() {
     transfers::create_transfer(
         &database.pool,
         user_id,
+        &disabled_exchange_rate_provider_config(),
         CreateTransferRequest {
             from_account_id: savings_account.id,
             to_account_id: cash_account.id,

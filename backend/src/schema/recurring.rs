@@ -32,6 +32,7 @@ pub struct RecurringTransactionResponse {
     pub id: Uuid,
     pub account_id: Uuid,
     pub account_name: String,
+    pub account_currency: String,
     pub amount: Decimal,
     pub r#type: TransactionType,
     pub category: String,

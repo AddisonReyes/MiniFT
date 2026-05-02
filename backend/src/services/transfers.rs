@@ -1,7 +1,9 @@
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
+    config::ExchangeRateProviderConfig,
     errors::ApiError,
     models::account::AccountRecord,
     models::{
@@ -9,7 +11,7 @@ use crate::{
         transfer::{TransferRecord, TransferRow},
     },
     schema::transfer::{CreateTransferRequest, TransferResponse},
-    services::{ensure_positive_amount, normalize_optional_text},
+    services::{ensure_positive_amount, exchange_rates, normalize_optional_text},
 };
 
 fn map_transfer(row: TransferRow) -> TransferResponse {
@@ -67,6 +69,10 @@ fn build_transfer_note(note: &Option<String>, fallback_label: &str, account_name
         .unwrap_or_else(|| format!("{fallback_label} {account_name}"))
 }
 
+fn convert_transfer_amount(amount: Decimal, rate: Decimal) -> Decimal {
+    (amount * rate).round_dp(2)
+}
+
 pub async fn list_transfers(
     pool: &PgPool,
     user_id: Uuid,
@@ -98,6 +104,7 @@ pub async fn list_transfers(
 pub async fn create_transfer(
     pool: &PgPool,
     user_id: Uuid,
+    exchange_rate_config: &ExchangeRateProviderConfig,
     payload: CreateTransferRequest,
 ) -> Result<TransferResponse, ApiError> {
     if payload.from_account_id == payload.to_account_id {
@@ -114,6 +121,35 @@ pub async fn create_transfer(
     )
     .await?;
     let note = normalize_optional_text(&payload.note);
+    let destination_amount = if from_account.currency == to_account.currency {
+        payload.amount
+    } else {
+        let rate = exchange_rates::resolve_effective_exchange_rate(
+            pool,
+            user_id,
+            exchange_rate_config,
+            &from_account.currency,
+            &to_account.currency,
+        )
+        .await?
+        .ok_or_else(|| {
+            ApiError::bad_request(format!(
+                "Missing exchange rate from {} to {} for this transfer",
+                from_account.currency, to_account.currency
+            ))
+        })?;
+
+        let converted_amount = convert_transfer_amount(payload.amount, rate);
+
+        if converted_amount <= Decimal::ZERO {
+            return Err(ApiError::bad_request(format!(
+                "Transfer amount is too small to convert from {} to {}",
+                from_account.currency, to_account.currency
+            )));
+        }
+
+        converted_amount
+    };
 
     let mut transaction = pool.begin().await?;
 
@@ -135,7 +171,7 @@ pub async fn create_transfer(
         "INSERT INTO transactions (user_id, account_id, transfer_id, amount, type, category, note, date)
          VALUES
          ($1, $2, $3, $4, $5, 'Transfer Out', $6, $7),
-         ($1, $8, $3, $4, $9, 'Transfer In', $10, $7)",
+         ($1, $8, $3, $9, $10, 'Transfer In', $11, $7)",
     )
     .bind(user_id)
     .bind(from_account.id)
@@ -145,6 +181,7 @@ pub async fn create_transfer(
     .bind(build_transfer_note(&note, "Transfer to", &to_account.name))
     .bind(payload.date)
     .bind(to_account.id)
+    .bind(destination_amount)
     .bind(TransactionType::Income)
     .bind(build_transfer_note(&note, "Transfer from", &from_account.name))
     .execute(&mut *transaction)
@@ -185,7 +222,9 @@ pub async fn delete_transfer(
 
 #[cfg(test)]
 mod tests {
-    use super::build_transfer_note;
+    use rust_decimal::Decimal;
+
+    use super::{build_transfer_note, convert_transfer_amount};
 
     #[test]
     fn reuses_custom_transfer_note_when_present() {
@@ -205,5 +244,12 @@ mod tests {
             build_transfer_note(&note, "Transfer from", "Checking"),
             "Transfer from Checking"
         );
+    }
+
+    #[test]
+    fn rounds_converted_transfer_amount_to_two_decimals() {
+        let converted = convert_transfer_amount(Decimal::new(500_00, 2), Decimal::new(2, 2));
+
+        assert_eq!(converted, Decimal::new(10_00, 2));
     }
 }

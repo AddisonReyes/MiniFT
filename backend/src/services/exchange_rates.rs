@@ -354,6 +354,43 @@ fn merge_exchange_rate_records(records: Vec<ExchangeRateRecord>) -> Vec<Exchange
         .collect()
 }
 
+fn resolve_effective_rate_from_records(
+    records: &[ExchangeRateRecord],
+    from_currency: &str,
+    to_currency: &str,
+) -> Option<Decimal> {
+    if from_currency == to_currency {
+        return Some(Decimal::ONE);
+    }
+
+    let mut direct_manual_rate = None;
+    let mut direct_provider_rate = None;
+    let mut inverse_manual_rate = None;
+    let mut inverse_provider_rate = None;
+
+    for record in records {
+        if record.from_currency == from_currency && record.to_currency == to_currency {
+            if is_manual_source(&record.source) {
+                direct_manual_rate = Some(record.rate);
+            } else {
+                direct_provider_rate = Some(record.rate);
+            }
+        } else if record.from_currency == to_currency && record.to_currency == from_currency {
+            if is_manual_source(&record.source) {
+                inverse_manual_rate = Some(record.rate);
+            } else {
+                inverse_provider_rate = Some(record.rate);
+            }
+        }
+    }
+
+    direct_manual_rate.or(direct_provider_rate).or_else(|| {
+        inverse_manual_rate
+            .or(inverse_provider_rate)
+            .map(|rate| Decimal::ONE / rate)
+    })
+}
+
 fn filter_records_by_currencies(
     records: Vec<ExchangeRateRecord>,
     currencies: &[String],
@@ -403,6 +440,51 @@ pub async fn list_exchange_rates(
     );
 
     Ok(merge_exchange_rate_records(fresh_records))
+}
+
+pub async fn resolve_effective_exchange_rate(
+    pool: &PgPool,
+    user_id: Uuid,
+    config: &ExchangeRateProviderConfig,
+    from_currency: &str,
+    to_currency: &str,
+) -> Result<Option<Decimal>, ApiError> {
+    let normalized_from_currency = normalize_currency_code(from_currency, "From currency")?;
+    let normalized_to_currency = normalize_currency_code(to_currency, "To currency")?;
+
+    if normalized_from_currency == normalized_to_currency {
+        return Ok(Some(Decimal::ONE));
+    }
+
+    let tracked_currencies = vec![
+        normalized_from_currency.clone(),
+        normalized_to_currency.clone(),
+    ];
+
+    let existing_records = filter_records_by_currencies(
+        list_exchange_rate_records(pool, user_id).await?,
+        &tracked_currencies,
+    );
+
+    refresh_provider_cache_if_needed(
+        pool,
+        user_id,
+        config,
+        &tracked_currencies,
+        &existing_records,
+    )
+    .await?;
+
+    let fresh_records = filter_records_by_currencies(
+        list_exchange_rate_records(pool, user_id).await?,
+        &tracked_currencies,
+    );
+
+    Ok(resolve_effective_rate_from_records(
+        &fresh_records,
+        &normalized_from_currency,
+        &normalized_to_currency,
+    ))
 }
 
 pub async fn refresh_all_stale_provider_rates(
@@ -505,7 +587,8 @@ mod tests {
 
     use super::{
         exchange_rate_pair_key, merge_exchange_rate_records, normalize_exchange_rate_input,
-        parse_requested_currencies, should_refresh_provider_cache, MANUAL_SOURCE, PROVIDER_SOURCE,
+        parse_requested_currencies, resolve_effective_rate_from_records,
+        should_refresh_provider_cache, MANUAL_SOURCE, PROVIDER_SOURCE,
     };
     use crate::{
         models::exchange_rate::ExchangeRateRecord, schema::exchange_rate::ExchangeRateInput,
@@ -667,5 +750,23 @@ mod tests {
             exchange_rate_pair_key(" usd ", " eur "),
             ("USD".to_string(), "EUR".to_string())
         );
+    }
+
+    #[test]
+    fn resolves_inverse_manual_rate_when_direct_pair_is_missing() {
+        let rate = resolve_effective_rate_from_records(
+            &[record(
+                "USD",
+                "DOP",
+                Decimal::new(5900, 2),
+                MANUAL_SOURCE,
+                Utc::now(),
+            )],
+            "DOP",
+            "USD",
+        )
+        .expect("inverse rate should resolve");
+
+        assert_eq!(rate.round_dp(8), Decimal::new(1694915, 8));
     }
 }

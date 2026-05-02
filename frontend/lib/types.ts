@@ -39,6 +39,7 @@ export interface Transaction {
   id: string;
   account_id: string | null;
   account_name: string | null;
+  account_currency: string | null;
   amount: MoneyValue;
   type: TransactionType;
   display_type: TransactionType;
@@ -75,6 +76,7 @@ export interface RecurringTransaction {
   id: string;
   account_id: string;
   account_name: string;
+  account_currency: string;
   amount: MoneyValue;
   type: Exclude<TransactionType, "transfer">;
   category: string;

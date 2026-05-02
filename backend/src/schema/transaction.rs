@@ -40,6 +40,7 @@ pub struct TransactionResponse {
     pub id: Uuid,
     pub account_id: Option<Uuid>,
     pub account_name: Option<String>,
+    pub account_currency: Option<String>,
     pub amount: Decimal,
     pub r#type: TransactionType,
     pub display_type: TransactionType,
