@@ -8,6 +8,7 @@ argon2 = "0.5.3"
 chrono = { version = "0.4.38", features = ["serde"] }
 dotenvy = "0.15.7"
 jsonwebtoken = "9.3.0"
+reqwest = { version = "0.12.9", default-features = false, features = ["json", "rustls-tls"] }
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
 rust_decimal = { version = "1.36.0", features = ["serde"] }
 serde = { version = "1.0.214", features = ["derive"] }
@@ -16,4 +17,3 @@ sqlx = { version = "0.8.2", features = ["runtime-tokio-rustls", "postgres", "uui
 thiserror = "2.0.3"
 tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread", "time"] }
 uuid = { version = "1.11.0", features = ["serde", "v4"] }
-

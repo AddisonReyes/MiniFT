@@ -344,10 +344,24 @@ pub async fn delete_recurring_transaction(
 
 pub async fn run_worker(state: AppState) {
     let interval = Duration::from_secs(state.worker.interval_seconds.max(15));
+    let mut next_exchange_rate_refresh = Utc::now();
 
     loop {
         if let Err(error) = process_due_transactions(&state.pool).await {
             eprintln!("recurring worker failed: {error:?}");
+        }
+
+        if Utc::now() >= next_exchange_rate_refresh {
+            if let Err(error) = crate::services::exchange_rates::refresh_all_stale_provider_rates(
+                &state.pool,
+                &state.exchange_rates,
+            )
+            .await
+            {
+                eprintln!("exchange rate refresh failed: {error:?}");
+            }
+
+            next_exchange_rate_refresh = Utc::now() + chrono::Duration::hours(1);
         }
 
         tokio::time::sleep(interval).await;

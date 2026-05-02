@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 !backend/.env.example
+!backend/.env.railway
 !frontend/.env.example
 
 .DS_Store

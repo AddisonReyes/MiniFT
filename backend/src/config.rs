@@ -129,17 +129,49 @@ impl SeedConfig {
 }
 
 #[derive(Debug, Clone)]
+pub struct ExchangeRateProviderConfig {
+    pub enabled: bool,
+    pub frankfurter_base_url: String,
+    pub request_timeout_seconds: u64,
+}
+
+impl ExchangeRateProviderConfig {
+    pub fn from_env() -> Self {
+        Self {
+            enabled: env::var("FRANKFURTER_ENABLED")
+                .ok()
+                .map(|value| {
+                    matches!(
+                        value.trim().to_ascii_lowercase().as_str(),
+                        "1" | "true" | "yes" | "on"
+                    )
+                })
+                .unwrap_or(true),
+            frankfurter_base_url: env::var("FRANKFURTER_API_BASE_URL")
+                .unwrap_or_else(|_| "https://api.frankfurter.dev/v2".to_string())
+                .trim_end_matches('/')
+                .to_string(),
+            request_timeout_seconds: env::var("FRANKFURTER_TIMEOUT_SECONDS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(10),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct AppState {
     pub pool: PgPool,
     pub auth: AuthConfig,
     pub cors: CorsConfig,
     pub worker: WorkerConfig,
     pub seed: SeedConfig,
+    pub exchange_rates: ExchangeRateProviderConfig,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_allowed_origins, CorsConfig};
+    use super::{parse_allowed_origins, CorsConfig, ExchangeRateProviderConfig};
 
     #[test]
     fn parses_json_array_and_normalizes_trailing_slashes() {
@@ -177,6 +209,22 @@ mod tests {
         assert_eq!(
             config.allowed_origin_header("http://localhost:3000/"),
             Some("http://localhost:3000".to_string())
+        );
+    }
+
+    #[test]
+    fn trims_exchange_rate_provider_base_url() {
+        let config = ExchangeRateProviderConfig {
+            enabled: true,
+            frankfurter_base_url: "https://api.frankfurter.dev/v2/"
+                .trim_end_matches('/')
+                .to_string(),
+            request_timeout_seconds: 10,
+        };
+
+        assert_eq!(
+            config.frankfurter_base_url,
+            "https://api.frankfurter.dev/v2"
         );
     }
 }

@@ -1,7 +1,9 @@
 use std::env;
 
 use minift_backend::{
-    config::{AppState, AuthConfig, CorsConfig, SeedConfig, WorkerConfig},
+    config::{
+        AppState, AuthConfig, CorsConfig, ExchangeRateProviderConfig, SeedConfig, WorkerConfig,
+    },
     cors, db, routes, services,
 };
 use rocket::fairing::AdHoc;
@@ -19,6 +21,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         cors: CorsConfig::from_env(),
         worker: WorkerConfig::from_env(),
         seed: SeedConfig::from_env(),
+        exchange_rates: ExchangeRateProviderConfig::from_env(),
     };
 
     services::dev_seed::seed_dev_data(&state)

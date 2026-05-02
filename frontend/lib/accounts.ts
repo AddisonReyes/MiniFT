@@ -42,21 +42,22 @@ export function buildCurrencyOptions(currencies: string[]) {
   ).sort((first, second) => first.localeCompare(second));
 }
 
+export function buildTrackedCurrencyOptions(currencies: string[]) {
+  return Array.from(
+    new Set([
+      ...currencies.map(normalizeCurrencyCode),
+    ]),
+  ).filter(Boolean);
+}
+
 export function getTrackedCurrencies(
   accounts: Account[],
   defaultCurrency: string,
-  exchangeRates: ExchangeRate[],
 ) {
-  return Array.from(
-    new Set([
-      normalizeCurrencyCode(defaultCurrency),
-      ...accounts.map((account) => normalizeCurrencyCode(account.currency)),
-      ...exchangeRates.flatMap((rate) => [
-        normalizeCurrencyCode(rate.from_currency),
-        normalizeCurrencyCode(rate.to_currency),
-      ]),
-    ]),
-  ).filter(Boolean);
+  return buildTrackedCurrencyOptions([
+    defaultCurrency,
+    ...accounts.map((account) => account.currency),
+  ]);
 }
 
 function exchangeRateKey(fromCurrency: string, toCurrency: string) {
@@ -67,7 +68,7 @@ function createExchangeRateMap(exchangeRates: ExchangeRate[]) {
   return new Map(
     exchangeRates.map((rate) => [
       exchangeRateKey(rate.from_currency, rate.to_currency),
-      toNumber(rate.rate),
+      rate,
     ]),
   );
 }
@@ -75,6 +76,14 @@ function createExchangeRateMap(exchangeRates: ExchangeRate[]) {
 function formatRateInputValue(value: number) {
   const normalized = value.toFixed(6).replace(/\.?0+$/, "");
   return normalized || "1";
+}
+
+export function formatExchangeRateValue(value: MoneyValue | null | undefined) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return formatRateInputValue(toNumber(value));
 }
 
 export function findExchangeRate(
@@ -92,17 +101,37 @@ export function findExchangeRate(
   const rateMap = createExchangeRateMap(exchangeRates);
   const direct = rateMap.get(exchangeRateKey(from, to));
 
-  if (typeof direct === "number" && Number.isFinite(direct) && direct > 0) {
-    return direct;
+  if (direct) {
+    const rate = toNumber(direct.rate);
+
+    if (Number.isFinite(rate) && rate > 0) {
+      return rate;
+    }
   }
 
   const inverse = rateMap.get(exchangeRateKey(to, from));
 
-  if (typeof inverse === "number" && Number.isFinite(inverse) && inverse > 0) {
-    return 1 / inverse;
+  if (inverse) {
+    const rate = toNumber(inverse.rate);
+
+    if (Number.isFinite(rate) && rate > 0) {
+      return 1 / rate;
+    }
   }
 
   return null;
+}
+
+function findExactExchangeRate(
+  exchangeRates: ExchangeRate[],
+  fromCurrency: string,
+  toCurrency: string,
+) {
+  return (
+    createExchangeRateMap(exchangeRates).get(
+      exchangeRateKey(fromCurrency, toCurrency),
+    ) ?? null
+  );
 }
 
 export function convertMoneyValue(
@@ -164,10 +193,56 @@ export function createExchangeRateFormValues(
         continue;
       }
 
-      const rate = findExchangeRate(exchangeRates, fromCurrency, toCurrency);
+      const rate = findExactExchangeRate(exchangeRates, fromCurrency, toCurrency);
 
       values[exchangeRateKey(fromCurrency, toCurrency)] =
-        rate === null ? "" : formatRateInputValue(rate);
+        rate === null ? "" : formatExchangeRateValue(rate.rate);
+    }
+  }
+
+  return values;
+}
+
+export function createExchangeRateManualValues(
+  currencies: string[],
+  exchangeRates: ExchangeRate[],
+) {
+  const values: Record<string, boolean> = {};
+
+  for (const fromCurrency of currencies) {
+    for (const toCurrency of currencies) {
+      if (fromCurrency === toCurrency) {
+        continue;
+      }
+
+      values[exchangeRateKey(fromCurrency, toCurrency)] = Boolean(
+        findExactExchangeRate(exchangeRates, fromCurrency, toCurrency)
+          ?.is_manual,
+      );
+    }
+  }
+
+  return values;
+}
+
+export function createExchangeRateAutoValues(
+  currencies: string[],
+  exchangeRates: ExchangeRate[],
+) {
+  const values: Record<string, string> = {};
+
+  for (const fromCurrency of currencies) {
+    for (const toCurrency of currencies) {
+      if (fromCurrency === toCurrency) {
+        continue;
+      }
+
+      const rate = findExactExchangeRate(exchangeRates, fromCurrency, toCurrency);
+
+      values[exchangeRateKey(fromCurrency, toCurrency)] =
+        rate === null
+          ? ""
+          : formatExchangeRateValue(rate.provider_rate ?? rate.rate);
     }
   }
 
@@ -187,6 +262,26 @@ export function writeExchangeRateFormValue(
   fromCurrency: string,
   toCurrency: string,
   nextValue: string,
+) {
+  return {
+    ...values,
+    [exchangeRateKey(fromCurrency, toCurrency)]: nextValue,
+  };
+}
+
+export function readExchangeRateManualValue(
+  values: Record<string, boolean>,
+  fromCurrency: string,
+  toCurrency: string,
+) {
+  return values[exchangeRateKey(fromCurrency, toCurrency)] ?? false;
+}
+
+export function writeExchangeRateManualValue(
+  values: Record<string, boolean>,
+  fromCurrency: string,
+  toCurrency: string,
+  nextValue: boolean,
 ) {
   return {
     ...values,

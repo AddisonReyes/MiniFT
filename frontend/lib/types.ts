@@ -31,6 +31,8 @@ export interface ExchangeRate {
   from_currency: string;
   to_currency: string;
   rate: MoneyValue;
+  is_manual: boolean;
+  provider_rate?: MoneyValue | null;
 }
 
 export interface Transaction {

@@ -10,15 +10,21 @@ import { SummaryCard } from "@/components/summary-card";
 import { Badge, Button, Card, Input, Modal, Select, cn } from "@/components/ui";
 import {
   ACCOUNT_TYPE_OPTIONS,
+  buildTrackedCurrencyOptions,
   buildCurrencyOptions,
   convertMoneyValue,
+  createExchangeRateAutoValues,
   createExchangeRateFormValues,
+  createExchangeRateManualValues,
   formatAccountTypeLabel,
   getTrackedCurrencies,
+  readExchangeRateFormValue,
+  readExchangeRateManualValue,
   summarizeAccounts,
   writeExchangeRateFormValue,
+  writeExchangeRateManualValue,
 } from "@/lib/accounts";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import { formatCurrency, toNumber } from "@/lib/format";
 import type { Account, AccountType, ExchangeRate } from "@/lib/types";
@@ -55,24 +61,34 @@ export default function AccountsPage() {
   const [exchangeRateForm, setExchangeRateForm] = useState<
     Record<string, string>
   >({});
+  const [manualExchangeRateForm, setManualExchangeRateForm] = useState<
+    Record<string, boolean>
+  >({});
 
   const accountsQuery = useQuery({
     queryKey: ["accounts"],
     queryFn: () => api.get<Account[]>("/accounts"),
   });
 
+  const accounts = accountsQuery.data ?? [];
+  const requestedCurrencies = buildTrackedCurrencyOptions([
+    defaultCurrency,
+    ...accounts.map((account) => account.currency),
+  ]);
+  const exchangeRatesPath =
+    requestedCurrencies.length > 1
+      ? `/exchange-rates?currencies=${encodeURIComponent(
+          requestedCurrencies.join(","),
+        )}`
+      : "/exchange-rates";
+
   const exchangeRatesQuery = useQuery({
-    queryKey: ["exchange-rates"],
-    queryFn: () => api.get<ExchangeRate[]>("/exchange-rates"),
+    queryKey: ["exchange-rates", requestedCurrencies.join(",")],
+    queryFn: () => api.get<ExchangeRate[]>(exchangeRatesPath),
   });
 
-  const accounts = accountsQuery.data ?? [];
   const exchangeRates = exchangeRatesQuery.data ?? [];
-  const currencies = getTrackedCurrencies(
-    accounts,
-    defaultCurrency,
-    exchangeRates,
-  );
+  const currencies = getTrackedCurrencies(accounts, defaultCurrency);
   const currencyOptions = buildCurrencyOptions([
     defaultCurrency,
     form.currency,
@@ -94,6 +110,7 @@ export default function AccountsPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      await queryClient.invalidateQueries({ queryKey: ["exchange-rates"] });
       setOpen(false);
       setEditing(null);
       setForm(createInitialForm(defaultCurrency));
@@ -105,6 +122,7 @@ export default function AccountsPage() {
       api.delete<{ message: string }>(`/accounts/${accountId}`),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      await queryClient.invalidateQueries({ queryKey: ["exchange-rates"] });
     },
   });
 
@@ -114,11 +132,27 @@ export default function AccountsPage() {
         currencies
           .filter((toCurrency) => toCurrency !== fromCurrency)
           .flatMap((toCurrency) => {
-            const rate =
-              exchangeRateForm[`${fromCurrency}:${toCurrency}`]?.trim();
+            if (
+              !readExchangeRateManualValue(
+                manualExchangeRateForm,
+                fromCurrency,
+                toCurrency,
+              )
+            ) {
+              return [];
+            }
+
+            const rate = readExchangeRateFormValue(
+              exchangeRateForm,
+              fromCurrency,
+              toCurrency,
+            ).trim();
 
             if (!rate) {
-              return [];
+              throw new ApiError(
+                "Every checked manual override needs a valid exchange rate.",
+                400,
+              );
             }
 
             return [
@@ -165,8 +199,9 @@ export default function AccountsPage() {
   }
 
   function openExchangeRates() {
-    setExchangeRateForm(
-      createExchangeRateFormValues(currencies, exchangeRates),
+    setExchangeRateForm(createExchangeRateFormValues(currencies, exchangeRates));
+    setManualExchangeRateForm(
+      createExchangeRateManualValues(currencies, exchangeRates),
     );
     saveExchangeRatesMutation.reset();
     setExchangeRatesOpen(true);
@@ -174,6 +209,7 @@ export default function AccountsPage() {
 
   function closeExchangeRatesModal() {
     setExchangeRatesOpen(false);
+    setManualExchangeRateForm({});
     saveExchangeRatesMutation.reset();
   }
 
@@ -388,7 +424,9 @@ export default function AccountsPage() {
         open={isExchangeRatesOpen}
         currencies={currencies}
         defaultCurrency={defaultCurrency}
+        exchangeRates={exchangeRates}
         values={exchangeRateForm}
+        manualValues={manualExchangeRateForm}
         isPending={saveExchangeRatesMutation.isPending}
         error={saveExchangeRatesMutation.error}
         onChange={(fromCurrency, toCurrency, value) =>
@@ -400,6 +438,54 @@ export default function AccountsPage() {
               value,
             ),
           )
+        }
+        onManualChange={(fromCurrency, toCurrency, value) =>
+          {
+            const autoValues = createExchangeRateAutoValues(
+              currencies,
+              exchangeRates,
+            );
+
+            setManualExchangeRateForm((current) =>
+              writeExchangeRateManualValue(
+                current,
+                fromCurrency,
+                toCurrency,
+                value,
+              ),
+            );
+
+            if (!value) {
+              setExchangeRateForm((current) =>
+                writeExchangeRateFormValue(
+                  current,
+                  fromCurrency,
+                  toCurrency,
+                  autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
+                ),
+              );
+              return;
+            }
+
+            setExchangeRateForm((current) => {
+              const currentValue = readExchangeRateFormValue(
+                current,
+                fromCurrency,
+                toCurrency,
+              ).trim();
+
+              if (currentValue) {
+                return current;
+              }
+
+              return writeExchangeRateFormValue(
+                current,
+                fromCurrency,
+                toCurrency,
+                autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
+              );
+            });
+          }
         }
         onClose={closeExchangeRatesModal}
         onSubmit={() => saveExchangeRatesMutation.mutate()}

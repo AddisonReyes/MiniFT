@@ -8,13 +8,22 @@ use crate::{
     services::exchange_rates,
 };
 
-#[get("/api/exchange-rates")]
+#[get("/api/exchange-rates?<currencies>")]
 pub async fn list(
     state: &State<AppState>,
     user: AuthUser,
+    currencies: Option<String>,
 ) -> Result<Json<Vec<ExchangeRateResponse>>, ApiError> {
+    let requested_currencies = exchange_rates::parse_requested_currencies(currencies.as_deref())?;
+
     Ok(Json(
-        exchange_rates::list_exchange_rates(&state.pool, user.user_id).await?,
+        exchange_rates::list_exchange_rates(
+            &state.pool,
+            user.user_id,
+            &state.exchange_rates,
+            requested_currencies,
+        )
+        .await?,
     ))
 }
 

@@ -52,7 +52,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 - JWT auth with access and refresh tokens
 - Argon2 password hashing
 - Default `Cash` account created at registration using the user's default currency
-- Per-account currencies plus user-owned, fully editable exchange rates
+- Per-account currencies plus user-owned exchange rate overrides layered over Frankfurter daily rates
 - Transfer mirroring into transaction records
 - Monthly and category summary endpoints
 - Idempotent development seed data for local demos
@@ -63,7 +63,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 - Public landing page plus protected dashboard workspace
 - Dark-mode-first UI with a subtle ledger-grid background
-- `/accounts` shows gross and net totals in the user's default currency, per-account currencies, and an editable conversions modal
+- `/accounts` shows gross and net totals in the user's default currency, per-account currencies, and an editable conversions modal with Frankfurter-backed daily rates plus manual overrides
 - `/settings` lets users update their default currency after registration
 - Static HTML export compatible with Cloudflare Pages
 - Browser-managed JWT session with automatic refresh
@@ -80,6 +80,15 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 - `cd frontend && npm run lint`
 
 Backend integration tests try `TEST_DATABASE_URL` first and then `DATABASE_URL`. If neither points to a reachable PostgreSQL instance, those integration tests exit early without failing.
+
+## Exchange Rates
+
+- MiniFT fetches daily currency conversions from Frankfurter by default.
+- Users can override any pair manually from `/accounts`; unchecked pairs continue using the online rate.
+- Backend env vars:
+  - `FRANKFURTER_ENABLED=true`
+  - `FRANKFURTER_API_BASE_URL=https://api.frankfurter.dev/v2`
+  - `FRANKFURTER_TIMEOUT_SECONDS=10`
 
 ## Cloudflare Pages
 

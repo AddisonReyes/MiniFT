@@ -9,7 +9,7 @@ Next.js App Router frontend for MiniFT. It renders the public landing page, prot
 - `/register`: account creation page.
 - `/dashboard`: protected monthly overview.
 - `/transactions`: protected transaction, transfer, and recurring workspace.
-- `/accounts`: protected account management with gross/net totals and editable exchange rates.
+- `/accounts`: protected account management with gross/net totals, Frankfurter-backed rates, and editable manual overrides.
 - `/budgets`: protected monthly budget management.
 - `/reports`: protected monthly reporting.
 - `/settings`: protected profile/session settings, including default currency.
@@ -47,7 +47,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - `next.config.ts` uses `output: "export"` so `npm run build` emits a deploy-ready `out/` folder.
 - The frontend stores JWTs in browser storage and automatically refreshes access tokens when the backend returns `401`.
 - The backend must allow cross-origin requests from the Cloudflare Pages site.
-- `/accounts` converts gross and net totals into the user's default currency using editable exchange rates.
+- `/accounts` converts gross and net totals into the user's default currency using Frankfurter daily rates unless a pair is manually overridden.
 - `/settings` lets users change their default currency without re-registering.
 - Shared UI primitives live in `components/`; reusable product widgets include `BrandLink`, `SiteFooter`, `MonthPicker`, and `FinanceSnapshot`.
 - Read [DESIGN.md](/home/dakotitah/github/MiniFT/frontend/DESIGN.md) before making substantial UI changes so new work stays aligned with the product's visual language.

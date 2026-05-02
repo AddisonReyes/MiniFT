@@ -18,4 +18,6 @@ pub struct ExchangeRateResponse {
     pub from_currency: String,
     pub to_currency: String,
     pub rate: Decimal,
+    pub is_manual: bool,
+    pub provider_rate: Option<Decimal>,
 }
