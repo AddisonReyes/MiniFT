@@ -142,10 +142,10 @@ export function summarizeAccounts(
       continue;
     }
 
-    grossTotal += convertedBalance;
+    netTotal += convertedBalance;
 
     if (convertedBalance >= 0) {
-      netTotal += convertedBalance;
+      grossTotal += convertedBalance;
     }
   }
 

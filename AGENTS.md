@@ -8,6 +8,7 @@ MiniFT is a two-app repository:
 - `frontend/`: Next.js App Router app. Pages live in `frontend/app/`, shared UI in `frontend/components/`, and client utilities in `frontend/lib/`.
 - Frontend route intent: `/` is the public landing page; `/dashboard`, `/transactions`, `/accounts`, `/budgets`, `/reports`, and `/settings` are protected app routes wrapped by `PageFrame`.
 - Shared frontend widgets should live in `frontend/components/`. Prefer reusing existing primitives such as `BrandLink`, `SiteFooter`, `MonthPicker`, `SummaryCard`, `FinanceSnapshot`, and `components/ui.tsx` before creating page-local duplicates.
+- Read `frontend/DESIGN.md` before making substantial UI changes. It captures the current visual language, component priorities, and design constraints for agents.
 - Root files: `docker-compose.yml` wires local services together; `README.md` documents the full-stack setup.
 
 ## Build, Test, and Development Commands
@@ -15,6 +16,7 @@ MiniFT is a two-app repository:
 - `docker-compose up --build`: build and run the full MVP stack locally.
 - `cd backend && cargo run`: start the API outside Docker.
 - `cd backend && cargo check`: fast Rust validation.
+- `cd backend && cargo test`: run backend unit and integration tests.
 - `cd backend && cargo fmt`: format backend code.
 - `cd frontend && npm install`: install frontend dependencies.
 - `cd frontend && npm run dev`: start the Next.js dev server.
@@ -31,7 +33,7 @@ For frontend changes, avoid duplicating display logic in pages. Put shared forma
 
 ## Testing Guidelines
 
-There is no dedicated automated test suite yet. For now, contributors should treat `cargo check`, `npm run build`, `npm run lint`, and a local `docker-compose up --build` smoke test as the minimum verification bar. When adding backend tests, prefer Rust unit tests near the module or integration tests under `backend/tests/`.
+Backend automated tests live both near the Rust modules and under `backend/tests/`. Treat `cd backend && cargo test`, `cd backend && cargo check`, `cd frontend && npm run build`, `cd frontend && npm run lint`, and a local `docker-compose up --build` smoke test as the default verification bar. When adding backend tests, prefer Rust unit tests near the module for internal logic and integration tests under `backend/tests/` for Postgres-backed flows.
 
 ## Commit & Pull Request Guidelines
 
@@ -39,4 +41,4 @@ Recent history uses short, descriptive commit subjects such as `Currency format`
 
 ## Security & Configuration Tips
 
-Never commit real secrets. Backend auth depends on `JWT_SECRET`, and local database access uses `DATABASE_URL`. The frontend proxy depends on `BACKEND_INTERNAL_URL`. If Docker Compose fails because the shared bridge network is missing, create it with `docker network create services_default`.
+Never commit real secrets. Backend auth depends on `JWT_SECRET`, local database access uses `DATABASE_URL`, backend integration tests can use `TEST_DATABASE_URL`, and frontend API access depends on `NEXT_PUBLIC_API_BASE_URL`. Keep `SEED_DEV_DATA` disabled outside development. If Docker Compose fails because the shared bridge network is missing, create it with `docker network create services_default`.

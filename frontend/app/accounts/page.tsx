@@ -114,7 +114,8 @@ export default function AccountsPage() {
         currencies
           .filter((toCurrency) => toCurrency !== fromCurrency)
           .flatMap((toCurrency) => {
-            const rate = exchangeRateForm[`${fromCurrency}:${toCurrency}`]?.trim();
+            const rate =
+              exchangeRateForm[`${fromCurrency}:${toCurrency}`]?.trim();
 
             if (!rate) {
               return [];
@@ -164,7 +165,9 @@ export default function AccountsPage() {
   }
 
   function openExchangeRates() {
-    setExchangeRateForm(createExchangeRateFormValues(currencies, exchangeRates));
+    setExchangeRateForm(
+      createExchangeRateFormValues(currencies, exchangeRates),
+    );
     saveExchangeRatesMutation.reset();
     setExchangeRatesOpen(true);
   }
@@ -230,7 +233,9 @@ export default function AccountsPage() {
               className="space-y-5 transition hover:border-white/15 hover:bg-white/[0.035]"
             >
               <div className="flex flex-wrap gap-2">
-                <Badge tone="neutral">{formatAccountTypeLabel(account.type)}</Badge>
+                <Badge tone="neutral">
+                  {formatAccountTypeLabel(account.type)}
+                </Badge>
                 <Badge tone="neutral">{account.currency}</Badge>
               </div>
 
@@ -291,8 +296,8 @@ export default function AccountsPage() {
         <Card className="empty-state mt-6">
           <div className="font-medium text-white">No accounts yet</div>
           <p className="mt-1 text-sm text-mist">
-            Add cash, bank accounts, credit cards, or loans to separate
-            balances and track their impact on your totals.
+            Add cash, bank accounts, credit cards, or loans to separate balances
+            and track their impact on your totals.
           </p>
         </Card>
       ) : null}
