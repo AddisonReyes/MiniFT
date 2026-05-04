@@ -3,6 +3,7 @@ use std::{env, sync::Arc};
 use minift_backend::{
     config::AuthConfig, db::MIGRATOR, schema::auth::RegisterRequest, services::auth,
 };
+use rocket::http::SameSite;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 use uuid::Uuid;
 
@@ -100,6 +101,11 @@ pub fn test_auth_config() -> AuthConfig {
         jwt_secret: "integration-test-secret".to_string(),
         access_token_ttl_minutes: 15,
         refresh_token_ttl_days: 30,
+        access_cookie_name: "minift_access_token".to_string(),
+        refresh_cookie_name: "minift_refresh_token".to_string(),
+        cookie_secure: false,
+        cookie_same_site: SameSite::Lax,
+        cookie_domain: None,
     }
 }
 

@@ -22,6 +22,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 export function Button({
   className,
   variant = "primary",
+  type = "button",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
@@ -35,6 +36,7 @@ export function Button({
 
   return (
     <button
+      type={type}
       className={cn(
         "inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-signal/40 focus:ring-offset-2 focus:ring-offset-ink",
         styles[variant],

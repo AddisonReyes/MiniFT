@@ -46,3 +46,14 @@ pub struct TokenClaims {
     pub exp: usize,
     pub iat: usize,
 }
+
+#[derive(Debug, Clone, FromRow)]
+pub struct RefreshSessionRecord {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token_hash: String,
+    pub expires_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+    pub revoked_at: Option<DateTime<Utc>>,
+    pub replaced_by_session_id: Option<Uuid>,
+}

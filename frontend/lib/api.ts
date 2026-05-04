@@ -1,10 +1,4 @@
 import type { ApiMessage } from "@/lib/types";
-import {
-  clearAuthTokens,
-  getAccessToken,
-  getRefreshToken,
-  storeAuthTokens,
-} from "@/lib/auth-storage";
 
 export class ApiError extends Error {
   status: number;
@@ -46,18 +40,16 @@ function buildApiUrl(path: string) {
   return `${apiBaseUrl()}${normalizePath(path)}`;
 }
 
-function shouldAttachToken(path: string) {
-  return !["/auth/login", "/auth/register", "/auth/refresh"].includes(
-    normalizePath(path),
-  );
+function shouldSkipRefresh(path: string) {
+  return [
+    "/auth/login",
+    "/auth/register",
+    "/auth/refresh",
+    "/auth/logout",
+  ].includes(normalizePath(path));
 }
 
-type AuthResponsePayload = {
-  access_token: string;
-  refresh_token: string;
-};
-
-let refreshRequest: Promise<string | null> | null = null;
+let refreshRequest: Promise<boolean> | null = null;
 
 async function refreshAccessToken() {
   if (refreshRequest) {
@@ -65,31 +57,13 @@ async function refreshAccessToken() {
   }
 
   refreshRequest = (async () => {
-    const refreshToken = getRefreshToken();
-
-    if (!refreshToken) {
-      clearAuthTokens();
-      return null;
-    }
-
     const response = await fetch(buildApiUrl("/auth/refresh"), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
       cache: "no-store",
+      credentials: "include",
     });
 
-    if (!response.ok) {
-      clearAuthTokens();
-      return null;
-    }
-
-    const payload = (await response.json()) as AuthResponsePayload;
-    storeAuthTokens(payload.access_token, payload.refresh_token);
-    return payload.access_token;
+    return response.ok;
   })();
 
   try {
@@ -112,41 +86,22 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  if (shouldAttachToken(normalizedPath)) {
-    const accessToken = getAccessToken();
-
-    if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
-    }
-  }
-
   const response = await fetch(buildApiUrl(normalizedPath), {
     ...init,
     headers,
     cache: "no-store",
+    credentials: "include",
   });
 
-  if (
-    response.status === 401 &&
-    allowRefresh &&
-    shouldAttachToken(normalizedPath)
-  ) {
-    const refreshedAccessToken = await refreshAccessToken();
+  if (response.status === 401 && allowRefresh && !shouldSkipRefresh(normalizedPath)) {
+    const refreshed = await refreshAccessToken();
 
-    if (refreshedAccessToken) {
-      const retryHeaders = new Headers(init.headers);
-
-      if (hasBody && !retryHeaders.has("Content-Type")) {
-        retryHeaders.set("Content-Type", "application/json");
-      }
-
-      retryHeaders.set("Authorization", `Bearer ${refreshedAccessToken}`);
-
+    if (refreshed) {
       return request<T>(
         normalizedPath,
         {
           ...init,
-          headers: retryHeaders,
+          headers,
         },
         false,
       );

@@ -9,11 +9,12 @@ import { Card, Button, Input, Select } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { register, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
+import { sanitizeRedirectTarget } from "@/lib/redirect";
 
 function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/dashboard";
+  const nextPath = sanitizeRedirectTarget(searchParams.get("next"));
   const queryClient = useQueryClient();
   const session = useSessionQuery();
   const [email, setEmail] = useState("");

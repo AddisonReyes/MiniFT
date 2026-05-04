@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -21,18 +21,14 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const session = useSessionQuery();
   const user = session.data;
-  const [currency, setCurrency] = useState(user?.currency || "USD");
-
-  useEffect(() => {
-    if (user?.currency) {
-      setCurrency(user.currency);
-    }
-  }, [user?.currency]);
+  const [draftCurrency, setDraftCurrency] = useState<string | null>(null);
+  const currency = draftCurrency ?? user?.currency ?? "USD";
 
   const updateCurrencyMutation = useMutation({
     mutationFn: updateDefaultCurrency,
     onSuccess: async (updatedUser) => {
       await queryClient.setQueryData(sessionQueryKey, updatedUser);
+      setDraftCurrency(updatedUser.currency);
     },
   });
 
@@ -119,7 +115,7 @@ export default function SettingsPage() {
                 <Select
                   id="default-currency"
                   value={currency}
-                  onChange={(event) => setCurrency(event.target.value)}
+                  onChange={(event) => setDraftCurrency(event.target.value)}
                 >
                   {SUPPORTED_CURRENCIES.map((supportedCurrency) => (
                     <option key={supportedCurrency} value={supportedCurrency}>

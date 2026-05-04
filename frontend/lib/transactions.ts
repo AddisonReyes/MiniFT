@@ -4,6 +4,7 @@ import type {
   Transaction,
   TransactionType,
 } from "@/lib/types";
+import { currentDateInput } from "@/lib/format";
 
 export type NonTransferTransactionType = Exclude<TransactionType, "transfer">;
 
@@ -42,8 +43,6 @@ export interface RecurringFormValues {
   next_run_date: string;
 }
 
-export const today = new Date().toISOString().slice(0, 10);
-
 export function createTransactionFilters(): TransactionFiltersState {
   return {
     type: "",
@@ -63,7 +62,7 @@ export function createTransactionForm(
     type,
     category: "",
     note: "",
-    date: today,
+    date: currentDateInput(),
   };
 }
 
@@ -73,7 +72,7 @@ export function createTransferForm(): TransferFormValues {
     to_account_id: "",
     amount: "",
     note: "",
-    date: today,
+    date: currentDateInput(),
   };
 }
 
@@ -85,7 +84,7 @@ export function createRecurringForm(): RecurringFormValues {
     category: "",
     note: "",
     frequency: "monthly",
-    next_run_date: today,
+    next_run_date: currentDateInput(),
   };
 }
 

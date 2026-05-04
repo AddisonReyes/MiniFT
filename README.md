@@ -1,6 +1,6 @@
 # MiniFT
 
-MiniFT is a minimalist personal finance tracker built as a full-stack MVP with a Rust API, Next.js frontend, PostgreSQL persistence, JWT auth, multi-currency accounts, editable exchange rates, recurring transaction processing, budgets, and reporting.
+MiniFT is a minimalist personal finance tracker built as a full-stack MVP with a Rust API, Next.js frontend, PostgreSQL persistence, cookie-backed auth, multi-currency accounts, editable exchange rates, recurring transaction processing, budgets, and reporting.
 
 ## Stack
 
@@ -14,6 +14,8 @@ MiniFT is a minimalist personal finance tracker built as a full-stack MVP with a
 - The public landing page lives at `/`; authenticated users work from `/dashboard`.
 - The browser calls the backend API directly using `NEXT_PUBLIC_API_BASE_URL`.
 - `backend/` exposes the Rocket API under `/api/*`.
+- The backend authenticates users with `HttpOnly` access cookies plus rotated refresh sessions persisted in PostgreSQL.
+- Because the frontend is a static export, authenticated routes are client-guarded after the session check instead of server-rendered behind middleware.
 - `postgres` stores users, accounts, per-account currencies, exchange rates, transactions, transfers, recurring rules, and budgets.
 - The backend runs a background worker to materialize due recurring transactions.
 - The backend can optionally seed a complete demo workspace when `SEED_DEV_DATA=true`.
@@ -49,7 +51,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 ## Backend Highlights
 
-- JWT auth with access and refresh tokens
+- JWT access cookies with rotated refresh sessions
 - Argon2 password hashing
 - Default `Cash` account created at registration using the user's default currency
 - Per-account currencies plus user-owned exchange rate overrides layered over Frankfurter daily rates
@@ -66,7 +68,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 - `/accounts` shows gross and net totals in the user's default currency, per-account currencies, and an editable conversions modal with Frankfurter-backed daily rates plus manual overrides
 - `/settings` lets users update their default currency after registration
 - Static HTML export compatible with Cloudflare Pages
-- Browser-managed JWT session with automatic refresh
+- HttpOnly cookie session with automatic refresh
 - CRUD screens for accounts, transactions, budgets, and recurring transactions
 - Reports page for monthly totals and category breakdowns
 - Shared UI widgets for branding, footer, finance snapshots, month picking, and transaction display styles
@@ -74,12 +76,15 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 ## Testing
 
+- `cd backend && cargo fmt --check`
 - `cd backend && cargo test`
 - `cd backend && cargo check`
 - `cd frontend && npm run build`
 - `cd frontend && npm run lint`
 
 Backend integration tests try `TEST_DATABASE_URL` first and then `DATABASE_URL`. If neither points to a reachable PostgreSQL instance, those integration tests exit early without failing.
+
+GitHub Actions mirrors this baseline in [.github/workflows/ci.yml](/home/dakotitah/github/MiniFT/.github/workflows/ci.yml).
 
 ## Exchange Rates
 
@@ -101,6 +106,11 @@ Build the frontend from `frontend/` with:
 Set the Railway backend allowlist with:
 
 - `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000"]`
+- `AUTH_COOKIE_SECURE=true`
+- `AUTH_COOKIE_SAME_SITE=none`
+- `AUTH_COOKIE_DOMAIN=` optionally set to your API cookie domain when your production setup requires it
+
+The backend must use an explicit origin allowlist for cookie auth. Avoid `CORS_ALLOWED_ORIGINS=["*"]` in production.
 
 ## Local Development Without Docker
 

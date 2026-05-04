@@ -28,17 +28,24 @@ impl<'r> FromRequest<'r> for AuthUser {
             ));
         };
 
-        let Some(auth_header) = request.headers().get_one("Authorization") else {
-            return Outcome::Error((
-                Status::Unauthorized,
-                ApiError::unauthorized("Missing Authorization header"),
-            ));
-        };
+        let token = if let Some(auth_header) = request.headers().get_one("Authorization") {
+            let Some(token) = auth_header.strip_prefix("Bearer ") else {
+                return Outcome::Error((
+                    Status::Unauthorized,
+                    ApiError::unauthorized("Invalid authorization scheme"),
+                ));
+            };
 
-        let Some(token) = auth_header.strip_prefix("Bearer ") else {
+            token.to_string()
+        } else if let Some(cookie) = request
+            .cookies()
+            .get(state.auth.access_cookie_name.as_str())
+        {
+            cookie.value().to_string()
+        } else {
             return Outcome::Error((
                 Status::Unauthorized,
-                ApiError::unauthorized("Invalid authorization scheme"),
+                ApiError::unauthorized("Authentication required"),
             ));
         };
 
@@ -46,7 +53,7 @@ impl<'r> FromRequest<'r> for AuthUser {
         validation.validate_exp = true;
 
         let claims = match decode::<TokenClaims>(
-            token,
+            &token,
             &DecodingKey::from_secret(state.auth.jwt_secret.as_bytes()),
             &validation,
         ) {

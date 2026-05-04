@@ -9,11 +9,12 @@ import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
 import { Card, Button, Input } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
+import { sanitizeRedirectTarget } from "@/lib/redirect";
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/dashboard";
+  const nextPath = sanitizeRedirectTarget(searchParams.get("next"));
   const queryClient = useQueryClient();
   const session = useSessionQuery();
   const [email, setEmail] = useState("");

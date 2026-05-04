@@ -16,11 +16,6 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct RefreshRequest {
-    pub refresh_token: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct UpdateDefaultCurrencyRequest {
     pub currency: String,
 }
@@ -28,6 +23,4 @@ pub struct UpdateDefaultCurrencyRequest {
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
     pub user: UserProfile,
-    pub access_token: String,
-    pub refresh_token: String,
 }

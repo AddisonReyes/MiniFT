@@ -60,6 +60,7 @@ impl<'r> Responder<'r, 'static> for ApiError {
 
 impl From<sqlx::Error> for ApiError {
     fn from(error: sqlx::Error) -> Self {
-        Self::internal(error.to_string())
+        eprintln!("database error: {error}");
+        Self::internal("A database operation failed")
     }
 }

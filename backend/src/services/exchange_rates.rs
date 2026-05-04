@@ -425,14 +425,49 @@ pub async fn list_exchange_rates(
         &tracked_currencies,
     );
 
-    refresh_provider_cache_if_needed(
-        pool,
-        user_id,
-        config,
-        &tracked_currencies,
-        &existing_records,
-    )
-    .await?;
+    let needs_refresh = config.enabled
+        && should_refresh_provider_cache(&existing_records, &tracked_currencies, Utc::now());
+
+    if needs_refresh {
+        if existing_records.is_empty() {
+            refresh_provider_cache_if_needed(
+                pool,
+                user_id,
+                config,
+                &tracked_currencies,
+                &existing_records,
+            )
+            .await?;
+        } else {
+            let pool = pool.clone();
+            let config = config.clone();
+            let tracked_currencies = tracked_currencies.clone();
+
+            tokio::spawn(async move {
+                let records = match list_exchange_rate_records(&pool, user_id).await {
+                    Ok(records) => filter_records_by_currencies(records, &tracked_currencies),
+                    Err(error) => {
+                        eprintln!("unable to read cached exchange rates: {}", error.message);
+                        return;
+                    }
+                };
+
+                if let Err(error) = refresh_provider_cache_if_needed(
+                    &pool,
+                    user_id,
+                    &config,
+                    &tracked_currencies,
+                    &records,
+                )
+                .await
+                {
+                    eprintln!("unable to refresh exchange-rate cache: {}", error.message);
+                }
+            });
+
+            return Ok(merge_exchange_rate_records(existing_records));
+        }
+    }
 
     let fresh_records = filter_records_by_currencies(
         list_exchange_rate_records(pool, user_id).await?,

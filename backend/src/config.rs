@@ -1,5 +1,6 @@
 use std::env;
 
+use rocket::http::SameSite;
 use sqlx::PgPool;
 
 fn normalize_origin(origin: &str) -> Option<String> {
@@ -39,13 +40,48 @@ pub struct AuthConfig {
     pub jwt_secret: String,
     pub access_token_ttl_minutes: i64,
     pub refresh_token_ttl_days: i64,
+    pub access_cookie_name: String,
+    pub refresh_cookie_name: String,
+    pub cookie_secure: bool,
+    pub cookie_same_site: SameSite,
+    pub cookie_domain: Option<String>,
+}
+
+fn parse_bool_env(name: &str, default: bool) -> bool {
+    env::var(name)
+        .ok()
+        .map(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
+        .unwrap_or(default)
+}
+
+fn parse_same_site(value: &str) -> Result<SameSite, String> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "lax" => Ok(SameSite::Lax),
+        "strict" => Ok(SameSite::Strict),
+        "none" => Ok(SameSite::None),
+        _ => Err("AUTH_COOKIE_SAME_SITE must be one of: lax, strict, none".to_string()),
+    }
 }
 
 impl AuthConfig {
-    pub fn from_env() -> Self {
-        Self {
-            jwt_secret: env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "mini-ft-local-secret-change-me".to_string()),
+    pub fn from_env() -> Result<Self, String> {
+        let jwt_secret =
+            env::var("JWT_SECRET").map_err(|_| "JWT_SECRET must be set".to_string())?;
+        let cookie_same_site = parse_same_site(
+            &env::var("AUTH_COOKIE_SAME_SITE").unwrap_or_else(|_| "lax".to_string()),
+        )?;
+        let cookie_domain = env::var("AUTH_COOKIE_DOMAIN")
+            .ok()
+            .map(|value| value.trim().to_string())
+            .filter(|value| !value.is_empty());
+
+        Ok(Self {
+            jwt_secret,
             access_token_ttl_minutes: env::var("ACCESS_TOKEN_TTL_MINUTES")
                 .ok()
                 .and_then(|value| value.parse().ok())
@@ -54,7 +90,14 @@ impl AuthConfig {
                 .ok()
                 .and_then(|value| value.parse().ok())
                 .unwrap_or(30),
-        }
+            access_cookie_name: env::var("ACCESS_COOKIE_NAME")
+                .unwrap_or_else(|_| "minift_access_token".to_string()),
+            refresh_cookie_name: env::var("REFRESH_COOKIE_NAME")
+                .unwrap_or_else(|_| "minift_refresh_token".to_string()),
+            cookie_secure: parse_bool_env("AUTH_COOKIE_SECURE", false),
+            cookie_same_site,
+            cookie_domain,
+        })
     }
 }
 
@@ -81,7 +124,7 @@ impl CorsConfig {
             .iter()
             .any(|allowed_origin| allowed_origin == "*")
         {
-            return Some("*".to_string());
+            return Some(normalized_origin);
         }
 
         self.allowed_origins
@@ -117,12 +160,7 @@ impl SeedConfig {
         Self {
             enabled: env::var("SEED_DEV_DATA")
                 .ok()
-                .map(|value| {
-                    matches!(
-                        value.trim().to_ascii_lowercase().as_str(),
-                        "1" | "true" | "yes" | "on"
-                    )
-                })
+                .map(|_| parse_bool_env("SEED_DEV_DATA", false))
                 .unwrap_or(false),
         }
     }
@@ -140,12 +178,7 @@ impl ExchangeRateProviderConfig {
         Self {
             enabled: env::var("FRANKFURTER_ENABLED")
                 .ok()
-                .map(|value| {
-                    matches!(
-                        value.trim().to_ascii_lowercase().as_str(),
-                        "1" | "true" | "yes" | "on"
-                    )
-                })
+                .map(|_| parse_bool_env("FRANKFURTER_ENABLED", true))
                 .unwrap_or(true),
             frankfurter_base_url: env::var("FRANKFURTER_API_BASE_URL")
                 .unwrap_or_else(|_| "https://api.frankfurter.dev/v2".to_string())
@@ -171,7 +204,9 @@ pub struct AppState {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_allowed_origins, CorsConfig, ExchangeRateProviderConfig};
+    use rocket::http::SameSite;
+
+    use super::{parse_allowed_origins, parse_same_site, CorsConfig, ExchangeRateProviderConfig};
 
     #[test]
     fn parses_json_array_and_normalizes_trailing_slashes() {
@@ -226,5 +261,12 @@ mod tests {
             config.frankfurter_base_url,
             "https://api.frankfurter.dev/v2"
         );
+    }
+
+    #[test]
+    fn parses_cookie_same_site_values() {
+        assert!(matches!(parse_same_site("lax"), Ok(SameSite::Lax)));
+        assert!(matches!(parse_same_site("strict"), Ok(SameSite::Strict)));
+        assert!(matches!(parse_same_site("none"), Ok(SameSite::None)));
     }
 }

@@ -17,7 +17,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
 
     let state = AppState {
         pool,
-        auth: AuthConfig::from_env(),
+        auth: AuthConfig::from_env().map_err(std::io::Error::other)?,
         cors: CorsConfig::from_env(),
         worker: WorkerConfig::from_env(),
         seed: SeedConfig::from_env(),

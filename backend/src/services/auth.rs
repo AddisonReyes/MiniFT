@@ -4,20 +4,25 @@ use argon2::{
 };
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
-use sqlx::{types::Uuid, PgPool};
+use sqlx::{PgPool, Postgres, Transaction};
+use uuid::Uuid;
 
 use crate::{
     config::AuthConfig,
     errors::ApiError,
     models::{
         account::AccountType,
-        auth::{TokenClaims, TokenKind, UserProfile, UserRecord},
+        auth::{RefreshSessionRecord, TokenClaims, TokenKind, UserProfile, UserRecord},
     },
-    schema::auth::{
-        AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, UpdateDefaultCurrencyRequest,
-    },
+    schema::auth::{AuthResponse, LoginRequest, RegisterRequest, UpdateDefaultCurrencyRequest},
     services::normalize_currency_code,
 };
+
+pub struct IssuedAuthSession {
+    pub user: UserProfile,
+    pub access_token: String,
+    pub refresh_token: String,
+}
 
 fn normalize_email(email: &str) -> Result<String, ApiError> {
     let email = email.trim().to_lowercase();
@@ -39,21 +44,21 @@ fn validate_password(password: &str) -> Result<(), ApiError> {
     Ok(())
 }
 
-fn hash_password(password: &str) -> Result<String, ApiError> {
+fn hash_secret(secret: &str) -> Result<String, ApiError> {
     let salt = SaltString::generate(&mut OsRng);
     Argon2::default()
-        .hash_password(password.as_bytes(), &salt)
+        .hash_password(secret.as_bytes(), &salt)
         .map(|hash| hash.to_string())
-        .map_err(|error| ApiError::internal(error.to_string()))
+        .map_err(|_| ApiError::internal("Unable to securely process credentials"))
 }
 
-fn verify_password(password: &str, hash: &str) -> Result<(), ApiError> {
+fn verify_secret(secret: &str, hash: &str, failure_message: &str) -> Result<(), ApiError> {
     let parsed_hash =
-        PasswordHash::new(hash).map_err(|_| ApiError::unauthorized("Invalid credentials"))?;
+        PasswordHash::new(hash).map_err(|_| ApiError::unauthorized(failure_message))?;
 
     Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
-        .map_err(|_| ApiError::unauthorized("Invalid credentials"))
+        .verify_password(secret.as_bytes(), &parsed_hash)
+        .map_err(|_| ApiError::unauthorized(failure_message))
 }
 
 fn encode_token(
@@ -77,28 +82,32 @@ fn encode_token(
         &claims,
         &EncodingKey::from_secret(auth.jwt_secret.as_bytes()),
     )
-    .map_err(|error| ApiError::internal(error.to_string()))
+    .map_err(|_| ApiError::internal("Unable to issue authentication tokens"))
 }
 
-fn issue_auth_response(user: &UserRecord, auth: &AuthConfig) -> Result<AuthResponse, ApiError> {
+fn issue_session(
+    user: &UserRecord,
+    auth: &AuthConfig,
+    refresh_token: String,
+) -> Result<IssuedAuthSession, ApiError> {
     let access_token = encode_token(
         user,
         auth,
         TokenKind::Access,
         Duration::minutes(auth.access_token_ttl_minutes),
     )?;
-    let refresh_token = encode_token(
-        user,
-        auth,
-        TokenKind::Refresh,
-        Duration::days(auth.refresh_token_ttl_days),
-    )?;
 
-    Ok(AuthResponse {
+    Ok(IssuedAuthSession {
         user: UserProfile::from(user),
         access_token,
         refresh_token,
     })
+}
+
+fn map_auth_response(session: &IssuedAuthSession) -> AuthResponse {
+    AuthResponse {
+        user: session.user.clone(),
+    }
 }
 
 fn is_unique_violation(error: &sqlx::Error) -> bool {
@@ -106,6 +115,31 @@ fn is_unique_violation(error: &sqlx::Error) -> bool {
         sqlx::Error::Database(db_error) => db_error.code().as_deref() == Some("23505"),
         _ => false,
     }
+}
+
+fn invalid_refresh_token() -> ApiError {
+    ApiError::unauthorized("Invalid or expired refresh token")
+}
+
+fn parse_refresh_token(raw_token: &str) -> Result<(Uuid, String), ApiError> {
+    let (session_id, secret) = raw_token
+        .split_once('.')
+        .ok_or_else(invalid_refresh_token)?;
+    let session_id = Uuid::parse_str(session_id).map_err(|_| invalid_refresh_token())?;
+
+    if secret.trim().is_empty() {
+        return Err(invalid_refresh_token());
+    }
+
+    Ok((session_id, secret.to_string()))
+}
+
+fn build_refresh_cookie_value(session_id: Uuid, secret: &str) -> String {
+    format!("{session_id}.{secret}")
+}
+
+fn create_refresh_secret() -> String {
+    SaltString::generate(&mut OsRng).to_string()
 }
 
 async fn find_user_by_email(pool: &PgPool, email: &str) -> Result<Option<UserRecord>, ApiError> {
@@ -132,11 +166,105 @@ async fn find_user_by_id(pool: &PgPool, user_id: Uuid) -> Result<Option<UserReco
     .map_err(ApiError::from)
 }
 
+async fn find_user_by_id_in_transaction(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+) -> Result<Option<UserRecord>, ApiError> {
+    sqlx::query_as::<_, UserRecord>(
+        "SELECT id, email, password_hash, currency, created_at
+         FROM users
+         WHERE id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(ApiError::from)
+}
+
+async fn find_refresh_session_for_update(
+    transaction: &mut Transaction<'_, Postgres>,
+    session_id: Uuid,
+) -> Result<Option<RefreshSessionRecord>, ApiError> {
+    sqlx::query_as::<_, RefreshSessionRecord>(
+        "SELECT id, user_id, token_hash, expires_at, created_at, revoked_at, replaced_by_session_id
+         FROM refresh_sessions
+         WHERE id = $1
+         FOR UPDATE",
+    )
+    .bind(session_id)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(ApiError::from)
+}
+
+async fn insert_refresh_session(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    auth: &AuthConfig,
+) -> Result<(Uuid, String), ApiError> {
+    let session_id = Uuid::new_v4();
+    let secret = create_refresh_secret();
+    let token_hash = hash_secret(&secret)?;
+    let expires_at = Utc::now() + Duration::days(auth.refresh_token_ttl_days);
+
+    sqlx::query(
+        "INSERT INTO refresh_sessions (id, user_id, token_hash, expires_at)
+         VALUES ($1, $2, $3, $4)",
+    )
+    .bind(session_id)
+    .bind(user_id)
+    .bind(token_hash)
+    .bind(expires_at)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok((session_id, build_refresh_cookie_value(session_id, &secret)))
+}
+
+async fn create_refresh_session(
+    pool: &PgPool,
+    user_id: Uuid,
+    auth: &AuthConfig,
+) -> Result<String, ApiError> {
+    let mut transaction = pool.begin().await?;
+    let (_, refresh_token) = insert_refresh_session(&mut transaction, user_id, auth).await?;
+    transaction.commit().await?;
+    Ok(refresh_token)
+}
+
+async fn revoke_refresh_session(
+    transaction: &mut Transaction<'_, Postgres>,
+    session_id: Uuid,
+    replaced_by_session_id: Option<Uuid>,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        "UPDATE refresh_sessions
+         SET revoked_at = COALESCE(revoked_at, NOW()),
+             replaced_by_session_id = COALESCE(replaced_by_session_id, $2)
+         WHERE id = $1",
+    )
+    .bind(session_id)
+    .bind(replaced_by_session_id)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn issue_auth_session(
+    pool: &PgPool,
+    auth: &AuthConfig,
+    user: &UserRecord,
+) -> Result<IssuedAuthSession, ApiError> {
+    let refresh_token = create_refresh_session(pool, user.id, auth).await?;
+    issue_session(user, auth, refresh_token)
+}
+
 pub async fn register_user(
     pool: &PgPool,
     auth: &AuthConfig,
     payload: RegisterRequest,
-) -> Result<AuthResponse, ApiError> {
+) -> Result<IssuedAuthSession, ApiError> {
     let email = normalize_email(&payload.email)?;
     validate_password(&payload.password)?;
     let currency = normalize_currency_code(
@@ -144,7 +272,7 @@ pub async fn register_user(
         "Default currency",
     )?;
 
-    let password_hash = hash_password(&payload.password)?;
+    let password_hash = hash_secret(&payload.password)?;
     let mut transaction = pool.begin().await?;
 
     let user = sqlx::query_as::<_, UserRecord>(
@@ -177,51 +305,83 @@ pub async fn register_user(
 
     transaction.commit().await?;
 
-    issue_auth_response(&user, auth)
+    issue_auth_session(pool, auth, &user).await
 }
 
 pub async fn login_user(
     pool: &PgPool,
     auth: &AuthConfig,
     payload: LoginRequest,
-) -> Result<AuthResponse, ApiError> {
+) -> Result<IssuedAuthSession, ApiError> {
     let email = normalize_email(&payload.email)?;
 
     let user = find_user_by_email(pool, &email)
         .await?
         .ok_or_else(|| ApiError::unauthorized("Invalid credentials"))?;
 
-    verify_password(&payload.password, &user.password_hash)?;
+    verify_secret(
+        &payload.password,
+        &user.password_hash,
+        "Invalid credentials",
+    )?;
 
-    issue_auth_response(&user, auth)
+    issue_auth_session(pool, auth, &user).await
 }
 
 pub async fn refresh_session(
     pool: &PgPool,
     auth: &AuthConfig,
-    payload: RefreshRequest,
-) -> Result<AuthResponse, ApiError> {
-    let token = payload
-        .refresh_token
-        .ok_or_else(|| ApiError::bad_request("Refresh token is required"))?;
+    refresh_token: &str,
+) -> Result<IssuedAuthSession, ApiError> {
+    let (session_id, secret) = parse_refresh_token(refresh_token)?;
+    let mut transaction = pool.begin().await?;
+    let session = find_refresh_session_for_update(&mut transaction, session_id)
+        .await?
+        .ok_or_else(invalid_refresh_token)?;
 
-    let claims = jsonwebtoken::decode::<TokenClaims>(
-        &token,
-        &jsonwebtoken::DecodingKey::from_secret(auth.jwt_secret.as_bytes()),
-        &jsonwebtoken::Validation::default(),
-    )
-    .map_err(|_| ApiError::unauthorized("Invalid or expired refresh token"))?
-    .claims;
-
-    if claims.token_kind != TokenKind::Refresh {
-        return Err(ApiError::unauthorized("Refresh token required"));
+    if session.revoked_at.is_some() || session.expires_at <= Utc::now() {
+        revoke_refresh_session(&mut transaction, session.id, None).await?;
+        transaction.commit().await?;
+        return Err(invalid_refresh_token());
     }
 
-    let user = find_user_by_id(pool, claims.sub)
+    verify_secret(
+        &secret,
+        &session.token_hash,
+        "Invalid or expired refresh token",
+    )?;
+
+    let user = find_user_by_id_in_transaction(&mut transaction, session.user_id)
         .await?
         .ok_or_else(|| ApiError::unauthorized("User not found"))?;
 
-    issue_auth_response(&user, auth)
+    let (replacement_session_id, replacement_token) =
+        insert_refresh_session(&mut transaction, session.user_id, auth).await?;
+    revoke_refresh_session(&mut transaction, session.id, Some(replacement_session_id)).await?;
+
+    transaction.commit().await?;
+
+    issue_session(&user, auth, replacement_token)
+}
+
+pub async fn logout_session(pool: &PgPool, refresh_token: Option<&str>) -> Result<(), ApiError> {
+    let Some(refresh_token) = refresh_token else {
+        return Ok(());
+    };
+
+    let Ok((session_id, _)) = parse_refresh_token(refresh_token) else {
+        return Ok(());
+    };
+
+    let mut transaction = pool.begin().await?;
+
+    if let Some(session) = find_refresh_session_for_update(&mut transaction, session_id).await? {
+        revoke_refresh_session(&mut transaction, session.id, None).await?;
+    }
+
+    transaction.commit().await?;
+
+    Ok(())
 }
 
 pub async fn get_user_profile(pool: &PgPool, user_id: Uuid) -> Result<UserProfile, ApiError> {
@@ -256,9 +416,15 @@ pub async fn update_default_currency(
     get_user_profile(pool, user_id).await
 }
 
+pub fn auth_response(session: &IssuedAuthSession) -> AuthResponse {
+    map_auth_response(session)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{normalize_email, validate_password};
+    use uuid::Uuid;
+
+    use super::{normalize_email, parse_refresh_token, validate_password};
 
     #[test]
     fn normalizes_email_by_trimming_and_lowercasing() {
@@ -279,5 +445,22 @@ mod tests {
         let error = validate_password("short").expect_err("password should fail");
 
         assert_eq!(error.message, "Password must be at least 8 characters long");
+    }
+
+    #[test]
+    fn parses_refresh_tokens_into_session_id_and_secret() {
+        let session_id = Uuid::new_v4();
+        let parsed = parse_refresh_token(&format!("{session_id}.secret-token"))
+            .expect("refresh token should parse");
+
+        assert_eq!(parsed.0, session_id);
+        assert_eq!(parsed.1, "secret-token");
+    }
+
+    #[test]
+    fn rejects_refresh_tokens_without_both_parts() {
+        let error = parse_refresh_token("missing-secret").expect_err("token should fail");
+
+        assert_eq!(error.message, "Invalid or expired refresh token");
     }
 }

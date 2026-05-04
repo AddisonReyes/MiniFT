@@ -16,6 +16,7 @@ fn apply_cors_headers(response: &mut Response<'_>, allowed_origin: &str) {
         "Access-Control-Allow-Origin",
         allowed_origin.to_string(),
     ));
+    response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     response.set_header(Header::new(
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, PATCH, DELETE, OPTIONS",
@@ -26,9 +27,7 @@ fn apply_cors_headers(response: &mut Response<'_>, allowed_origin: &str) {
     ));
     response.set_header(Header::new("Access-Control-Max-Age", "86400"));
 
-    if allowed_origin != "*" {
-        response.set_header(Header::new("Vary", "Origin"));
-    }
+    response.set_header(Header::new("Vary", "Origin"));
 }
 
 #[rocket::async_trait]

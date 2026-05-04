@@ -26,11 +26,20 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 
 ```bash
 cp .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
 The frontend expects the backend API to be available and reachable through `NEXT_PUBLIC_API_BASE_URL`, including the auth, accounts, exchange-rate, transaction, budget, report, and settings endpoints.
+
+## Quality Checks
+
+```bash
+npm run lint
+npm run build
+```
+
+`npm run lint` uses the ESLint CLI configured in `eslint.config.mjs`.
 
 ## Cloudflare Pages
 
@@ -41,12 +50,16 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - Build output directory: `out`
 - Required build env: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
 - Backend env: `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000"]`
+- Backend env: `AUTH_COOKIE_SECURE=true`
+- Backend env: `AUTH_COOKIE_SAME_SITE=none`
 
 ## Notes
 
 - `next.config.ts` uses `output: "export"` so `npm run build` emits a deploy-ready `out/` folder.
-- The frontend stores JWTs in browser storage and automatically refreshes access tokens when the backend returns `401`.
-- The backend must allow cross-origin requests from the Cloudflare Pages site.
+- The frontend authenticates with HttpOnly cookies and automatically retries requests after a successful refresh.
+- Since the app is exported as static HTML, protected pages are enforced after the client-side session check rather than by a server render.
+- The backend must allow cross-origin requests from the Cloudflare Pages site and expose cookies with `AUTH_COOKIE_SECURE=true` plus `AUTH_COOKIE_SAME_SITE=none` in production.
+- Cookie auth requires explicit backend origins. Do not expect wildcard CORS to work for authenticated browser requests.
 - `/accounts` converts gross and net totals into the user's default currency using Frankfurter daily rates unless a pair is manually overridden.
 - `/settings` lets users change their default currency without re-registering.
 - Shared UI primitives live in `components/`; reusable product widgets include `BrandLink`, `SiteFooter`, `MonthPicker`, and `FinanceSnapshot`.

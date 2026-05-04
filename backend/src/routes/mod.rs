@@ -9,6 +9,7 @@ pub fn all() -> Vec<Route> {
         handlers::auth::register,
         handlers::auth::login,
         handlers::auth::refresh,
+        handlers::auth::logout,
         handlers::auth::me,
         handlers::auth::update_me,
         handlers::accounts::list,
