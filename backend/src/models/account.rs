@@ -2,11 +2,14 @@ use chrono::{DateTime, Utc};
 use rocket::form::FromFormField;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use rust_decimal::Decimal;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, FromFormField)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, FromFormField, ToSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[sqlx(type_name = "account_type", rename_all = "snake_case")]
 pub enum AccountType {

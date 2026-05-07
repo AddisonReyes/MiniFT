@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     config::AppState,
-    errors::ApiError,
+    errors::{ApiError, ErrorResponse},
     guards::AuthUser,
     schema::{
         account::{AccountResponse, CreateAccountRequest, UpdateAccountRequest},
@@ -12,6 +12,20 @@ use crate::{
     services::accounts,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/accounts",
+    tag = "accounts",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Accounts owned by the authenticated user", body = [AccountResponse]),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[get("/api/accounts")]
 pub async fn list(
     state: &State<AppState>,
@@ -22,6 +36,24 @@ pub async fn list(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/accounts/{account_id}",
+    tag = "accounts",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    params(
+        ("account_id" = Uuid, Path, description = "Account identifier")
+    ),
+    responses(
+        (status = 200, description = "Single account with computed balance", body = AccountResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[get("/api/accounts/<account_id>")]
 pub async fn get(
     state: &State<AppState>,
@@ -33,6 +65,23 @@ pub async fn get(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/accounts",
+    tag = "accounts",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    request_body = CreateAccountRequest,
+    responses(
+        (status = 200, description = "Account created successfully", body = AccountResponse),
+        (status = 400, description = "Invalid account payload", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[post("/api/accounts", format = "json", data = "<payload>")]
 pub async fn create(
     state: &State<AppState>,
@@ -44,6 +93,26 @@ pub async fn create(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/accounts/{account_id}",
+    tag = "accounts",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    params(
+        ("account_id" = Uuid, Path, description = "Account identifier")
+    ),
+    request_body = UpdateAccountRequest,
+    responses(
+        (status = 200, description = "Account updated successfully", body = AccountResponse),
+        (status = 400, description = "Invalid account payload or operation would remove the last cash account", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[put("/api/accounts/<account_id>", format = "json", data = "<payload>")]
 pub async fn update(
     state: &State<AppState>,
@@ -57,6 +126,25 @@ pub async fn update(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/accounts/{account_id}",
+    tag = "accounts",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    params(
+        ("account_id" = Uuid, Path, description = "Account identifier")
+    ),
+    responses(
+        (status = 200, description = "Account deleted successfully", body = MessageResponse),
+        (status = 400, description = "Account cannot be removed because it is the last required account or has related activity", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[delete("/api/accounts/<account_id>")]
 pub async fn delete(
     state: &State<AppState>,

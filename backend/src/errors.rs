@@ -5,6 +5,7 @@ use rocket::{
     serde::json::Json,
 };
 use serde::Serialize;
+use utoipa::ToSchema;
 
 #[derive(Debug)]
 pub struct ApiError {
@@ -41,9 +42,10 @@ impl ApiError {
     }
 }
 
-#[derive(Serialize)]
-struct ErrorResponse {
-    error: String,
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ErrorResponse {
+    /// Human-readable explanation of the failure.
+    pub error: String,
 }
 
 impl<'r> Responder<'r, 'static> for ApiError {

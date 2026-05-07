@@ -4,9 +4,10 @@ use minift_backend::{
     config::{
         AppState, AuthConfig, CorsConfig, ExchangeRateProviderConfig, SeedConfig, WorkerConfig,
     },
-    cors, db, routes, services,
+    cors, db, docs, routes, services,
 };
 use rocket::fairing::AdHoc;
+use utoipa_swagger_ui::SwaggerUi;
 
 async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
@@ -28,10 +29,16 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         .await
         .map_err(|error| std::io::Error::other(error.message.clone()))?;
 
+    let api_doc = docs::build_openapi(&state);
+
     let rocket = rocket::build()
         .manage(state.clone())
         .attach(cors::Cors)
         .mount("/", routes::all())
+        .mount(
+            "/",
+            SwaggerUi::new("/docs/<_..>").url("/api-docs/openapi.json", api_doc),
+        )
         .attach(AdHoc::on_liftoff("Recurring Worker", |rocket| {
             Box::pin(async move {
                 if let Some(state) = rocket.state::<AppState>().cloned() {

@@ -6,7 +6,7 @@ use rocket::{
 
 use crate::{
     config::AppState,
-    errors::ApiError,
+    errors::{ApiError, ErrorResponse},
     guards::AuthUser,
     models::auth::UserProfile,
     schema::{
@@ -75,6 +75,18 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
     remove_auth_cookie(cookies, state, &state.auth.refresh_cookie_name);
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/register",
+    tag = "auth",
+    request_body = RegisterRequest,
+    responses(
+        (status = 200, description = "User registered and auth cookies issued", body = AuthResponse),
+        (status = 400, description = "Invalid registration payload", body = ErrorResponse),
+        (status = 409, description = "Email already registered", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[post("/api/auth/register", format = "json", data = "<payload>")]
 pub async fn register(
     state: &State<AppState>,
@@ -86,6 +98,18 @@ pub async fn register(
     Ok(Json(auth::auth_response(&session)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/login",
+    tag = "auth",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "User authenticated and auth cookies issued", body = AuthResponse),
+        (status = 400, description = "Invalid login payload", body = ErrorResponse),
+        (status = 401, description = "Invalid credentials", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[post("/api/auth/login", format = "json", data = "<payload>")]
 pub async fn login(
     state: &State<AppState>,
@@ -97,6 +121,19 @@ pub async fn login(
     Ok(Json(auth::auth_response(&session)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/refresh",
+    tag = "auth",
+    security(
+        ("refresh_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Access and refresh cookies rotated successfully", body = AuthResponse),
+        (status = 401, description = "Refresh cookie missing, invalid, or expired", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[post("/api/auth/refresh")]
 pub async fn refresh(
     state: &State<AppState>,
@@ -112,6 +149,15 @@ pub async fn refresh(
     Ok(Json(auth::auth_response(&session)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/logout",
+    tag = "auth",
+    responses(
+        (status = 200, description = "Auth cookies cleared and refresh session revoked when present", body = MessageResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[post("/api/auth/logout")]
 pub async fn logout(
     state: &State<AppState>,
@@ -127,6 +173,20 @@ pub async fn logout(
     Ok(Json(MessageResponse::new("Signed out")))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/auth/me",
+    tag = "auth",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Current authenticated user profile", body = UserProfile),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[get("/api/auth/me")]
 pub async fn me(state: &State<AppState>, user: AuthUser) -> Result<Json<UserProfile>, ApiError> {
     Ok(Json(
@@ -134,6 +194,23 @@ pub async fn me(state: &State<AppState>, user: AuthUser) -> Result<Json<UserProf
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/auth/me",
+    tag = "auth",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    request_body = UpdateDefaultCurrencyRequest,
+    responses(
+        (status = 200, description = "Default user currency updated", body = UserProfile),
+        (status = 400, description = "Invalid currency code", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[put("/api/auth/me", format = "json", data = "<payload>")]
 pub async fn update_me(
     state: &State<AppState>,

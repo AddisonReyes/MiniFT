@@ -31,6 +31,8 @@ Once the stack is ready:
 
 - Frontend: `http://localhost:3000`
 - Backend health: `http://localhost:8000/health`
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
 
 The development stack keeps PostgreSQL data in the Docker volume `postgres_data`. Avoid `docker-compose down -v` if you want to preserve your local workspace data between runs.
 
@@ -52,6 +54,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 ## Backend Highlights
 
 - JWT access cookies with rotated refresh sessions
+- Generated OpenAPI 3.1 spec with embedded Swagger UI
 - Argon2 password hashing
 - Default `Cash` account created at registration using the user's default currency
 - Per-account currencies plus user-owned exchange rate overrides layered over Frankfurter daily rates
@@ -85,6 +88,15 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 Backend integration tests try `TEST_DATABASE_URL` first and then `DATABASE_URL`. If neither points to a reachable PostgreSQL instance, those integration tests exit early without failing.
 
 GitHub Actions mirrors this baseline in [.github/workflows/ci.yml](/home/dakotitah/github/MiniFT/.github/workflows/ci.yml).
+
+## API Documentation
+
+The backend serves interactive API docs directly from Rocket:
+
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
+
+Protected endpoints accept either a Bearer access token or the configured HttpOnly access cookie. Since Swagger UI cannot read HttpOnly cookies automatically, Bearer auth is the easiest option when you want to manually exercise protected routes from the docs page.
 
 ## Exchange Rates
 

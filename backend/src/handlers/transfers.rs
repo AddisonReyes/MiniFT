@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     config::AppState,
-    errors::ApiError,
+    errors::{ApiError, ErrorResponse},
     guards::AuthUser,
     schema::{
         common::MessageResponse,
@@ -12,6 +12,20 @@ use crate::{
     services::transfers,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/transfers",
+    tag = "transfers",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Transfers owned by the authenticated user", body = [TransferResponse]),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[get("/api/transfers")]
 pub async fn list(
     state: &State<AppState>,
@@ -22,6 +36,23 @@ pub async fn list(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/transfers",
+    tag = "transfers",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    request_body = CreateTransferRequest,
+    responses(
+        (status = 200, description = "Transfer created and mirrored transaction entries inserted", body = TransferResponse),
+        (status = 400, description = "Invalid transfer payload or missing effective exchange rate", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "Source or destination account not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[post("/api/transfers", format = "json", data = "<payload>")]
 pub async fn create(
     state: &State<AppState>,
@@ -39,6 +70,24 @@ pub async fn create(
     ))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/transfers/{transfer_id}",
+    tag = "transfers",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    params(
+        ("transfer_id" = Uuid, Path, description = "Transfer identifier")
+    ),
+    responses(
+        (status = 200, description = "Transfer deleted successfully", body = MessageResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "Transfer not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[delete("/api/transfers/<transfer_id>")]
 pub async fn delete(
     state: &State<AppState>,

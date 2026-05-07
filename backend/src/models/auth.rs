@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, FromRow)]
@@ -12,11 +13,15 @@ pub struct UserRecord {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct UserProfile {
+    /// Stable unique identifier for the signed-in user.
     pub id: Uuid,
+    /// Unique email address used for authentication.
     pub email: String,
+    /// Default ISO 4217 currency code for the workspace.
     pub currency: String,
+    /// Timestamp when the user account was created.
     pub created_at: DateTime<Utc>,
 }
 

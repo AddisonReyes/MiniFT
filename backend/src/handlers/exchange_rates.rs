@@ -2,12 +2,30 @@ use rocket::{serde::json::Json, State};
 
 use crate::{
     config::AppState,
-    errors::ApiError,
+    errors::{ApiError, ErrorResponse},
     guards::AuthUser,
     schema::exchange_rate::{ExchangeRateResponse, ReplaceExchangeRatesRequest},
     services::exchange_rates,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/exchange-rates",
+    tag = "exchange_rates",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    params(
+        ("currencies" = Option<String>, Query, description = "Optional comma-separated ISO 4217 currency codes used to scope the returned pairs")
+    ),
+    responses(
+        (status = 200, description = "Effective exchange rates for the authenticated user", body = [ExchangeRateResponse]),
+        (status = 400, description = "Invalid currency filter", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[get("/api/exchange-rates?<currencies>")]
 pub async fn list(
     state: &State<AppState>,
@@ -27,6 +45,22 @@ pub async fn list(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/exchange-rates",
+    tag = "exchange_rates",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    request_body = ReplaceExchangeRatesRequest,
+    responses(
+        (status = 200, description = "Manual exchange-rate overrides replaced successfully", body = [ExchangeRateResponse]),
+        (status = 400, description = "Invalid exchange-rate payload", body = ErrorResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
 #[put("/api/exchange-rates", format = "json", data = "<payload>")]
 pub async fn replace(
     state: &State<AppState>,

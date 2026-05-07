@@ -3,11 +3,14 @@ use rocket::form::FromFormField;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::transaction::TransactionType;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, FromFormField)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, FromFormField, ToSchema,
+)]
 #[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "recurring_frequency", rename_all = "lowercase")]
 pub enum RecurringFrequency {

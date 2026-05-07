@@ -43,6 +43,11 @@ cargo run
 
 The backend applies SQL migrations automatically on startup.
 
+Interactive API docs are served from the same backend process:
+
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
+
 If `SEED_DEV_DATA=true`, startup also creates a demo user plus sample accounts, transactions, budgets, recurring rules, and exchange rates:
 
 - Email: `demo@minift.local`
@@ -70,6 +75,15 @@ Unit tests live next to the modules they cover. Integration tests live under `ba
 - `GET /api/exchange-rates`
 - `PUT /api/exchange-rates`
 - monthly and category summaries under `/api/transactions/summary/*`
+
+## Swagger / OpenAPI
+
+The backend now publishes an OpenAPI 3.1 document and an embedded Swagger UI.
+
+- UI route: `/docs`
+- JSON route: `/api-docs/openapi.json`
+- Protected routes are documented with both Bearer auth and cookie auth.
+- `POST /api/auth/refresh` is documented as using the refresh cookie rather than a JSON request body.
 
 ## Notes
 
