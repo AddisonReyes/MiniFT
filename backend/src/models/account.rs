@@ -13,12 +13,16 @@ use rust_decimal::Decimal;
 #[serde(rename_all = "snake_case")]
 #[sqlx(type_name = "account_type", rename_all = "snake_case")]
 pub enum AccountType {
+    /// Physical cash or a cash-equivalent wallet.
     #[field(value = "cash")]
     Cash,
+    /// Deposit account such as checking or savings.
     #[field(value = "bank_account")]
     BankAccount,
+    /// Liability account representing a credit card balance.
     #[field(value = "credit_card")]
     CreditCard,
+    /// Liability account for a loan balance.
     #[field(value = "loan")]
     Loan,
 }

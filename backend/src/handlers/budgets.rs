@@ -17,6 +17,7 @@ use crate::{
     operation_id = "budgets_list",
     path = "/api/budgets",
     tag = "budgets",
+    summary = "List budgets",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -50,6 +51,7 @@ pub async fn list(
     operation_id = "budgets_create",
     path = "/api/budgets",
     tag = "budgets",
+    summary = "Create a budget",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -79,6 +81,7 @@ pub async fn create(
     operation_id = "budgets_get",
     path = "/api/budgets/{budget_id}",
     tag = "budgets",
+    summary = "Get a budget",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -109,6 +112,7 @@ pub async fn get(
     operation_id = "budgets_update",
     path = "/api/budgets/{budget_id}",
     tag = "budgets",
+    summary = "Update a budget",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -143,6 +147,7 @@ pub async fn update(
     operation_id = "budgets_delete",
     path = "/api/budgets/{budget_id}",
     tag = "budgets",
+    summary = "Delete a budget",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

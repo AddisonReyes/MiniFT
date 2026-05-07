@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+#[allow(unused_imports)]
+use serde_json::json;
 use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -14,14 +16,24 @@ pub struct UserRecord {
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
+#[schema(example = json!({
+    "id": "7f3b0daa-1a48-4e6e-8f4d-d89f5f8f5001",
+    "email": "alex@example.com",
+    "currency": "USD",
+    "created_at": "2026-05-01T10:15:30Z"
+}))]
 pub struct UserProfile {
     /// Stable unique identifier for the signed-in user.
+    #[schema(example = "7f3b0daa-1a48-4e6e-8f4d-d89f5f8f5001")]
     pub id: Uuid,
     /// Unique email address used for authentication.
+    #[schema(format = Email, example = "alex@example.com")]
     pub email: String,
     /// Default ISO 4217 currency code for the workspace.
+    #[schema(pattern = "^[A-Za-z]{3}$", example = "USD")]
     pub currency: String,
     /// Timestamp when the user account was created.
+    #[schema(example = "2026-05-01T10:15:30Z")]
     pub created_at: DateTime<Utc>,
 }
 

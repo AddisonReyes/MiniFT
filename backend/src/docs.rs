@@ -2,7 +2,7 @@ use utoipa::{
     openapi::{
         info::License,
         schema::Components,
-        security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme},
+        security::{ApiKey, ApiKeyValue, HttpAuthScheme, HttpBuilder, SecurityScheme},
         Server,
     },
     OpenApi,
@@ -66,8 +66,8 @@ pub fn build_openapi(state: &AppState) -> utoipa::openapi::OpenApi {
     doc.info.title = "MiniFT Backend API".to_string();
     doc.info.version = env!("CARGO_PKG_VERSION").to_string();
     doc.info.license = Some({
-        let mut license = License::new("Portfolio project");
-        license.identifier = Some("LicenseRef-Portfolio".to_string());
+        let mut license = License::new("PolyForm Noncommercial 1.0.0");
+        license.url = Some("https://polyformproject.org/licenses/noncommercial/1.0.0".to_string());
         license
     });
     doc.info.description = Some(
@@ -75,32 +75,31 @@ pub fn build_openapi(state: &AppState) -> utoipa::openapi::OpenApi {
             r#"
 Cookie-backed personal finance API for MiniFT.
 
-### What you can do here
-- Register and authenticate users with rotating refresh sessions.
-- Manage accounts, transactions, budgets, transfers, recurring rules, and exchange rates.
-- Inspect reporting endpoints for monthly totals and category breakdowns.
+### Authentication
+- Browser clients should authenticate through the HttpOnly cookies set by `POST /api/auth/register`, `POST /api/auth/login`, and `POST /api/auth/refresh`.
+- Protected endpoints also accept `Authorization: Bearer <access-token>` for non-browser clients and manual testing.
+- `POST /api/auth/refresh` reads the `{}` refresh cookie, rotates the persisted refresh session, and sends back fresh auth cookies.
+- `POST /api/auth/logout` clears both auth cookies and revokes the refresh session when present.
 
-### Authentication notes
-- Protected endpoints accept either a Bearer access token or the `{}` HttpOnly access cookie.
-- `POST /api/auth/refresh` reads the `{}` HttpOnly refresh cookie and rotates the persisted session.
-- Auth response bodies return the current user profile only. Tokens are issued through cookies.
+### Conventions
+- Request and response bodies are JSON unless noted otherwise.
+- Monetary amounts are serialized as strings to preserve decimal precision.
+- Dates use `YYYY-MM-DD`; timestamps use ISO 8601 UTC.
+- Error responses use the shape `{{ "error": "..." }}`.
 
 ### Documentation endpoints
-- Railway backend: `https://minift-backend.up.railway.app/`
-- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
-- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 - Swagger UI: `/docs`
 - OpenAPI JSON: `/api-docs/openapi.json`
             "#,
-            state.auth.access_cookie_name, state.auth.refresh_cookie_name
+            state.auth.refresh_cookie_name
         )
         .trim()
         .to_string(),
     );
     doc.servers = Some(vec![
         {
-            let mut server = Server::new("https://minift-backend.up.railway.app");
-            server.description = Some("Production backend on Railway".to_string());
+            let mut server = Server::new("/");
+            server.description = Some("Current deployment".to_string());
             server
         },
         {
@@ -113,14 +112,22 @@ Cookie-backed personal finance API for MiniFT.
     let components = doc.components.get_or_insert_with(Components::new);
     components.add_security_scheme(
         "bearer_auth",
-        SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        SecurityScheme::Http(
+            HttpBuilder::new()
+                .scheme(HttpAuthScheme::Bearer)
+                .bearer_format("JWT")
+                .description(Some(
+                    "Optional alternative to cookie auth for scripts, mobile clients, or manual testing.",
+                ))
+                .build(),
+        ),
     );
     components.add_security_scheme(
         "access_cookie_auth",
         SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::with_description(
             state.auth.access_cookie_name.clone(),
             format!(
-                "HttpOnly access token cookie. Current configured name: `{}`.",
+                "HttpOnly access token cookie used by browser clients. Current configured name: `{}`.",
                 state.auth.access_cookie_name
             ),
         ))),

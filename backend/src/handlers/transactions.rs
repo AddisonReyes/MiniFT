@@ -21,6 +21,8 @@ use crate::{
     operation_id = "transactions_list",
     path = "/api/transactions",
     tag = "transactions",
+    summary = "List transactions",
+    description = "Returns transactions matching the supplied filters. Transfer-mirrored entries are included in the list output.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -50,6 +52,8 @@ pub async fn list(
     operation_id = "transactions_create",
     path = "/api/transactions",
     tag = "transactions",
+    summary = "Create a transaction",
+    description = "Creates an income or expense transaction. Transfer creation must go through the transfers endpoints.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -79,6 +83,7 @@ pub async fn create(
     operation_id = "transactions_get",
     path = "/api/transactions/{transaction_id}",
     tag = "transactions",
+    summary = "Get a transaction",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -109,6 +114,8 @@ pub async fn get(
     operation_id = "transactions_update",
     path = "/api/transactions/{transaction_id}",
     tag = "transactions",
+    summary = "Update a transaction",
+    description = "Updates an existing income or expense transaction. Transfer-mirrored entries cannot be edited here.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -152,6 +159,8 @@ pub async fn update(
     operation_id = "transactions_delete",
     path = "/api/transactions/{transaction_id}",
     tag = "transactions",
+    summary = "Delete a transaction",
+    description = "Deletes an income or expense transaction. Transfer-mirrored entries must be removed through the transfers endpoints.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -182,6 +191,8 @@ pub async fn delete(
     operation_id = "transactions_monthly_summary",
     path = "/api/transactions/summary/month",
     tag = "transactions",
+    summary = "Get monthly totals",
+    description = "Aggregates income, expense, and net totals for a month. When `month` is omitted, the current month is used.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -215,6 +226,8 @@ pub async fn monthly_summary(
     operation_id = "transactions_category_summary",
     path = "/api/transactions/summary/categories",
     tag = "transactions",
+    summary = "Get category totals for a month",
+    description = "Aggregates category totals and percentages for income or expense transactions in a month. Transfer summaries are not supported.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

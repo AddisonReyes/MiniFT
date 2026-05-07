@@ -20,6 +20,7 @@ use crate::{
     operation_id = "recurring_list",
     path = "/api/recurring-transactions",
     tag = "recurring",
+    summary = "List recurring rules",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -45,6 +46,8 @@ pub async fn list(
     operation_id = "recurring_create",
     path = "/api/recurring-transactions",
     tag = "recurring",
+    summary = "Create a recurring rule",
+    description = "Creates a recurring income or expense rule. Generated transactions are materialized later by the background worker.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -75,6 +78,7 @@ pub async fn create(
     operation_id = "recurring_update",
     path = "/api/recurring-transactions/{recurring_id}",
     tag = "recurring",
+    summary = "Update a recurring rule",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -118,6 +122,7 @@ pub async fn update(
     operation_id = "recurring_delete",
     path = "/api/recurring-transactions/{recurring_id}",
     tag = "recurring",
+    summary = "Delete a recurring rule",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

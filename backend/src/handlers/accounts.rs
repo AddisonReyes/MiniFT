@@ -17,6 +17,7 @@ use crate::{
     operation_id = "accounts_list",
     path = "/api/accounts",
     tag = "accounts",
+    summary = "List accounts",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -42,6 +43,7 @@ pub async fn list(
     operation_id = "accounts_get",
     path = "/api/accounts/{account_id}",
     tag = "accounts",
+    summary = "Get an account",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -72,6 +74,7 @@ pub async fn get(
     operation_id = "accounts_create",
     path = "/api/accounts",
     tag = "accounts",
+    summary = "Create an account",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -101,6 +104,7 @@ pub async fn create(
     operation_id = "accounts_update",
     path = "/api/accounts/{account_id}",
     tag = "accounts",
+    summary = "Update an account",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -135,6 +139,7 @@ pub async fn update(
     operation_id = "accounts_delete",
     path = "/api/accounts/{account_id}",
     tag = "accounts",
+    summary = "Delete an account",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

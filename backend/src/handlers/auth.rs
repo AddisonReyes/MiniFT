@@ -80,9 +80,18 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
     operation_id = "auth_register",
     path = "/api/auth/register",
     tag = "auth",
+    summary = "Register a new user",
+    description = "Creates a user, provisions the default cash account, and signs the user in by setting both HttpOnly auth cookies.",
     request_body = RegisterRequest,
     responses(
-        (status = 200, description = "User registered and auth cookies issued", body = AuthResponse),
+        (
+            status = 200,
+            description = "User registered and auth cookies issued",
+            body = AuthResponse,
+            headers(
+                ("Set-Cookie" = String, description = "Sets two HttpOnly cookies: the access cookie and the refresh cookie.")
+            )
+        ),
         (status = 400, description = "Invalid registration payload", body = ErrorResponse),
         (status = 409, description = "Email already registered", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
@@ -104,9 +113,18 @@ pub async fn register(
     operation_id = "auth_login",
     path = "/api/auth/login",
     tag = "auth",
+    summary = "Authenticate an existing user",
+    description = "Validates credentials and signs the user in by setting both HttpOnly auth cookies.",
     request_body = LoginRequest,
     responses(
-        (status = 200, description = "User authenticated and auth cookies issued", body = AuthResponse),
+        (
+            status = 200,
+            description = "User authenticated and auth cookies issued",
+            body = AuthResponse,
+            headers(
+                ("Set-Cookie" = String, description = "Sets two HttpOnly cookies: the access cookie and the refresh cookie.")
+            )
+        ),
         (status = 400, description = "Invalid login payload", body = ErrorResponse),
         (status = 401, description = "Invalid credentials", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
@@ -128,11 +146,20 @@ pub async fn login(
     operation_id = "auth_refresh",
     path = "/api/auth/refresh",
     tag = "auth",
+    summary = "Rotate the current session",
+    description = "Reads the refresh cookie, rotates the persisted refresh session, and sends back fresh auth cookies. This endpoint does not accept a JSON request body.",
     security(
         ("refresh_cookie_auth" = [])
     ),
     responses(
-        (status = 200, description = "Access and refresh cookies rotated successfully", body = AuthResponse),
+        (
+            status = 200,
+            description = "Access and refresh cookies rotated successfully",
+            body = AuthResponse,
+            headers(
+                ("Set-Cookie" = String, description = "Sets fresh HttpOnly access and refresh cookies for the rotated session.")
+            )
+        ),
         (status = 401, description = "Refresh cookie missing, invalid, or expired", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
     )
@@ -157,8 +184,17 @@ pub async fn refresh(
     operation_id = "auth_logout",
     path = "/api/auth/logout",
     tag = "auth",
+    summary = "Sign out the current browser session",
+    description = "Clears both auth cookies. If a valid refresh cookie is present, its persisted refresh session is revoked as well.",
     responses(
-        (status = 200, description = "Auth cookies cleared and refresh session revoked when present", body = MessageResponse),
+        (
+            status = 200,
+            description = "Auth cookies cleared and refresh session revoked when present",
+            body = MessageResponse,
+            headers(
+                ("Set-Cookie" = String, description = "Clears the HttpOnly access and refresh cookies from the client.")
+            )
+        ),
         (status = 500, description = "Server error", body = ErrorResponse)
     )
 )]
@@ -182,6 +218,8 @@ pub async fn logout(
     operation_id = "auth_me",
     path = "/api/auth/me",
     tag = "auth",
+    summary = "Get the current user profile",
+    description = "Returns the authenticated user's profile. Accepts either a Bearer access token or the access cookie.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -204,6 +242,8 @@ pub async fn me(state: &State<AppState>, user: AuthUser) -> Result<Json<UserProf
     operation_id = "auth_update_me",
     path = "/api/auth/me",
     tag = "auth",
+    summary = "Update the current user's default currency",
+    description = "Updates the workspace currency stored on the user profile. This value is also used as the default currency for new accounts.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

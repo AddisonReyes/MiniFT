@@ -13,12 +13,19 @@ use crate::{
     operation_id = "exchange_rates_list",
     path = "/api/exchange-rates",
     tag = "exchange_rates",
+    summary = "List effective exchange rates",
+    description = "Returns the effective exchange rates available to the authenticated user, combining manual overrides with provider-backed fallback rates when applicable.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
     ),
     params(
-        ("currencies" = Option<String>, Query, description = "Optional comma-separated ISO 4217 currency codes used to scope the returned pairs")
+        (
+            "currencies" = Option<String>,
+            Query,
+            description = "Optional comma-separated ISO 4217 currency codes used to scope the returned pairs",
+            example = "USD,DOP,EUR"
+        )
     ),
     responses(
         (status = 200, description = "Effective exchange rates for the authenticated user", body = [ExchangeRateResponse]),
@@ -51,6 +58,8 @@ pub async fn list(
     operation_id = "exchange_rates_replace",
     path = "/api/exchange-rates",
     tag = "exchange_rates",
+    summary = "Replace manual exchange-rate overrides",
+    description = "Replaces the full manual override set stored for the authenticated user. Provider-backed fallback rates remain available for non-overridden pairs.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

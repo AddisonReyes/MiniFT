@@ -2,6 +2,12 @@
 
 MiniFT is a minimalist personal finance tracker built as a full-stack MVP with a Rust API, Next.js frontend, PostgreSQL persistence, cookie-backed auth, multi-currency accounts, editable exchange rates, recurring transaction processing, budgets, and reporting.
 
+## License
+
+MiniFT is source-available under [PolyForm Noncommercial 1.0.0](./LICENSE).
+
+Commercial use is not permitted under this license. If you need commercial rights, they must come directly from the project author.
+
 ## Stack
 
 - Frontend: Next.js App Router, TypeScript, React, TailwindCSS, TanStack Query

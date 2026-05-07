@@ -17,6 +17,7 @@ use crate::{
     operation_id = "transfers_list",
     path = "/api/transfers",
     tag = "transfers",
+    summary = "List transfers",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -42,6 +43,8 @@ pub async fn list(
     operation_id = "transfers_create",
     path = "/api/transfers",
     tag = "transfers",
+    summary = "Create a transfer",
+    description = "Creates an account-to-account transfer and its mirrored transaction entries. When currencies differ, the backend resolves an effective exchange rate.",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])
@@ -77,6 +80,7 @@ pub async fn create(
     operation_id = "transfers_delete",
     path = "/api/transfers/{transfer_id}",
     tag = "transfers",
+    summary = "Delete a transfer",
     security(
         ("bearer_auth" = []),
         ("access_cookie_auth" = [])

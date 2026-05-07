@@ -45,6 +45,7 @@ impl ApiError {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     /// Human-readable explanation of the failure.
+    #[schema(example = "Invalid credentials")]
     pub error: String,
 }
 

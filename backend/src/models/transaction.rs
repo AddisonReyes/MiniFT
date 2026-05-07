@@ -12,10 +12,13 @@ use uuid::Uuid;
 #[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "transaction_type", rename_all = "lowercase")]
 pub enum TransactionType {
+    /// Money flowing into an account.
     #[field(value = "income")]
     Income,
+    /// Money flowing out of an account.
     #[field(value = "expense")]
     Expense,
+    /// Transfer-mirrored entry managed through the transfers endpoints.
     #[field(value = "transfer")]
     Transfer,
 }

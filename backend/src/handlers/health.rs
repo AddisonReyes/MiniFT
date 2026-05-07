@@ -7,6 +7,8 @@ use crate::schema::common::MessageResponse;
     operation_id = "health_check",
     path = "/health",
     tag = "system",
+    summary = "Health check",
+    description = "Simple readiness endpoint used by local and hosted health checks.",
     responses(
         (status = 200, description = "Backend health probe succeeded", body = MessageResponse)
     )

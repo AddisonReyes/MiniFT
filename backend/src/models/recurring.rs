@@ -14,10 +14,13 @@ use crate::models::transaction::TransactionType;
 #[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "recurring_frequency", rename_all = "lowercase")]
 pub enum RecurringFrequency {
+    /// Run once per day.
     #[field(value = "daily")]
     Daily,
+    /// Run once every seven days.
     #[field(value = "weekly")]
     Weekly,
+    /// Run once per calendar month.
     #[field(value = "monthly")]
     Monthly,
 }
