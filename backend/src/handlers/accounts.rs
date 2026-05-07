@@ -14,6 +14,7 @@ use crate::{
 
 #[utoipa::path(
     get,
+    operation_id = "accounts_list",
     path = "/api/accounts",
     tag = "accounts",
     security(
@@ -38,6 +39,7 @@ pub async fn list(
 
 #[utoipa::path(
     get,
+    operation_id = "accounts_get",
     path = "/api/accounts/{account_id}",
     tag = "accounts",
     security(
@@ -67,6 +69,7 @@ pub async fn get(
 
 #[utoipa::path(
     post,
+    operation_id = "accounts_create",
     path = "/api/accounts",
     tag = "accounts",
     security(
@@ -95,6 +98,7 @@ pub async fn create(
 
 #[utoipa::path(
     put,
+    operation_id = "accounts_update",
     path = "/api/accounts/{account_id}",
     tag = "accounts",
     security(
@@ -128,6 +132,7 @@ pub async fn update(
 
 #[utoipa::path(
     delete,
+    operation_id = "accounts_delete",
     path = "/api/accounts/{account_id}",
     tag = "accounts",
     security(

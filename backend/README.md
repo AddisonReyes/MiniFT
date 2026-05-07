@@ -47,6 +47,8 @@ Interactive API docs are served from the same backend process:
 
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
+- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
+- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 
 If `SEED_DEV_DATA=true`, startup also creates a demo user plus sample accounts, transactions, budgets, recurring rules, and exchange rates:
 
@@ -82,6 +84,8 @@ The backend now publishes an OpenAPI 3.1 document and an embedded Swagger UI.
 
 - UI route: `/docs`
 - JSON route: `/api-docs/openapi.json`
+- Production UI: `https://minift-backend.up.railway.app/docs`
+- Production JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 - Protected routes are documented with both Bearer auth and cookie auth.
 - `POST /api/auth/refresh` is documented as using the refresh cookie rather than a JSON request body.
 

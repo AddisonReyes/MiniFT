@@ -77,6 +77,7 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
 
 #[utoipa::path(
     post,
+    operation_id = "auth_register",
     path = "/api/auth/register",
     tag = "auth",
     request_body = RegisterRequest,
@@ -100,6 +101,7 @@ pub async fn register(
 
 #[utoipa::path(
     post,
+    operation_id = "auth_login",
     path = "/api/auth/login",
     tag = "auth",
     request_body = LoginRequest,
@@ -123,6 +125,7 @@ pub async fn login(
 
 #[utoipa::path(
     post,
+    operation_id = "auth_refresh",
     path = "/api/auth/refresh",
     tag = "auth",
     security(
@@ -151,6 +154,7 @@ pub async fn refresh(
 
 #[utoipa::path(
     post,
+    operation_id = "auth_logout",
     path = "/api/auth/logout",
     tag = "auth",
     responses(
@@ -175,6 +179,7 @@ pub async fn logout(
 
 #[utoipa::path(
     get,
+    operation_id = "auth_me",
     path = "/api/auth/me",
     tag = "auth",
     security(
@@ -196,6 +201,7 @@ pub async fn me(state: &State<AppState>, user: AuthUser) -> Result<Json<UserProf
 
 #[utoipa::path(
     put,
+    operation_id = "auth_update_me",
     path = "/api/auth/me",
     tag = "auth",
     security(

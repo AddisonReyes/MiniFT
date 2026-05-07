@@ -33,6 +33,9 @@ Once the stack is ready:
 - Backend health: `http://localhost:8000/health`
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
+- Railway backend: `https://minift-backend.up.railway.app/`
+- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
+- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 
 The development stack keeps PostgreSQL data in the Docker volume `postgres_data`. Avoid `docker-compose down -v` if you want to preserve your local workspace data between runs.
 
@@ -95,6 +98,8 @@ The backend serves interactive API docs directly from Rocket:
 
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
+- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
+- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 
 Protected endpoints accept either a Bearer access token or the configured HttpOnly access cookie. Since Swagger UI cannot read HttpOnly cookies automatically, Bearer auth is the easiest option when you want to manually exercise protected routes from the docs page.
 

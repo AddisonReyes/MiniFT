@@ -1,7 +1,9 @@
 use utoipa::{
     openapi::{
+        info::License,
         schema::Components,
         security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme},
+        Server,
     },
     OpenApi,
 };
@@ -63,6 +65,11 @@ pub fn build_openapi(state: &AppState) -> utoipa::openapi::OpenApi {
 
     doc.info.title = "MiniFT Backend API".to_string();
     doc.info.version = env!("CARGO_PKG_VERSION").to_string();
+    doc.info.license = Some({
+        let mut license = License::new("Portfolio project");
+        license.identifier = Some("LicenseRef-Portfolio".to_string());
+        license
+    });
     doc.info.description = Some(
         format!(
             r#"
@@ -79,6 +86,9 @@ Cookie-backed personal finance API for MiniFT.
 - Auth response bodies return the current user profile only. Tokens are issued through cookies.
 
 ### Documentation endpoints
+- Railway backend: `https://minift-backend.up.railway.app/`
+- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
+- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 - Swagger UI: `/docs`
 - OpenAPI JSON: `/api-docs/openapi.json`
             "#,
@@ -87,6 +97,18 @@ Cookie-backed personal finance API for MiniFT.
         .trim()
         .to_string(),
     );
+    doc.servers = Some(vec![
+        {
+            let mut server = Server::new("https://minift-backend.up.railway.app");
+            server.description = Some("Production backend on Railway".to_string());
+            server
+        },
+        {
+            let mut server = Server::new("http://localhost:8000");
+            server.description = Some("Local backend".to_string());
+            server
+        },
+    ]);
 
     let components = doc.components.get_or_insert_with(Components::new);
     components.add_security_scheme(

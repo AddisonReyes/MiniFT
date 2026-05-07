@@ -10,6 +10,7 @@ use crate::{
 
 #[utoipa::path(
     get,
+    operation_id = "exchange_rates_list",
     path = "/api/exchange-rates",
     tag = "exchange_rates",
     security(
@@ -47,6 +48,7 @@ pub async fn list(
 
 #[utoipa::path(
     put,
+    operation_id = "exchange_rates_replace",
     path = "/api/exchange-rates",
     tag = "exchange_rates",
     security(

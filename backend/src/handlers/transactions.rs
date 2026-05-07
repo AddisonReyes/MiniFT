@@ -18,6 +18,7 @@ use crate::{
 
 #[utoipa::path(
     get,
+    operation_id = "transactions_list",
     path = "/api/transactions",
     tag = "transactions",
     security(
@@ -46,6 +47,7 @@ pub async fn list(
 
 #[utoipa::path(
     post,
+    operation_id = "transactions_create",
     path = "/api/transactions",
     tag = "transactions",
     security(
@@ -74,6 +76,7 @@ pub async fn create(
 
 #[utoipa::path(
     get,
+    operation_id = "transactions_get",
     path = "/api/transactions/{transaction_id}",
     tag = "transactions",
     security(
@@ -103,6 +106,7 @@ pub async fn get(
 
 #[utoipa::path(
     put,
+    operation_id = "transactions_update",
     path = "/api/transactions/{transaction_id}",
     tag = "transactions",
     security(
@@ -145,6 +149,7 @@ pub async fn update(
 
 #[utoipa::path(
     delete,
+    operation_id = "transactions_delete",
     path = "/api/transactions/{transaction_id}",
     tag = "transactions",
     security(
@@ -174,6 +179,7 @@ pub async fn delete(
 
 #[utoipa::path(
     get,
+    operation_id = "transactions_monthly_summary",
     path = "/api/transactions/summary/month",
     tag = "transactions",
     security(
@@ -206,6 +212,7 @@ pub async fn monthly_summary(
 
 #[utoipa::path(
     get,
+    operation_id = "transactions_category_summary",
     path = "/api/transactions/summary/categories",
     tag = "transactions",
     security(

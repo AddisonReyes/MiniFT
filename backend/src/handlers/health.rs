@@ -4,6 +4,7 @@ use crate::schema::common::MessageResponse;
 
 #[utoipa::path(
     get,
+    operation_id = "health_check",
     path = "/health",
     tag = "system",
     responses(

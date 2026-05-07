@@ -17,6 +17,7 @@ use crate::{
 
 #[utoipa::path(
     get,
+    operation_id = "recurring_list",
     path = "/api/recurring-transactions",
     tag = "recurring",
     security(
@@ -41,6 +42,7 @@ pub async fn list(
 
 #[utoipa::path(
     post,
+    operation_id = "recurring_create",
     path = "/api/recurring-transactions",
     tag = "recurring",
     security(
@@ -70,6 +72,7 @@ pub async fn create(
 
 #[utoipa::path(
     put,
+    operation_id = "recurring_update",
     path = "/api/recurring-transactions/{recurring_id}",
     tag = "recurring",
     security(
@@ -112,6 +115,7 @@ pub async fn update(
 
 #[utoipa::path(
     delete,
+    operation_id = "recurring_delete",
     path = "/api/recurring-transactions/{recurring_id}",
     tag = "recurring",
     security(
