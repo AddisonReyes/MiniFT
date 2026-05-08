@@ -8,6 +8,7 @@ pub mod docs;
 pub mod errors;
 pub mod guards;
 pub mod handlers;
+pub mod logging;
 pub mod models;
 pub mod routes;
 pub mod schema;

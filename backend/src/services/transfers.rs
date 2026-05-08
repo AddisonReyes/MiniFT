@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::{
     config::ExchangeRateProviderConfig,
     errors::ApiError,
+    logging::{self, field},
     models::account::AccountRecord,
     models::{
         transaction::TransactionType,
@@ -98,7 +99,17 @@ pub async fn list_transfers(
     .fetch_all(pool)
     .await?;
 
-    Ok(rows.into_iter().map(map_transfer).collect())
+    let transfers = rows.into_iter().map(map_transfer).collect::<Vec<_>>();
+
+    logging::info(
+        "transfers.listed",
+        &[
+            field("user_id", user_id),
+            field("transfer_count", transfers.len()),
+        ],
+    );
+
+    Ok(transfers)
 }
 
 pub async fn create_transfer(
@@ -121,7 +132,9 @@ pub async fn create_transfer(
     )
     .await?;
     let note = normalize_optional_text(&payload.note);
-    let destination_amount = if from_account.currency == to_account.currency {
+    let same_currency_transfer = from_account.currency == to_account.currency;
+    let mut applied_exchange_rate = None;
+    let destination_amount = if same_currency_transfer {
         payload.amount
     } else {
         let rate = exchange_rates::resolve_effective_exchange_rate(
@@ -138,6 +151,7 @@ pub async fn create_transfer(
                 from_account.currency, to_account.currency
             ))
         })?;
+        applied_exchange_rate = Some(rate);
 
         let converted_amount = convert_transfer_amount(payload.amount, rate);
 
@@ -189,7 +203,7 @@ pub async fn create_transfer(
 
     transaction.commit().await?;
 
-    Ok(TransferResponse {
+    let response = TransferResponse {
         id: transfer.id,
         from_account_id: transfer.from_account_id,
         to_account_id: transfer.to_account_id,
@@ -199,7 +213,26 @@ pub async fn create_transfer(
         date: transfer.date,
         note: transfer.note,
         created_at: transfer.created_at,
-    })
+    };
+
+    logging::info(
+        "transfers.created",
+        &[
+            field("user_id", user_id),
+            field("transfer_id", response.id),
+            field("from_account_id", response.from_account_id),
+            field("to_account_id", response.to_account_id),
+            field("from_currency", &from_account.currency),
+            field("to_currency", &to_account.currency),
+            field("source_amount", response.amount),
+            field("destination_amount", destination_amount),
+            field("exchange_rate", applied_exchange_rate),
+            field("same_currency_transfer", same_currency_transfer),
+            field("date", response.date),
+        ],
+    );
+
+    Ok(response)
 }
 
 pub async fn delete_transfer(
@@ -216,6 +249,11 @@ pub async fn delete_transfer(
     if result.rows_affected() == 0 {
         return Err(ApiError::not_found("Transfer not found"));
     }
+
+    logging::info(
+        "transfers.deleted",
+        &[field("user_id", user_id), field("transfer_id", transfer_id)],
+    );
 
     Ok(())
 }

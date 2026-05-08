@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::ApiError,
+    logging::{self, field},
     models::{account::AccountType, recurring::RecurringFrequency, transaction::TransactionType},
     schema::{
         account::CreateAccountRequest, auth::RegisterRequest, budget::CreateBudgetRequest,
@@ -467,11 +468,17 @@ async fn create_demo_recurring_rules(
 
 pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
     if !state.seed.enabled {
+        logging::info("seed.dev.disabled", &[]);
         return Ok(());
     }
 
+    logging::info("seed.dev.started", &[field("email", DEMO_EMAIL)]);
+
     if demo_user_exists(&state.pool).await? {
-        eprintln!("SEED_DEV_DATA enabled: demo user already exists, skipping seed");
+        logging::info(
+            "seed.dev.skipped_existing_user",
+            &[field("email", DEMO_EMAIL)],
+        );
         return Ok(());
     }
 
@@ -495,8 +502,13 @@ pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
     create_demo_budgets(state, user_id, today).await?;
     create_demo_recurring_rules(state, user_id, &demo_accounts, today).await?;
 
-    eprintln!(
-        "SEED_DEV_DATA enabled: seeded demo workspace for {DEMO_EMAIL} with password {DEMO_PASSWORD}"
+    logging::info(
+        "seed.dev.completed",
+        &[
+            field("user_id", user_id),
+            field("email", DEMO_EMAIL),
+            field("default_currency", DEMO_DEFAULT_CURRENCY),
+        ],
     );
 
     Ok(())

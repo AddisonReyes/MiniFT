@@ -10,6 +10,7 @@ use uuid::Uuid;
 use crate::{
     config::AuthConfig,
     errors::ApiError,
+    logging::{self, field},
     models::{
         account::AccountType,
         auth::{RefreshSessionRecord, TokenClaims, TokenKind, UserProfile, UserRecord},
@@ -280,13 +281,20 @@ pub async fn register_user(
          VALUES ($1, $2, $3)
          RETURNING id, email, password_hash, currency, created_at",
     )
-    .bind(email)
+    .bind(&email)
     .bind(password_hash)
     .bind(&currency)
     .fetch_one(&mut *transaction)
     .await
     .map_err(|error| {
         if is_unique_violation(&error) {
+            logging::warn(
+                "auth.register.failed",
+                &[
+                    field("email", &email),
+                    field("reason", "email_already_registered"),
+                ],
+            );
             ApiError::conflict("Email is already registered")
         } else {
             ApiError::from(error)
@@ -305,7 +313,18 @@ pub async fn register_user(
 
     transaction.commit().await?;
 
-    issue_auth_session(pool, auth, &user).await
+    let session = issue_auth_session(pool, auth, &user).await?;
+
+    logging::info(
+        "auth.register.succeeded",
+        &[
+            field("user_id", session.user.id),
+            field("email", &session.user.email),
+            field("currency", &session.user.currency),
+        ],
+    );
+
+    Ok(session)
 }
 
 pub async fn login_user(
@@ -315,17 +334,44 @@ pub async fn login_user(
 ) -> Result<IssuedAuthSession, ApiError> {
     let email = normalize_email(&payload.email)?;
 
-    let user = find_user_by_email(pool, &email)
-        .await?
-        .ok_or_else(|| ApiError::unauthorized("Invalid credentials"))?;
+    let user = match find_user_by_email(pool, &email).await? {
+        Some(user) => user,
+        None => {
+            logging::warn(
+                "auth.login.failed",
+                &[field("email", &email), field("reason", "user_not_found")],
+            );
+            return Err(ApiError::unauthorized("Invalid credentials"));
+        }
+    };
 
-    verify_secret(
+    if let Err(error) = verify_secret(
         &payload.password,
         &user.password_hash,
         "Invalid credentials",
-    )?;
+    ) {
+        logging::warn(
+            "auth.login.failed",
+            &[
+                field("user_id", user.id),
+                field("email", &user.email),
+                field("reason", "invalid_password"),
+            ],
+        );
+        return Err(error);
+    }
 
-    issue_auth_session(pool, auth, &user).await
+    let session = issue_auth_session(pool, auth, &user).await?;
+
+    logging::info(
+        "auth.login.succeeded",
+        &[
+            field("user_id", session.user.id),
+            field("email", &session.user.email),
+        ],
+    );
+
+    Ok(session)
 }
 
 pub async fn refresh_session(
@@ -333,27 +379,73 @@ pub async fn refresh_session(
     auth: &AuthConfig,
     refresh_token: &str,
 ) -> Result<IssuedAuthSession, ApiError> {
-    let (session_id, secret) = parse_refresh_token(refresh_token)?;
+    let (session_id, secret) = match parse_refresh_token(refresh_token) {
+        Ok(value) => value,
+        Err(error) => {
+            logging::warn(
+                "auth.refresh.failed",
+                &[field("reason", "invalid_refresh_token_format")],
+            );
+            return Err(error);
+        }
+    };
     let mut transaction = pool.begin().await?;
     let session = find_refresh_session_for_update(&mut transaction, session_id)
         .await?
-        .ok_or_else(invalid_refresh_token)?;
+        .ok_or_else(|| {
+            logging::warn(
+                "auth.refresh.failed",
+                &[
+                    field("session_id", session_id),
+                    field("reason", "refresh_session_not_found"),
+                ],
+            );
+            invalid_refresh_token()
+        })?;
 
     if session.revoked_at.is_some() || session.expires_at <= Utc::now() {
         revoke_refresh_session(&mut transaction, session.id, None).await?;
         transaction.commit().await?;
+        logging::warn(
+            "auth.refresh.failed",
+            &[
+                field("session_id", session.id),
+                field("user_id", session.user_id),
+                field("reason", "refresh_session_revoked_or_expired"),
+            ],
+        );
         return Err(invalid_refresh_token());
     }
 
-    verify_secret(
+    if let Err(error) = verify_secret(
         &secret,
         &session.token_hash,
         "Invalid or expired refresh token",
-    )?;
+    ) {
+        logging::warn(
+            "auth.refresh.failed",
+            &[
+                field("session_id", session.id),
+                field("user_id", session.user_id),
+                field("reason", "refresh_secret_mismatch"),
+            ],
+        );
+        return Err(error);
+    }
 
     let user = find_user_by_id_in_transaction(&mut transaction, session.user_id)
         .await?
-        .ok_or_else(|| ApiError::unauthorized("User not found"))?;
+        .ok_or_else(|| {
+            logging::warn(
+                "auth.refresh.failed",
+                &[
+                    field("session_id", session.id),
+                    field("user_id", session.user_id),
+                    field("reason", "user_not_found"),
+                ],
+            );
+            ApiError::unauthorized("User not found")
+        })?;
 
     let (replacement_session_id, replacement_token) =
         insert_refresh_session(&mut transaction, session.user_id, auth).await?;
@@ -361,15 +453,32 @@ pub async fn refresh_session(
 
     transaction.commit().await?;
 
-    issue_session(&user, auth, replacement_token)
+    let issued_session = issue_session(&user, auth, replacement_token)?;
+
+    logging::info(
+        "auth.refresh.succeeded",
+        &[
+            field("user_id", issued_session.user.id),
+            field("email", &issued_session.user.email),
+            field("previous_session_id", session.id),
+            field("replacement_session_id", replacement_session_id),
+        ],
+    );
+
+    Ok(issued_session)
 }
 
 pub async fn logout_session(pool: &PgPool, refresh_token: Option<&str>) -> Result<(), ApiError> {
     let Some(refresh_token) = refresh_token else {
+        logging::info("auth.logout.completed", &[field("session_revoked", false)]);
         return Ok(());
     };
 
     let Ok((session_id, _)) = parse_refresh_token(refresh_token) else {
+        logging::warn(
+            "auth.logout.skipped",
+            &[field("reason", "invalid_refresh_token_format")],
+        );
         return Ok(());
     };
 
@@ -377,6 +486,22 @@ pub async fn logout_session(pool: &PgPool, refresh_token: Option<&str>) -> Resul
 
     if let Some(session) = find_refresh_session_for_update(&mut transaction, session_id).await? {
         revoke_refresh_session(&mut transaction, session.id, None).await?;
+        logging::info(
+            "auth.logout.completed",
+            &[
+                field("session_revoked", true),
+                field("session_id", session.id),
+                field("user_id", session.user_id),
+            ],
+        );
+    } else {
+        logging::info(
+            "auth.logout.completed",
+            &[
+                field("session_revoked", false),
+                field("session_id", session_id),
+            ],
+        );
     }
 
     transaction.commit().await?;
@@ -389,7 +514,18 @@ pub async fn get_user_profile(pool: &PgPool, user_id: Uuid) -> Result<UserProfil
         .await?
         .ok_or_else(|| ApiError::not_found("User not found"))?;
 
-    Ok(UserProfile::from(&user))
+    let profile = UserProfile::from(&user);
+
+    logging::info(
+        "auth.profile.read",
+        &[
+            field("user_id", profile.id),
+            field("email", &profile.email),
+            field("currency", &profile.currency),
+        ],
+    );
+
+    Ok(profile)
 }
 
 pub async fn update_default_currency(
@@ -413,7 +549,18 @@ pub async fn update_default_currency(
         return Err(ApiError::not_found("User not found"));
     }
 
-    get_user_profile(pool, user_id).await
+    let profile = get_user_profile(pool, user_id).await?;
+
+    logging::info(
+        "auth.default_currency.updated",
+        &[
+            field("user_id", profile.id),
+            field("email", &profile.email),
+            field("currency", &profile.currency),
+        ],
+    );
+
+    Ok(profile)
 }
 
 pub fn auth_response(session: &IssuedAuthSession) -> AuthResponse {

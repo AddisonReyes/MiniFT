@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::ApiError,
+    logging::{self, field},
     models::{
         account::AccountRecord,
         transaction::{
@@ -86,6 +87,11 @@ pub async fn list_transactions(
     user_id: Uuid,
     filters: TransactionFilters,
 ) -> Result<Vec<TransactionResponse>, ApiError> {
+    let type_filter = filters.r#type;
+    let category_filter = filters.category.clone();
+    let account_filter = filters.account_id;
+    let start_date_filter = filters.start_date.clone();
+    let end_date_filter = filters.end_date.clone();
     let mut builder = QueryBuilder::<Postgres>::new(
         "SELECT
             t.id,
@@ -106,7 +112,7 @@ pub async fn list_transactions(
 
     builder.push_bind(user_id);
 
-    if let Some(transaction_type) = filters.r#type {
+    if let Some(transaction_type) = type_filter {
         match transaction_type {
             TransactionType::Transfer => {
                 builder.push(" AND t.transfer_id IS NOT NULL");
@@ -118,22 +124,22 @@ pub async fn list_transactions(
         }
     }
 
-    if let Some(category) = filters.category {
+    if let Some(category) = category_filter.as_ref() {
         builder.push(" AND t.category ILIKE ");
         builder.push_bind(format!("%{}%", category.trim()));
     }
 
-    if let Some(account_id) = filters.account_id {
+    if let Some(account_id) = account_filter {
         builder.push(" AND t.account_id = ");
         builder.push_bind(account_id);
     }
 
-    if let Some(start_date) = parse_optional_date(filters.start_date, "start date")? {
+    if let Some(start_date) = parse_optional_date(start_date_filter.clone(), "start date")? {
         builder.push(" AND t.date >= ");
         builder.push_bind(start_date);
     }
 
-    if let Some(end_date) = parse_optional_date(filters.end_date, "end date")? {
+    if let Some(end_date) = parse_optional_date(end_date_filter.clone(), "end date")? {
         builder.push(" AND t.date <= ");
         builder.push_bind(end_date);
     }
@@ -145,7 +151,22 @@ pub async fn list_transactions(
         .fetch_all(pool)
         .await?;
 
-    Ok(rows.into_iter().map(map_transaction).collect())
+    let transactions = rows.into_iter().map(map_transaction).collect::<Vec<_>>();
+
+    logging::info(
+        "transactions.listed",
+        &[
+            field("user_id", user_id),
+            field("result_count", transactions.len()),
+            field("type_filter", type_filter),
+            field("category_filter", category_filter),
+            field("account_id_filter", account_filter),
+            field("start_date_filter", start_date_filter),
+            field("end_date_filter", end_date_filter),
+        ],
+    );
+
+    Ok(transactions)
 }
 
 pub async fn get_transaction(
@@ -176,7 +197,23 @@ pub async fn get_transaction(
     .await?
     .ok_or_else(|| ApiError::not_found("Transaction not found"))?;
 
-    Ok(map_transaction(row))
+    let transaction = map_transaction(row);
+
+    logging::info(
+        "transactions.read",
+        &[
+            field("user_id", user_id),
+            field("transaction_id", transaction.id),
+            field("account_id", transaction.account_id),
+            field("amount", transaction.amount),
+            field("type", transaction.display_type),
+            field("category", &transaction.category),
+            field("date", transaction.date),
+            field("transfer_id", transaction.transfer_id),
+        ],
+    );
+
+    Ok(transaction)
 }
 
 pub async fn create_transaction(
@@ -223,7 +260,22 @@ pub async fn create_transaction(
     .fetch_one(pool)
     .await?;
 
-    Ok(map_transaction(created))
+    let transaction = map_transaction(created);
+
+    logging::info(
+        "transactions.created",
+        &[
+            field("user_id", user_id),
+            field("transaction_id", transaction.id),
+            field("account_id", transaction.account_id),
+            field("amount", transaction.amount),
+            field("type", transaction.display_type),
+            field("category", &transaction.category),
+            field("date", transaction.date),
+        ],
+    );
+
+    Ok(transaction)
 }
 
 pub async fn update_transaction(
@@ -267,7 +319,22 @@ pub async fn update_transaction(
     .execute(pool)
     .await?;
 
-    get_transaction(pool, user_id, transaction_id).await
+    let transaction = get_transaction(pool, user_id, transaction_id).await?;
+
+    logging::info(
+        "transactions.updated",
+        &[
+            field("user_id", user_id),
+            field("transaction_id", transaction.id),
+            field("account_id", transaction.account_id),
+            field("amount", transaction.amount),
+            field("type", transaction.display_type),
+            field("category", &transaction.category),
+            field("date", transaction.date),
+        ],
+    );
+
+    Ok(transaction)
 }
 
 pub async fn delete_transaction(
@@ -283,11 +350,26 @@ pub async fn delete_transaction(
         ));
     }
 
+    let transaction = get_transaction(pool, user_id, transaction_id).await?;
+
     sqlx::query("DELETE FROM transactions WHERE id = $1 AND user_id = $2")
         .bind(transaction_id)
         .bind(user_id)
         .execute(pool)
         .await?;
+
+    logging::info(
+        "transactions.deleted",
+        &[
+            field("user_id", user_id),
+            field("transaction_id", transaction.id),
+            field("account_id", transaction.account_id),
+            field("amount", transaction.amount),
+            field("type", transaction.display_type),
+            field("category", &transaction.category),
+            field("date", transaction.date),
+        ],
+    );
 
     Ok(())
 }
@@ -315,12 +397,25 @@ pub async fn monthly_summary(
     .fetch_one(pool)
     .await?;
 
-    Ok(MonthlySummaryResponse {
+    let summary = MonthlySummaryResponse {
         month: month_start,
         income_total: row.income_total,
         expense_total: row.expense_total,
         net_total: row.income_total - row.expense_total,
-    })
+    };
+
+    logging::info(
+        "transactions.monthly_summary.generated",
+        &[
+            field("user_id", user_id),
+            field("month", summary.month),
+            field("income_total", summary.income_total),
+            field("expense_total", summary.expense_total),
+            field("net_total", summary.net_total),
+        ],
+    );
+
+    Ok(summary)
 }
 
 pub async fn category_summary(
@@ -379,9 +474,21 @@ pub async fn category_summary(
         })
         .collect();
 
-    Ok(CategorySummaryResponse {
+    let summary = CategorySummaryResponse {
         month: month_start,
         r#type: summary_type,
         items,
-    })
+    };
+
+    logging::info(
+        "transactions.category_summary.generated",
+        &[
+            field("user_id", user_id),
+            field("month", summary.month),
+            field("type", summary.r#type),
+            field("item_count", summary.items.len()),
+        ],
+    );
+
+    Ok(summary)
 }

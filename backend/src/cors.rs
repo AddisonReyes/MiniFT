@@ -7,7 +7,10 @@ use rocket::{
     response::Response,
 };
 
-use crate::config::AppState;
+use crate::{
+    config::AppState,
+    logging::{self, field},
+};
 
 pub struct Cors;
 
@@ -53,6 +56,14 @@ impl Fairing for Cors {
         };
 
         let Some(allowed_origin) = state.cors.allowed_origin_header(origin) else {
+            logging::warn(
+                "cors.origin_rejected",
+                &[
+                    field("origin", origin),
+                    field("method", request.method().as_str()),
+                    field("uri", request.uri().to_string()),
+                ],
+            );
             return;
         };
 

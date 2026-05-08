@@ -7,6 +7,8 @@ use rocket::{
 use serde::Serialize;
 use utoipa::ToSchema;
 
+use crate::logging::{self, field};
+
 #[derive(Debug)]
 pub struct ApiError {
     pub status: Status,
@@ -63,7 +65,7 @@ impl<'r> Responder<'r, 'static> for ApiError {
 
 impl From<sqlx::Error> for ApiError {
     fn from(error: sqlx::Error) -> Self {
-        eprintln!("database error: {error}");
+        logging::error("db.query.failed", &[field("error", error.to_string())]);
         Self::internal("A database operation failed")
     }
 }

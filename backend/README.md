@@ -98,3 +98,10 @@ The backend now publishes an OpenAPI 3.1 document and an embedded Swagger UI.
 - Transfers are stored in `transfers` and mirrored into `transactions`.
 - Exchange rates are resolved from Frankfurter daily data by default, while checked pairs in the accounts modal are stored as user-owned manual overrides.
 - The recurring worker runs inside the API process and checks due items on an interval.
+
+## Backend Logs
+
+- The backend emits structured JSON logs to `stdout`/`stderr`.
+- Logs cover startup, database connectivity, HTTP request completion, auth failures, user CRUD operations, exchange-rate refreshes, dev seed activity, and recurring worker processing.
+- Business logs include identifiers and operational context such as `user_id`, resource ids, counts, currencies, dates, and status codes.
+- Credentials, JWT secrets, passwords, and raw auth tokens are not written to logs.

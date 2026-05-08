@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::ApiError,
+    logging::{self, field},
     models::{
         recurring::{RecurringFrequency, RecurringTransactionRecord, RecurringTransactionRow},
         transaction::TransactionType,
@@ -194,15 +195,17 @@ async fn materialize_due_occurrences(
     transaction: &mut DbTransaction<'_, Postgres>,
     recurring: &RecurringTransactionRecord,
     today: NaiveDate,
-) -> Result<NaiveDate, ApiError> {
+) -> Result<(NaiveDate, usize), ApiError> {
     let mut next_run_date = recurring.next_run_date;
+    let mut generated_count = 0usize;
 
     while next_run_date <= today {
         insert_materialized_transaction(transaction, recurring, next_run_date).await?;
+        generated_count += 1;
         next_run_date = advance_date(next_run_date, recurring.frequency)?;
     }
 
-    Ok(next_run_date)
+    Ok((next_run_date, generated_count))
 }
 
 pub async fn list_recurring_transactions(
@@ -231,7 +234,17 @@ pub async fn list_recurring_transactions(
     .fetch_all(pool)
     .await?;
 
-    Ok(rows.into_iter().map(map_recurring_row).collect())
+    let recurring_transactions = rows.into_iter().map(map_recurring_row).collect::<Vec<_>>();
+
+    logging::info(
+        "recurring.listed",
+        &[
+            field("user_id", user_id),
+            field("recurring_count", recurring_transactions.len()),
+        ],
+    );
+
+    Ok(recurring_transactions)
 }
 
 pub async fn create_recurring_transaction(
@@ -279,11 +292,24 @@ pub async fn create_recurring_transaction(
     .fetch_one(pool)
     .await?;
 
-    Ok(map_recurring_record(
-        record,
-        input.account_name,
-        input.account_currency,
-    ))
+    let recurring_transaction =
+        map_recurring_record(record, input.account_name, input.account_currency);
+
+    logging::info(
+        "recurring.created",
+        &[
+            field("user_id", user_id),
+            field("recurring_id", recurring_transaction.id),
+            field("account_id", recurring_transaction.account_id),
+            field("amount", recurring_transaction.amount),
+            field("type", recurring_transaction.r#type),
+            field("category", &recurring_transaction.category),
+            field("frequency", recurring_transaction.frequency),
+            field("next_run_date", recurring_transaction.next_run_date),
+        ],
+    );
+
+    Ok(recurring_transaction)
 }
 
 pub async fn update_recurring_transaction(
@@ -331,11 +357,24 @@ pub async fn update_recurring_transaction(
     .await?;
 
     let record = get_recurring(pool, user_id, recurring_id).await?;
-    Ok(map_recurring_record(
-        record,
-        input.account_name,
-        input.account_currency,
-    ))
+    let recurring_transaction =
+        map_recurring_record(record, input.account_name, input.account_currency);
+
+    logging::info(
+        "recurring.updated",
+        &[
+            field("user_id", user_id),
+            field("recurring_id", recurring_transaction.id),
+            field("account_id", recurring_transaction.account_id),
+            field("amount", recurring_transaction.amount),
+            field("type", recurring_transaction.r#type),
+            field("category", &recurring_transaction.category),
+            field("frequency", recurring_transaction.frequency),
+            field("next_run_date", recurring_transaction.next_run_date),
+        ],
+    );
+
+    Ok(recurring_transaction)
 }
 
 pub async fn delete_recurring_transaction(
@@ -343,6 +382,7 @@ pub async fn delete_recurring_transaction(
     user_id: Uuid,
     recurring_id: Uuid,
 ) -> Result<(), ApiError> {
+    let record = get_recurring(pool, user_id, recurring_id).await?;
     let result = sqlx::query("DELETE FROM recurring_transactions WHERE id = $1 AND user_id = $2")
         .bind(recurring_id)
         .bind(user_id)
@@ -353,6 +393,20 @@ pub async fn delete_recurring_transaction(
         return Err(ApiError::not_found("Recurring transaction not found"));
     }
 
+    logging::info(
+        "recurring.deleted",
+        &[
+            field("user_id", user_id),
+            field("recurring_id", record.id),
+            field("account_id", record.account_id),
+            field("amount", record.amount),
+            field("type", record.r#type),
+            field("category", &record.category),
+            field("frequency", record.frequency),
+            field("next_run_date", record.next_run_date),
+        ],
+    );
+
     Ok(())
 }
 
@@ -360,9 +414,17 @@ pub async fn run_worker(state: AppState) {
     let interval = Duration::from_secs(state.worker.interval_seconds.max(15));
     let mut next_exchange_rate_refresh = Utc::now();
 
+    logging::info(
+        "worker.recurring.started",
+        &[field("interval_seconds", interval.as_secs())],
+    );
+
     loop {
         if let Err(error) = process_due_transactions(&state.pool).await {
-            eprintln!("recurring worker failed: {error:?}");
+            logging::error(
+                "worker.recurring.process_due_transactions_failed",
+                &[field("error", error.message.clone())],
+            );
         }
 
         if Utc::now() >= next_exchange_rate_refresh {
@@ -372,7 +434,10 @@ pub async fn run_worker(state: AppState) {
             )
             .await
             {
-                eprintln!("exchange rate refresh failed: {error:?}");
+                logging::error(
+                    "worker.exchange_rates.refresh_failed",
+                    &[field("error", error.message.clone())],
+                );
             }
 
             next_exchange_rate_refresh = Utc::now() + chrono::Duration::hours(1);
@@ -406,13 +471,39 @@ pub async fn process_due_transactions(pool: &PgPool) -> Result<(), ApiError> {
     .fetch_all(&mut *transaction)
     .await?;
 
+    let mut generated_transaction_count = 0usize;
+    let recurring_rule_count = rows.len();
+
     for recurring in rows {
-        let next_run_date =
+        let (next_run_date, generated_count) =
             materialize_due_occurrences(&mut transaction, &recurring, today).await?;
+        generated_transaction_count += generated_count;
         update_next_run_date(&mut transaction, recurring.id, next_run_date).await?;
+
+        if generated_count > 0 {
+            logging::info(
+                "worker.recurring.rule_materialized",
+                &[
+                    field("recurring_id", recurring.id),
+                    field("user_id", recurring.user_id),
+                    field("generated_transaction_count", generated_count),
+                    field("next_run_date", next_run_date),
+                ],
+            );
+        }
     }
 
     transaction.commit().await?;
+
+    if recurring_rule_count > 0 || generated_transaction_count > 0 {
+        logging::info(
+            "worker.recurring.cycle_completed",
+            &[
+                field("recurring_rule_count", recurring_rule_count),
+                field("generated_transaction_count", generated_transaction_count),
+            ],
+        );
+    }
 
     Ok(())
 }

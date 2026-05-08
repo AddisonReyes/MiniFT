@@ -132,6 +132,10 @@ impl CorsConfig {
             .find(|allowed_origin| *allowed_origin == &normalized_origin)
             .cloned()
     }
+
+    pub fn allowed_origin_count(&self) -> usize {
+        self.allowed_origins.len()
+    }
 }
 
 #[derive(Debug, Clone)]

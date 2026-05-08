@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::ApiError,
+    logging::{self, field},
     models::budget::BudgetRow,
     schema::budget::{BudgetFilters, BudgetResponse, CreateBudgetRequest, UpdateBudgetRequest},
     services::{
@@ -34,6 +35,7 @@ pub async fn list_budgets(
     user_id: Uuid,
     filters: BudgetFilters,
 ) -> Result<Vec<BudgetResponse>, ApiError> {
+    let month_filter = filters.month.clone();
     let month = match parse_optional_date(filters.month, "month")? {
         Some(value) => Some(normalize_month(value)?),
         None => None,
@@ -93,7 +95,18 @@ pub async fn list_budgets(
         .await?
     };
 
-    Ok(rows.into_iter().map(map_budget).collect())
+    let budgets = rows.into_iter().map(map_budget).collect::<Vec<_>>();
+
+    logging::info(
+        "budgets.listed",
+        &[
+            field("user_id", user_id),
+            field("budget_count", budgets.len()),
+            field("month_filter", month_filter),
+        ],
+    );
+
+    Ok(budgets)
 }
 
 pub async fn create_budget(
@@ -124,13 +137,33 @@ pub async fn create_budget(
     .await
     .map_err(|error| {
         if is_unique_violation(&error) {
+            logging::warn(
+                "budgets.create.failed",
+                &[
+                    field("user_id", user_id),
+                    field("reason", "duplicate_budget_for_month"),
+                ],
+            );
             ApiError::conflict("A budget already exists for that category and month")
         } else {
             ApiError::from(error)
         }
     })?;
 
-    Ok(map_budget(row))
+    let budget = map_budget(row);
+
+    logging::info(
+        "budgets.created",
+        &[
+            field("user_id", user_id),
+            field("budget_id", budget.id),
+            field("category", &budget.category),
+            field("limit_amount", budget.limit_amount),
+            field("month", budget.month),
+        ],
+    );
+
+    Ok(budget)
 }
 
 pub async fn update_budget(
@@ -157,6 +190,14 @@ pub async fn update_budget(
     .await
     .map_err(|error| {
         if is_unique_violation(&error) {
+            logging::warn(
+                "budgets.update.failed",
+                &[
+                    field("user_id", user_id),
+                    field("budget_id", budget_id),
+                    field("reason", "duplicate_budget_for_month"),
+                ],
+            );
             ApiError::conflict("A budget already exists for that category and month")
         } else {
             ApiError::from(error)
@@ -167,7 +208,21 @@ pub async fn update_budget(
         return Err(ApiError::not_found("Budget not found"));
     }
 
-    get_budget(pool, user_id, budget_id).await
+    let budget = get_budget(pool, user_id, budget_id).await?;
+
+    logging::info(
+        "budgets.updated",
+        &[
+            field("user_id", user_id),
+            field("budget_id", budget.id),
+            field("category", &budget.category),
+            field("limit_amount", budget.limit_amount),
+            field("month", budget.month),
+            field("spent_amount", budget.spent_amount),
+        ],
+    );
+
+    Ok(budget)
 }
 
 pub async fn get_budget(
@@ -201,10 +256,26 @@ pub async fn get_budget(
     .await?
     .ok_or_else(|| ApiError::not_found("Budget not found"))?;
 
-    Ok(map_budget(row))
+    let budget = map_budget(row);
+
+    logging::info(
+        "budgets.read",
+        &[
+            field("user_id", user_id),
+            field("budget_id", budget.id),
+            field("category", &budget.category),
+            field("limit_amount", budget.limit_amount),
+            field("month", budget.month),
+            field("spent_amount", budget.spent_amount),
+            field("remaining_amount", budget.remaining_amount),
+        ],
+    );
+
+    Ok(budget)
 }
 
 pub async fn delete_budget(pool: &PgPool, user_id: Uuid, budget_id: Uuid) -> Result<(), ApiError> {
+    let budget = get_budget(pool, user_id, budget_id).await?;
     let result = sqlx::query("DELETE FROM budgets WHERE id = $1 AND user_id = $2")
         .bind(budget_id)
         .bind(user_id)
@@ -214,6 +285,17 @@ pub async fn delete_budget(pool: &PgPool, user_id: Uuid, budget_id: Uuid) -> Res
     if result.rows_affected() == 0 {
         return Err(ApiError::not_found("Budget not found"));
     }
+
+    logging::info(
+        "budgets.deleted",
+        &[
+            field("user_id", user_id),
+            field("budget_id", budget.id),
+            field("category", &budget.category),
+            field("limit_amount", budget.limit_amount),
+            field("month", budget.month),
+        ],
+    );
 
     Ok(())
 }

@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     errors::ApiError,
+    logging::{self, field},
     models::account::{AccountBalanceRow, AccountRecord, AccountType},
     schema::account::{AccountResponse, CreateAccountRequest, UpdateAccountRequest},
     services::{normalize_currency_code, normalize_required_text},
@@ -199,7 +200,17 @@ pub async fn list_accounts(pool: &PgPool, user_id: Uuid) -> Result<Vec<AccountRe
         .fetch_all(pool)
         .await?;
 
-    Ok(rows.into_iter().map(map_account).collect())
+    let accounts = rows.into_iter().map(map_account).collect::<Vec<_>>();
+
+    logging::info(
+        "accounts.listed",
+        &[
+            field("user_id", user_id),
+            field("account_count", accounts.len()),
+        ],
+    );
+
+    Ok(accounts)
 }
 
 pub async fn get_account(
@@ -208,7 +219,21 @@ pub async fn get_account(
     account_id: Uuid,
 ) -> Result<AccountResponse, ApiError> {
     let row = get_account_balance_row(pool, user_id, account_id).await?;
-    Ok(map_account(row))
+    let account = map_account(row);
+
+    logging::info(
+        "accounts.read",
+        &[
+            field("user_id", user_id),
+            field("account_id", account.id),
+            field("name", &account.name),
+            field("type", account.r#type),
+            field("currency", &account.currency),
+            field("balance", account.balance),
+        ],
+    );
+
+    Ok(account)
 }
 
 pub async fn create_account(
@@ -234,7 +259,20 @@ pub async fn create_account(
     .fetch_one(pool)
     .await?;
 
-    Ok(map_new_account(account))
+    let created_account = map_new_account(account);
+
+    logging::info(
+        "accounts.created",
+        &[
+            field("user_id", user_id),
+            field("account_id", created_account.id),
+            field("name", &created_account.name),
+            field("type", created_account.r#type),
+            field("currency", &created_account.currency),
+        ],
+    );
+
+    Ok(created_account)
 }
 
 pub async fn update_account(
@@ -267,7 +305,21 @@ pub async fn update_account(
     .execute(pool)
     .await?;
 
-    get_account(pool, user_id, account_id).await
+    let updated_account = get_account(pool, user_id, account_id).await?;
+
+    logging::info(
+        "accounts.updated",
+        &[
+            field("user_id", user_id),
+            field("account_id", updated_account.id),
+            field("name", &updated_account.name),
+            field("type", updated_account.r#type),
+            field("currency", &updated_account.currency),
+            field("balance", updated_account.balance),
+        ],
+    );
+
+    Ok(updated_account)
 }
 
 pub async fn delete_account(
@@ -284,6 +336,14 @@ pub async fn delete_account(
     }
 
     if account_has_dependencies(pool, user_id, account_id).await? {
+        logging::warn(
+            "accounts.delete.blocked",
+            &[
+                field("user_id", user_id),
+                field("account_id", account_id),
+                field("reason", "account_has_dependencies"),
+            ],
+        );
         return Err(ApiError::bad_request(
             "Accounts with activity cannot be deleted",
         ));
@@ -294,6 +354,17 @@ pub async fn delete_account(
         .bind(user_id)
         .execute(pool)
         .await?;
+
+    logging::info(
+        "accounts.deleted",
+        &[
+            field("user_id", user_id),
+            field("account_id", account.id),
+            field("name", &account.name),
+            field("type", account.r#type),
+            field("currency", &account.currency),
+        ],
+    );
 
     Ok(())
 }

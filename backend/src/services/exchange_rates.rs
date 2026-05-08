@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::{
     config::ExchangeRateProviderConfig,
     errors::ApiError,
+    logging::{self, field},
     models::exchange_rate::ExchangeRateRecord,
     schema::exchange_rate::{ExchangeRateInput, ExchangeRateResponse},
     services::normalize_currency_code,
@@ -157,7 +158,10 @@ fn build_http_client(config: &ExchangeRateProviderConfig) -> Option<Client> {
         .timeout(Duration::from_secs(config.request_timeout_seconds))
         .build()
         .map_err(|error| {
-            eprintln!("unable to build Frankfurter client: {error}");
+            logging::error(
+                "exchange_rates.provider.client_build_failed",
+                &[field("error", error.to_string())],
+            );
             error
         })
         .ok()
@@ -214,6 +218,14 @@ async fn fetch_online_exchange_rates(
         return Vec::new();
     };
 
+    logging::info(
+        "exchange_rates.provider.fetch_started",
+        &[
+            field("currency_count", currencies.len()),
+            field("currencies", currencies),
+        ],
+    );
+
     let mut rates = Vec::new();
 
     for from_currency in currencies {
@@ -238,16 +250,24 @@ async fn fetch_online_exchange_rates(
         let response = match request.send().await {
             Ok(response) => response,
             Err(error) => {
-                eprintln!("unable to fetch Frankfurter rates for {from_currency}: {error}");
+                logging::warn(
+                    "exchange_rates.provider.request_failed",
+                    &[
+                        field("from_currency", from_currency),
+                        field("error", error.to_string()),
+                    ],
+                );
                 continue;
             }
         };
 
         if !response.status().is_success() {
-            eprintln!(
-                "Frankfurter returned status {} for base currency {}",
-                response.status(),
-                from_currency
+            logging::warn(
+                "exchange_rates.provider.unexpected_status",
+                &[
+                    field("from_currency", from_currency),
+                    field("status", response.status().as_u16()),
+                ],
             );
             continue;
         }
@@ -255,7 +275,13 @@ async fn fetch_online_exchange_rates(
         let payload = match response.json::<Vec<FrankfurterRateRow>>().await {
             Ok(payload) => payload,
             Err(error) => {
-                eprintln!("unable to parse Frankfurter response for {from_currency}: {error}");
+                logging::warn(
+                    "exchange_rates.provider.response_parse_failed",
+                    &[
+                        field("from_currency", from_currency),
+                        field("error", error.to_string()),
+                    ],
+                );
                 continue;
             }
         };
@@ -272,6 +298,11 @@ async fn fetch_online_exchange_rates(
             });
         }
     }
+
+    logging::info(
+        "exchange_rates.provider.fetch_completed",
+        &[field("rate_count", rates.len())],
+    );
 
     rates
 }
@@ -326,8 +357,25 @@ async fn refresh_provider_cache_if_needed(
         return Ok(());
     }
 
+    logging::info(
+        "exchange_rates.cache.refresh_started",
+        &[
+            field("user_id", user_id),
+            field("currency_count", currencies.len()),
+            field("currencies", currencies),
+        ],
+    );
+
     let provider_rates = fetch_online_exchange_rates(config, currencies).await;
     upsert_provider_exchange_rates(pool, user_id, &provider_rates).await?;
+
+    logging::info(
+        "exchange_rates.cache.refresh_completed",
+        &[
+            field("user_id", user_id),
+            field("provider_rate_count", provider_rates.len()),
+        ],
+    );
 
     Ok(())
 }
@@ -441,13 +489,16 @@ pub async fn list_exchange_rates(
         } else {
             let pool = pool.clone();
             let config = config.clone();
-            let tracked_currencies = tracked_currencies.clone();
+            let background_currencies = tracked_currencies.clone();
 
             tokio::spawn(async move {
                 let records = match list_exchange_rate_records(&pool, user_id).await {
-                    Ok(records) => filter_records_by_currencies(records, &tracked_currencies),
+                    Ok(records) => filter_records_by_currencies(records, &background_currencies),
                     Err(error) => {
-                        eprintln!("unable to read cached exchange rates: {}", error.message);
+                        logging::warn(
+                            "exchange_rates.cache.read_failed",
+                            &[field("user_id", user_id), field("error", error.message)],
+                        );
                         return;
                     }
                 };
@@ -456,16 +507,33 @@ pub async fn list_exchange_rates(
                     &pool,
                     user_id,
                     &config,
-                    &tracked_currencies,
+                    &background_currencies,
                     &records,
                 )
                 .await
                 {
-                    eprintln!("unable to refresh exchange-rate cache: {}", error.message);
+                    logging::warn(
+                        "exchange_rates.cache.background_refresh_failed",
+                        &[field("user_id", user_id), field("error", error.message)],
+                    );
                 }
             });
 
-            return Ok(merge_exchange_rate_records(existing_records));
+            let rates = merge_exchange_rate_records(existing_records);
+
+            logging::info(
+                "exchange_rates.listed",
+                &[
+                    field("user_id", user_id),
+                    field("currency_count", tracked_currencies.len()),
+                    field("currencies", &tracked_currencies),
+                    field("rate_count", rates.len()),
+                    field("refresh_triggered", true),
+                    field("served_from_cache", true),
+                ],
+            );
+
+            return Ok(rates);
         }
     }
 
@@ -474,7 +542,21 @@ pub async fn list_exchange_rates(
         &tracked_currencies,
     );
 
-    Ok(merge_exchange_rate_records(fresh_records))
+    let rates = merge_exchange_rate_records(fresh_records);
+
+    logging::info(
+        "exchange_rates.listed",
+        &[
+            field("user_id", user_id),
+            field("currency_count", tracked_currencies.len()),
+            field("currencies", &tracked_currencies),
+            field("rate_count", rates.len()),
+            field("refresh_triggered", needs_refresh),
+            field("served_from_cache", false),
+        ],
+    );
+
+    Ok(rates)
 }
 
 pub async fn resolve_effective_exchange_rate(
@@ -515,11 +597,24 @@ pub async fn resolve_effective_exchange_rate(
         &tracked_currencies,
     );
 
-    Ok(resolve_effective_rate_from_records(
+    let rate = resolve_effective_rate_from_records(
         &fresh_records,
         &normalized_from_currency,
         &normalized_to_currency,
-    ))
+    );
+
+    logging::info(
+        "exchange_rates.resolved",
+        &[
+            field("user_id", user_id),
+            field("from_currency", &normalized_from_currency),
+            field("to_currency", &normalized_to_currency),
+            field("rate_found", rate.is_some()),
+            field("rate", rate),
+        ],
+    );
+
+    Ok(rate)
 }
 
 pub async fn refresh_all_stale_provider_rates(
@@ -532,7 +627,12 @@ pub async fn refresh_all_stale_provider_rates(
 
     let user_ids = list_user_ids(pool).await?;
 
-    for user_id in user_ids {
+    logging::info(
+        "exchange_rates.cache.refresh_all_started",
+        &[field("user_count", user_ids.len())],
+    );
+
+    for user_id in user_ids.iter().copied() {
         let tracked_currencies = list_tracked_currencies(pool, user_id).await?;
         let existing_records = filter_records_by_currencies(
             list_exchange_rate_records(pool, user_id).await?,
@@ -548,6 +648,11 @@ pub async fn refresh_all_stale_provider_rates(
         )
         .await?;
     }
+
+    logging::info(
+        "exchange_rates.cache.refresh_all_completed",
+        &[field("user_count", user_ids.len())],
+    );
 
     Ok(())
 }
@@ -602,6 +707,14 @@ pub async fn replace_exchange_rates(
     }
 
     transaction.commit().await?;
+
+    logging::info(
+        "exchange_rates.manual_replaced",
+        &[
+            field("user_id", user_id),
+            field("manual_rate_count", normalized_rates.len()),
+        ],
+    );
 
     Ok(normalized_rates
         .into_iter()
