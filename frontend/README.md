@@ -41,6 +41,34 @@ npm run build
 
 `npm run lint` uses the ESLint CLI configured in `eslint.config.mjs`.
 
+## Android With Capacitor
+
+MiniFT can be packaged as an Android app through Capacitor without rewriting the
+Next.js frontend.
+
+### First Android test
+
+```bash
+cp .env.example .env
+npm ci
+npm run android:sync
+npm run android:open
+```
+
+This repo exports the frontend to `out/`, and Capacitor copies that build into
+`android/` during `android:sync`.
+
+### Backend notes for Android auth
+
+- Capacitor Android serves the app from `http://localhost`, so the backend must
+  allow that origin in `CORS_ALLOWED_ORIGINS`.
+- If you test against a deployed backend over HTTPS, use
+  `AUTH_COOKIE_SECURE=true` and `AUTH_COOKIE_SAME_SITE=none` so cookie auth
+  continues to work inside the Android WebView.
+- If you test against a backend running on your development machine, the Android
+  emulator usually reaches it at `http://10.0.2.2:8000` rather than
+  `http://localhost:8000`.
+
 ## Cloudflare Pages
 
 Use the `Next.js (Static HTML Export)` preset or equivalent settings:
