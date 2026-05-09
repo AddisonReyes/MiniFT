@@ -7,6 +7,8 @@ import type {
   MoneyValue,
 } from "@/lib/types";
 
+export type ExchangeRateLookup = Map<string, ExchangeRate>;
+
 export const ACCOUNT_TYPE_OPTIONS: Array<{
   value: AccountType;
   label: string;
@@ -64,13 +66,60 @@ function exchangeRateKey(fromCurrency: string, toCurrency: string) {
   return `${normalizeCurrencyCode(fromCurrency)}:${normalizeCurrencyCode(toCurrency)}`;
 }
 
-function createExchangeRateMap(exchangeRates: ExchangeRate[]) {
+export function createExchangeRateLookup(
+  exchangeRates: ExchangeRate[],
+): ExchangeRateLookup {
   return new Map(
     exchangeRates.map((rate) => [
       exchangeRateKey(rate.from_currency, rate.to_currency),
       rate,
     ]),
   );
+}
+
+function findExactExchangeRateInLookup(
+  exchangeRateLookup: ExchangeRateLookup,
+  fromCurrency: string,
+  toCurrency: string,
+) {
+  return (
+    exchangeRateLookup.get(exchangeRateKey(fromCurrency, toCurrency)) ?? null
+  );
+}
+
+function findExchangeRateInLookup(
+  exchangeRateLookup: ExchangeRateLookup,
+  fromCurrency: string,
+  toCurrency: string,
+) {
+  const from = normalizeCurrencyCode(fromCurrency);
+  const to = normalizeCurrencyCode(toCurrency);
+
+  if (from === to) {
+    return 1;
+  }
+
+  const direct = findExactExchangeRateInLookup(exchangeRateLookup, from, to);
+
+  if (direct) {
+    const rate = toNumber(direct.rate);
+
+    if (Number.isFinite(rate) && rate > 0) {
+      return rate;
+    }
+  }
+
+  const inverse = findExactExchangeRateInLookup(exchangeRateLookup, to, from);
+
+  if (inverse) {
+    const rate = toNumber(inverse.rate);
+
+    if (Number.isFinite(rate) && rate > 0) {
+      return 1 / rate;
+    }
+  }
+
+  return null;
 }
 
 function formatRateInputValue(value: number) {
@@ -91,46 +140,10 @@ export function findExchangeRate(
   fromCurrency: string,
   toCurrency: string,
 ) {
-  const from = normalizeCurrencyCode(fromCurrency);
-  const to = normalizeCurrencyCode(toCurrency);
-
-  if (from === to) {
-    return 1;
-  }
-
-  const rateMap = createExchangeRateMap(exchangeRates);
-  const direct = rateMap.get(exchangeRateKey(from, to));
-
-  if (direct) {
-    const rate = toNumber(direct.rate);
-
-    if (Number.isFinite(rate) && rate > 0) {
-      return rate;
-    }
-  }
-
-  const inverse = rateMap.get(exchangeRateKey(to, from));
-
-  if (inverse) {
-    const rate = toNumber(inverse.rate);
-
-    if (Number.isFinite(rate) && rate > 0) {
-      return 1 / rate;
-    }
-  }
-
-  return null;
-}
-
-function findExactExchangeRate(
-  exchangeRates: ExchangeRate[],
-  fromCurrency: string,
-  toCurrency: string,
-) {
-  return (
-    createExchangeRateMap(exchangeRates).get(
-      exchangeRateKey(fromCurrency, toCurrency),
-    ) ?? null
+  return findExchangeRateInLookup(
+    createExchangeRateLookup(exchangeRates),
+    fromCurrency,
+    toCurrency,
   );
 }
 
@@ -140,7 +153,25 @@ export function convertMoneyValue(
   toCurrency: string,
   exchangeRates: ExchangeRate[],
 ) {
-  const rate = findExchangeRate(exchangeRates, fromCurrency, toCurrency);
+  return convertMoneyValueWithLookup(
+    value,
+    fromCurrency,
+    toCurrency,
+    createExchangeRateLookup(exchangeRates),
+  );
+}
+
+export function convertMoneyValueWithLookup(
+  value: MoneyValue,
+  fromCurrency: string,
+  toCurrency: string,
+  exchangeRateLookup: ExchangeRateLookup,
+) {
+  const rate = findExchangeRateInLookup(
+    exchangeRateLookup,
+    fromCurrency,
+    toCurrency,
+  );
 
   if (rate === null) {
     return null;
@@ -154,16 +185,28 @@ export function summarizeAccounts(
   defaultCurrency: string,
   exchangeRates: ExchangeRate[],
 ) {
+  return summarizeAccountsWithLookup(
+    accounts,
+    defaultCurrency,
+    createExchangeRateLookup(exchangeRates),
+  );
+}
+
+export function summarizeAccountsWithLookup(
+  accounts: Account[],
+  defaultCurrency: string,
+  exchangeRateLookup: ExchangeRateLookup,
+) {
   let grossTotal = 0;
   let netTotal = 0;
   let missingCount = 0;
 
   for (const account of accounts) {
-    const convertedBalance = convertMoneyValue(
+    const convertedBalance = convertMoneyValueWithLookup(
       account.balance,
       account.currency,
       defaultCurrency,
-      exchangeRates,
+      exchangeRateLookup,
     );
 
     if (convertedBalance === null) {
@@ -185,6 +228,7 @@ export function createExchangeRateFormValues(
   currencies: string[],
   exchangeRates: ExchangeRate[],
 ) {
+  const exchangeRateLookup = createExchangeRateLookup(exchangeRates);
   const values: Record<string, string> = {};
 
   for (const fromCurrency of currencies) {
@@ -193,7 +237,11 @@ export function createExchangeRateFormValues(
         continue;
       }
 
-      const rate = findExactExchangeRate(exchangeRates, fromCurrency, toCurrency);
+      const rate = findExactExchangeRateInLookup(
+        exchangeRateLookup,
+        fromCurrency,
+        toCurrency,
+      );
 
       values[exchangeRateKey(fromCurrency, toCurrency)] =
         rate === null ? "" : formatExchangeRateValue(rate.rate);
@@ -207,6 +255,7 @@ export function createExchangeRateManualValues(
   currencies: string[],
   exchangeRates: ExchangeRate[],
 ) {
+  const exchangeRateLookup = createExchangeRateLookup(exchangeRates);
   const values: Record<string, boolean> = {};
 
   for (const fromCurrency of currencies) {
@@ -216,8 +265,11 @@ export function createExchangeRateManualValues(
       }
 
       values[exchangeRateKey(fromCurrency, toCurrency)] = Boolean(
-        findExactExchangeRate(exchangeRates, fromCurrency, toCurrency)
-          ?.is_manual,
+        findExactExchangeRateInLookup(
+          exchangeRateLookup,
+          fromCurrency,
+          toCurrency,
+        )?.is_manual,
       );
     }
   }
@@ -229,6 +281,7 @@ export function createExchangeRateAutoValues(
   currencies: string[],
   exchangeRates: ExchangeRate[],
 ) {
+  const exchangeRateLookup = createExchangeRateLookup(exchangeRates);
   const values: Record<string, string> = {};
 
   for (const fromCurrency of currencies) {
@@ -237,7 +290,11 @@ export function createExchangeRateAutoValues(
         continue;
       }
 
-      const rate = findExactExchangeRate(exchangeRates, fromCurrency, toCurrency);
+      const rate = findExactExchangeRateInLookup(
+        exchangeRateLookup,
+        fromCurrency,
+        toCurrency,
+      );
 
       values[exchangeRateKey(fromCurrency, toCurrency)] =
         rate === null

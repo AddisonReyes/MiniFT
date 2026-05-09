@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent } from "react";
+import { FormEvent, useMemo } from "react";
 
 import { FormError } from "@/components/form-error";
 import { Button, Input, Modal, ModalActions, cn } from "@/components/ui";
 import {
+  createExchangeRateLookup,
   formatExchangeRateValue,
   readExchangeRateFormValue,
   readExchangeRateManualValue,
@@ -42,10 +43,18 @@ export function ExchangeRatesModal({
   onClose: () => void;
   onSubmit: () => void;
 }) {
-  const currencyPairs = currencies.flatMap((fromCurrency) =>
-    currencies
-      .filter((toCurrency) => toCurrency !== fromCurrency)
-      .map((toCurrency) => ({ fromCurrency, toCurrency })),
+  const exchangeRateLookup = useMemo(
+    () => createExchangeRateLookup(exchangeRates),
+    [exchangeRates],
+  );
+  const currencyPairs = useMemo(
+    () =>
+      currencies.flatMap((fromCurrency) =>
+        currencies
+          .filter((toCurrency) => toCurrency !== fromCurrency)
+          .map((toCurrency) => ({ fromCurrency, toCurrency })),
+      ),
+    [currencies],
   );
 
   return (
@@ -93,11 +102,10 @@ export function ExchangeRatesModal({
                         fromCurrency,
                         toCurrency,
                       );
-                      const exchangeRate = exchangeRates.find(
-                        (item) =>
-                          item.from_currency === fromCurrency &&
-                          item.to_currency === toCurrency,
-                      );
+                      const exchangeRate =
+                        exchangeRateLookup.get(
+                          `${fromCurrency}:${toCurrency}`,
+                        ) ?? null;
                       const onlineValue = formatExchangeRateValue(
                         exchangeRate?.provider_rate ?? exchangeRate?.rate,
                       );

@@ -19,11 +19,14 @@ import {
   transactionTone,
 } from "@/lib/transaction-display";
 import type { Account, Budget, MonthlySummary, Transaction } from "@/lib/types";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 export default function DashboardPage() {
   const session = useSessionQuery();
   const month = currentMonthInput();
   const monthDate = monthInputToDate(month);
+  const showDesktopTransactions = useMediaQuery("(min-width: 640px)");
+  const isSessionReady = Boolean(session.data);
 
   const summaryQuery = useQuery({
     queryKey: ["dashboard", "summary", monthDate],
@@ -31,27 +34,31 @@ export default function DashboardPage() {
       api.get<MonthlySummary>(
         `/transactions/summary/month?month=${encodeURIComponent(monthDate)}`,
       ),
+    enabled: isSessionReady,
   });
 
   const accountsQuery = useQuery({
     queryKey: ["dashboard", "accounts"],
     queryFn: () => api.get<Account[]>("/accounts"),
+    enabled: isSessionReady,
   });
 
   const budgetsQuery = useQuery({
     queryKey: ["dashboard", "budgets", monthDate],
     queryFn: () =>
       api.get<Budget[]>(`/budgets?month=${encodeURIComponent(monthDate)}`),
+    enabled: isSessionReady,
   });
 
   const transactionsQuery = useQuery({
     queryKey: ["dashboard", "transactions"],
-    queryFn: () => api.get<Transaction[]>("/transactions"),
+    queryFn: () => api.get<Transaction[]>("/transactions?limit=20"),
+    enabled: isSessionReady,
   });
 
   const currency = session.data?.currency || "USD";
   const summary = summaryQuery.data;
-  const recentTransactions = (transactionsQuery.data || []).slice(0, 20);
+  const recentTransactions = transactionsQuery.data || [];
   const topBudgets = (budgetsQuery.data || []).slice(0, 4);
 
   return (
@@ -93,99 +100,92 @@ export default function DashboardPage() {
             <Badge tone="neutral">{recentTransactions.length} shown</Badge>
           </div>
 
-          <div className="space-y-3 sm:hidden">
-            {recentTransactions.length ? (
-              recentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-white">
-                        {transaction.category}
-                      </div>
-                      <div className="mt-1 text-xs text-mist">
-                        {transaction.account_name || "Cash"} ·{" "}
-                        {formatDate(transaction.date)}
-                      </div>
-                    </div>
-                    <div
-                      className={cn(
-                        "shrink-0 text-right font-semibold",
-                        transactionAmountClass(transaction.display_type),
-                      )}
-                    >
-                      {formatCurrency(
-                        transaction.amount,
-                        transaction.account_currency || currency,
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <Badge tone={transactionTone(transaction.display_type)}>
-                      {transaction.display_type}
-                    </Badge>
-                    {transaction.note ? (
-                      <span className="truncate text-xs text-mist">
-                        {transaction.note}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">
-                <div className="font-medium text-white">
-                  No transactions yet
-                </div>
-                <p className="mt-1 text-sm text-mist">
-                  Create your first income, expense, or transfer to bring the
-                  dashboard to life.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="table-shell hidden sm:block">
-            <table className="w-full min-w text-left text-sm">
-              <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
-                <tr>
-                  <th className="px-3 py-3 font-medium sm:px-4">Category</th>
-                  <th className="px-3 py-3 font-medium sm:px-4">Account</th>
-                  <th className="px-3 py-3 font-medium sm:px-4">Date</th>
-                  <th className="px-3 py-3 text-right font-medium sm:px-4">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.length ? (
-                  recentTransactions.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
-                    >
-                      <td className="px-3 py-4 sm:px-4">
+          {showDesktopTransactions ? (
+            <div className="table-shell">
+              <table className="w-full min-w-[680px] text-left text-sm">
+                <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
+                  <tr>
+                    <th className="px-3 py-3 font-medium sm:px-4">Category</th>
+                    <th className="px-3 py-3 font-medium sm:px-4">Account</th>
+                    <th className="px-3 py-3 font-medium sm:px-4">Date</th>
+                    <th className="px-3 py-3 text-right font-medium sm:px-4">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTransactions.length ? (
+                    recentTransactions.map((transaction) => (
+                      <tr
+                        key={transaction.id}
+                        className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
+                      >
+                        <td className="px-3 py-4 sm:px-4">
+                          <div className="font-medium text-white">
+                            {transaction.category}
+                          </div>
+                          {transaction.note ? (
+                            <div className="mt-1 text-xs text-mist">
+                              {transaction.note}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-4 text-mist sm:px-4">
+                          {transaction.account_name || "Cash"}
+                        </td>
+                        <td className="px-3 py-4 text-mist sm:px-4">
+                          {formatDate(transaction.date)}
+                        </td>
+                        <td
+                          className={cn(
+                            "px-3 py-4 text-right font-medium sm:px-4",
+                            transactionAmountClass(transaction.display_type),
+                          )}
+                        >
+                          {formatCurrency(
+                            transaction.amount,
+                            transaction.account_currency || currency,
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="px-4 py-7" colSpan={4}>
                         <div className="font-medium text-white">
+                          No transactions yet
+                        </div>
+                        <p className="mt-1 text-sm text-mist">
+                          Create your first income, expense, or transfer to
+                          bring the dashboard to life.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentTransactions.length ? (
+                recentTransactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-white">
                           {transaction.category}
                         </div>
-                        {transaction.note ? (
-                          <div className="mt-1 text-xs text-mist">
-                            {transaction.note}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-4 text-mist sm:px-4">
-                        {transaction.account_name || "Cash"}
-                      </td>
-                      <td className="px-3 py-4 text-mist sm:px-4">
-                        {formatDate(transaction.date)}
-                      </td>
-                      <td
+                        <div className="mt-1 text-xs text-mist">
+                          {transaction.account_name || "Cash"} ·{" "}
+                          {formatDate(transaction.date)}
+                        </div>
+                      </div>
+                      <div
                         className={cn(
-                          "px-3 py-4 text-right font-medium sm:px-4",
+                          "shrink-0 text-right font-semibold",
                           transactionAmountClass(transaction.display_type),
                         )}
                       >
@@ -193,25 +193,34 @@ export default function DashboardPage() {
                           transaction.amount,
                           transaction.account_currency || currency,
                         )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="px-4 py-7" colSpan={5}>
-                      <div className="font-medium text-white">
-                        No transactions yet
                       </div>
-                      <p className="mt-1 text-sm text-mist">
-                        Create your first income, expense, or transfer to bring
-                        the dashboard to life.
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <Badge tone={transactionTone(transaction.display_type)}>
+                        {transaction.display_type}
+                      </Badge>
+                      {transaction.note ? (
+                        <span className="truncate text-xs text-mist">
+                          {transaction.note}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <div className="font-medium text-white">
+                    No transactions yet
+                  </div>
+                  <p className="mt-1 text-sm text-mist">
+                    Create your first income, expense, or transfer to bring the
+                    dashboard to life.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
 
         <div className="space-y-6">

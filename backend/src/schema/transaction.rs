@@ -95,6 +95,9 @@ pub struct TransactionFilters {
         example = "2026-05-31"
     )]
     pub end_date: Option<String>,
+    /// Maximum number of transactions to return.
+    #[param(example = 20, minimum = 1, maximum = 200)]
+    pub limit: Option<u32>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

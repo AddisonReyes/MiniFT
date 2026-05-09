@@ -164,7 +164,7 @@ export function AppShell({
   );
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-3 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8 xl:pb-0">
+    <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-3 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8 lg:pb-0">
       <header className="mb-5 space-y-4 sm:mb-6 sm:space-y-5">
         <div className="flex items-center justify-between gap-3">
           <BrandLink
@@ -172,7 +172,7 @@ export function AppShell({
             onClick={() => setMobileNavOpen(false)}
           />
 
-          <nav className="hidden rounded-full border border-white/10 bg-ink/55 p-1 shadow-soft backdrop-blur xl:flex xl:items-center xl:gap-1">
+          <nav className="hidden rounded-full border border-white/10 bg-ink/55 p-1 shadow-soft backdrop-blur lg:flex lg:items-center lg:gap-1">
             {navigation.map((item) => {
               const active = pathname === item.href;
 
@@ -192,7 +192,7 @@ export function AppShell({
               );
             })}
           </nav>
-          <div className="inline-flex rounded-full border border-white/10 bg-ink/55 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-mist shadow-soft backdrop-blur xl:hidden">
+          <div className="inline-flex rounded-full border border-white/10 bg-ink/55 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-mist shadow-soft backdrop-blur lg:hidden">
             {currentItem?.label ?? "Workspace"}
           </div>
         </div>
@@ -218,17 +218,17 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="min-w-0 flex-1 pb-4 sm:pb-6 xl:pb-10">{children}</main>
+      <main className="min-w-0 flex-1 pb-4 sm:pb-6 lg:pb-10">{children}</main>
 
       {isMobileNavOpen ? (
         <>
           <button
             aria-label="Close more navigation"
-            className="fixed inset-0 z-30 bg-ink/25 backdrop-blur-[1px] xl:hidden"
+            className="fixed inset-0 z-30 bg-ink/25 backdrop-blur-[1px] lg:hidden"
             type="button"
             onClick={() => setMobileNavOpen(false)}
           />
-          <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-3 xl:hidden">
+          <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-3 lg:hidden">
             <div
               id="mobile-navigation"
               className="mx-auto grid max-w-md gap-2 rounded-[24px] border border-white/10 bg-ink/92 p-2 shadow-panel backdrop-blur-xl"
@@ -260,7 +260,7 @@ export function AppShell({
         </>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[rgba(9,12,17,0.92)] backdrop-blur-xl xl:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[rgba(9,12,17,0.92)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-2 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2">
           {primaryNavigation.map((item) => {
             const active = pathname === item.href;

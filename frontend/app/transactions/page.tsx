@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
+import dynamic from "next/dynamic";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { PageFrame } from "@/components/page-frame";
 import { Button, Card } from "@/components/ui";
-import { RecurringFormModal } from "@/components/transactions/recurring-form-modal";
 import { RecurringRulesSection } from "@/components/transactions/recurring-rules";
 import { TransactionFiltersCard } from "@/components/transactions/transaction-filters";
-import { TransactionFormModal } from "@/components/transactions/transaction-form-modal";
 import { TransactionListSection } from "@/components/transactions/transaction-list";
-import { TransferFormModal } from "@/components/transactions/transfer-form-modal";
 import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import {
@@ -28,6 +26,31 @@ import type {
   Transaction,
   TransactionType,
 } from "@/lib/types";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+
+const TransactionFormModal = dynamic(
+  () =>
+    import("@/components/transactions/transaction-form-modal").then(
+      (module) => module.TransactionFormModal,
+    ),
+  { ssr: false },
+);
+
+const TransferFormModal = dynamic(
+  () =>
+    import("@/components/transactions/transfer-form-modal").then(
+      (module) => module.TransferFormModal,
+    ),
+  { ssr: false },
+);
+
+const RecurringFormModal = dynamic(
+  () =>
+    import("@/components/transactions/recurring-form-modal").then(
+      (module) => module.RecurringFormModal,
+    ),
+  { ssr: false },
+);
 
 function getQueryErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message : fallbackMessage;
@@ -50,22 +73,30 @@ export default function TransactionsPage() {
   );
   const [transferForm, setTransferForm] = useState(createTransferForm);
   const [recurringForm, setRecurringForm] = useState(createRecurringForm);
+  const debouncedFilters = useDebouncedValue(filters, 250);
+  const isSessionReady = Boolean(session.data);
 
-  const transactionQueryPath = createTransactionQueryPath(filters);
+  const transactionQueryPath = createTransactionQueryPath(debouncedFilters);
 
   const accountsQuery = useQuery({
     queryKey: ["transactions", "accounts"],
     queryFn: () => api.get<Account[]>("/accounts"),
+    enabled: isSessionReady,
+    placeholderData: (previousData) => previousData,
   });
 
   const transactionsQuery = useQuery({
     queryKey: ["transactions", transactionQueryPath],
     queryFn: () => api.get<Transaction[]>(transactionQueryPath),
+    enabled: isSessionReady,
+    placeholderData: (previousData) => previousData,
   });
 
   const recurringQuery = useQuery({
     queryKey: ["transactions", "recurring"],
     queryFn: () => api.get<RecurringTransaction[]>("/recurring-transactions"),
+    enabled: isSessionReady,
+    placeholderData: (previousData) => previousData,
   });
 
   async function refreshTransactionsWorkspace() {
@@ -280,9 +311,15 @@ export default function TransactionsPage() {
       <TransactionFiltersCard
         filters={filters}
         accounts={accounts}
-        onReset={() => setFilters(createTransactionFilters())}
+        onReset={() =>
+          startTransition(() => {
+            setFilters(createTransactionFilters());
+          })
+        }
         onChange={(patch) =>
-          setFilters((current) => ({ ...current, ...patch }))
+          startTransition(() => {
+            setFilters((current) => ({ ...current, ...patch }));
+          })
         }
       />
 
@@ -335,55 +372,61 @@ export default function TransactionsPage() {
         }}
       />
 
-      <TransactionFormModal
-        open={isTransactionModalOpen}
-        editingTransaction={editingTransaction}
-        form={transactionForm}
-        accounts={accounts}
-        isPending={transactionMutation.isPending}
-        error={transactionMutation.error}
-        onChange={(patch) =>
-          setTransactionForm((current) => ({
-            ...current,
-            ...patch,
-          }))
-        }
-        onClose={closeTransactionModal}
-        onSubmit={() => transactionMutation.mutate()}
-      />
+      {isTransactionModalOpen ? (
+        <TransactionFormModal
+          open
+          editingTransaction={editingTransaction}
+          form={transactionForm}
+          accounts={accounts}
+          isPending={transactionMutation.isPending}
+          error={transactionMutation.error}
+          onChange={(patch) =>
+            setTransactionForm((current) => ({
+              ...current,
+              ...patch,
+            }))
+          }
+          onClose={closeTransactionModal}
+          onSubmit={() => transactionMutation.mutate()}
+        />
+      ) : null}
 
-      <TransferFormModal
-        open={isTransferModalOpen}
-        form={transferForm}
-        accounts={accounts}
-        isPending={transferMutation.isPending}
-        error={transferMutation.error}
-        onChange={(patch) =>
-          setTransferForm((current) => ({
-            ...current,
-            ...patch,
-          }))
-        }
-        onClose={closeTransferModal}
-        onSubmit={() => transferMutation.mutate()}
-      />
+      {isTransferModalOpen ? (
+        <TransferFormModal
+          open
+          form={transferForm}
+          accounts={accounts}
+          isPending={transferMutation.isPending}
+          error={transferMutation.error}
+          onChange={(patch) =>
+            setTransferForm((current) => ({
+              ...current,
+              ...patch,
+            }))
+          }
+          onClose={closeTransferModal}
+          onSubmit={() => transferMutation.mutate()}
+        />
+      ) : null}
 
-      <RecurringFormModal
-        open={isRecurringModalOpen}
-        editingLabel={editingRecurring?.category}
-        form={recurringForm}
-        accounts={accounts}
-        isPending={recurringMutation.isPending}
-        error={recurringMutation.error}
-        onChange={(patch) =>
-          setRecurringForm((current) => ({
-            ...current,
-            ...patch,
-          }))
-        }
-        onClose={closeRecurringModal}
-        onSubmit={() => recurringMutation.mutate()}
-      />
+      {isRecurringModalOpen ? (
+        <RecurringFormModal
+          open
+          editingLabel={editingRecurring?.category}
+          form={recurringForm}
+          accounts={accounts}
+          isPending={recurringMutation.isPending}
+          error={recurringMutation.error}
+          onChange={(patch) =>
+            setRecurringForm((current) => ({
+              ...current,
+              ...patch,
+            }))
+          }
+          onClose={closeRecurringModal}
+          onSubmit={() => recurringMutation.mutate()}
+        />
+      ) : null}
     </PageFrame>
   );
 }

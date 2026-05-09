@@ -92,6 +92,7 @@ pub async fn list_transactions(
     let account_filter = filters.account_id;
     let start_date_filter = filters.start_date.clone();
     let end_date_filter = filters.end_date.clone();
+    let limit_filter = filters.limit.map(|limit| limit.clamp(1, 200));
     let mut builder = QueryBuilder::<Postgres>::new(
         "SELECT
             t.id,
@@ -146,6 +147,11 @@ pub async fn list_transactions(
 
     builder.push(" ORDER BY t.date DESC, t.created_at DESC");
 
+    if let Some(limit) = limit_filter {
+        builder.push(" LIMIT ");
+        builder.push_bind(i64::from(limit));
+    }
+
     let rows = builder
         .build_query_as::<TransactionRow>()
         .fetch_all(pool)
@@ -163,6 +169,7 @@ pub async fn list_transactions(
             field("account_id_filter", account_filter),
             field("start_date_filter", start_date_filter),
             field("end_date_filter", end_date_filter),
+            field("limit_filter", limit_filter),
         ],
     );
 

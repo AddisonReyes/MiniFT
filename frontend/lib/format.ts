@@ -1,5 +1,21 @@
 import type { MoneyValue } from "@/lib/types";
 
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
 function padDatePart(value: number): string {
   return String(value).padStart(2, "0");
 }
@@ -28,13 +44,24 @@ export function toNumber(value: MoneyValue): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function getCurrencyFormatter(currency: string) {
+  let formatter = currencyFormatters.get(currency);
+
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    currencyFormatters.set(currency, formatter);
+  }
+
+  return formatter;
+}
+
 export function formatCurrency(value: MoneyValue, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(toNumber(value));
+  return getCurrencyFormatter(currency).format(toNumber(value));
 }
 
 export function formatDate(value: string): string {
@@ -44,11 +71,7 @@ export function formatDate(value: string): string {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(parsed.year, parsed.month - 1, parsed.day));
+  return dateFormatter.format(new Date(parsed.year, parsed.month - 1, parsed.day));
 }
 
 export function formatDateTime(value: string): string {
@@ -58,13 +81,7 @@ export function formatDateTime(value: string): string {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  return dateTimeFormatter.format(date);
 }
 
 export function monthInputToDate(month: string): string {

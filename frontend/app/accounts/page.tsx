@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { ExchangeRatesModal } from "@/components/accounts/exchange-rates-modal";
 import { FormError } from "@/components/form-error";
 import { PageFrame } from "@/components/page-frame";
 import { SummaryCard } from "@/components/summary-card";
@@ -21,7 +21,8 @@ import {
   ACCOUNT_TYPE_OPTIONS,
   buildTrackedCurrencyOptions,
   buildCurrencyOptions,
-  convertMoneyValue,
+  convertMoneyValueWithLookup,
+  createExchangeRateLookup,
   createExchangeRateAutoValues,
   createExchangeRateFormValues,
   createExchangeRateManualValues,
@@ -29,7 +30,7 @@ import {
   getTrackedCurrencies,
   readExchangeRateFormValue,
   readExchangeRateManualValue,
-  summarizeAccounts,
+  summarizeAccountsWithLookup,
   writeExchangeRateFormValue,
   writeExchangeRateManualValue,
 } from "@/lib/accounts";
@@ -37,6 +38,17 @@ import { ApiError, api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import { formatCurrency, toNumber } from "@/lib/format";
 import type { Account, AccountType, ExchangeRate } from "@/lib/types";
+
+const ExchangeRatesModal = dynamic(
+  () =>
+    import("@/components/accounts/exchange-rates-modal").then(
+      (module) => module.ExchangeRatesModal,
+    ),
+  { ssr: false },
+);
+
+const EMPTY_ACCOUNTS: Account[] = [];
+const EMPTY_EXCHANGE_RATES: ExchangeRate[] = [];
 
 function createInitialForm(defaultCurrency: string) {
   return {
@@ -62,6 +74,7 @@ function appendMissingRatesMeta(base: string, missingCount: number) {
 export default function AccountsPage() {
   const session = useSessionQuery();
   const defaultCurrency = session.data?.currency || "USD";
+  const isSessionReady = Boolean(session.data);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isExchangeRatesOpen, setExchangeRatesOpen] = useState(false);
@@ -77,36 +90,58 @@ export default function AccountsPage() {
   const accountsQuery = useQuery({
     queryKey: ["accounts"],
     queryFn: () => api.get<Account[]>("/accounts"),
+    enabled: isSessionReady,
+    placeholderData: (previousData) => previousData,
   });
 
-  const accounts = accountsQuery.data ?? [];
-  const requestedCurrencies = buildTrackedCurrencyOptions([
-    defaultCurrency,
-    ...accounts.map((account) => account.currency),
-  ]);
-  const exchangeRatesPath =
-    requestedCurrencies.length > 1
-      ? `/exchange-rates?currencies=${encodeURIComponent(
-          requestedCurrencies.join(","),
-        )}`
-      : "/exchange-rates";
+  const accounts = accountsQuery.data ?? EMPTY_ACCOUNTS;
+  const requestedCurrencies = useMemo(
+    () =>
+      buildTrackedCurrencyOptions([
+        defaultCurrency,
+        ...accounts.map((account) => account.currency),
+      ]),
+    [accounts, defaultCurrency],
+  );
+  const exchangeRatesPath = useMemo(
+    () =>
+      requestedCurrencies.length > 1
+        ? `/exchange-rates?currencies=${encodeURIComponent(
+            requestedCurrencies.join(","),
+          )}`
+        : "/exchange-rates",
+    [requestedCurrencies],
+  );
 
   const exchangeRatesQuery = useQuery({
     queryKey: ["exchange-rates", requestedCurrencies.join(",")],
     queryFn: () => api.get<ExchangeRate[]>(exchangeRatesPath),
+    enabled: isSessionReady,
+    placeholderData: (previousData) => previousData,
   });
 
-  const exchangeRates = exchangeRatesQuery.data ?? [];
-  const currencies = getTrackedCurrencies(accounts, defaultCurrency);
-  const currencyOptions = buildCurrencyOptions([
-    defaultCurrency,
-    form.currency,
-    ...currencies,
-  ]);
-  const { grossTotal, netTotal, missingCount } = summarizeAccounts(
+  const exchangeRates = exchangeRatesQuery.data ?? EMPTY_EXCHANGE_RATES;
+  const currencies = useMemo(
+    () => getTrackedCurrencies(accounts, defaultCurrency),
+    [accounts, defaultCurrency],
+  );
+  const exchangeRateLookup = useMemo(
+    () => createExchangeRateLookup(exchangeRates),
+    [exchangeRates],
+  );
+  const autoExchangeRateValues = useMemo(
+    () => createExchangeRateAutoValues(currencies, exchangeRates),
+    [currencies, exchangeRates],
+  );
+  const currencyOptions = useMemo(
+    () =>
+      buildCurrencyOptions([defaultCurrency, form.currency, ...currencies]),
+    [currencies, defaultCurrency, form.currency],
+  );
+  const { grossTotal, netTotal, missingCount } = summarizeAccountsWithLookup(
     accounts,
     defaultCurrency,
-    exchangeRates,
+    exchangeRateLookup,
   );
 
   const saveMutation = useMutation({
@@ -266,11 +301,11 @@ export default function AccountsPage() {
           const convertedBalance =
             account.currency === defaultCurrency
               ? toNumber(account.balance)
-              : convertMoneyValue(
+              : convertMoneyValueWithLookup(
                   account.balance,
                   account.currency,
                   defaultCurrency,
-                  exchangeRates,
+                  exchangeRateLookup,
                 );
           const isNegative = toNumber(account.balance) < 0;
 
@@ -436,74 +471,71 @@ export default function AccountsPage() {
         </form>
       </Modal>
 
-      <ExchangeRatesModal
-        open={isExchangeRatesOpen}
-        currencies={currencies}
-        defaultCurrency={defaultCurrency}
-        exchangeRates={exchangeRates}
-        values={exchangeRateForm}
-        manualValues={manualExchangeRateForm}
-        isPending={saveExchangeRatesMutation.isPending}
-        error={saveExchangeRatesMutation.error}
-        onChange={(fromCurrency, toCurrency, value) =>
-          setExchangeRateForm((current) =>
-            writeExchangeRateFormValue(
-              current,
-              fromCurrency,
-              toCurrency,
-              value,
-            ),
-          )
-        }
-        onManualChange={(fromCurrency, toCurrency, value) => {
-          const autoValues = createExchangeRateAutoValues(
-            currencies,
-            exchangeRates,
-          );
-
-          setManualExchangeRateForm((current) =>
-            writeExchangeRateManualValue(
-              current,
-              fromCurrency,
-              toCurrency,
-              value,
-            ),
-          );
-
-          if (!value) {
+      {isExchangeRatesOpen ? (
+        <ExchangeRatesModal
+          open
+          currencies={currencies}
+          defaultCurrency={defaultCurrency}
+          exchangeRates={exchangeRates}
+          values={exchangeRateForm}
+          manualValues={manualExchangeRateForm}
+          isPending={saveExchangeRatesMutation.isPending}
+          error={saveExchangeRatesMutation.error}
+          onChange={(fromCurrency, toCurrency, value) =>
             setExchangeRateForm((current) =>
               writeExchangeRateFormValue(
                 current,
                 fromCurrency,
                 toCurrency,
-                autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
+                value,
+              ),
+            )
+          }
+          onManualChange={(fromCurrency, toCurrency, value) => {
+            setManualExchangeRateForm((current) =>
+              writeExchangeRateManualValue(
+                current,
+                fromCurrency,
+                toCurrency,
+                value,
               ),
             );
-            return;
-          }
 
-          setExchangeRateForm((current) => {
-            const currentValue = readExchangeRateFormValue(
-              current,
-              fromCurrency,
-              toCurrency,
-            ).trim();
-
-            if (currentValue) {
-              return current;
+            if (!value) {
+              setExchangeRateForm((current) =>
+                writeExchangeRateFormValue(
+                  current,
+                  fromCurrency,
+                  toCurrency,
+                  autoExchangeRateValues[`${fromCurrency}:${toCurrency}`] ?? "",
+                ),
+              );
+              return;
             }
 
-            return writeExchangeRateFormValue(
-              current,
-              fromCurrency,
-              toCurrency,
-              autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
-            );
-          });
-        }}
-        onClose={closeExchangeRatesModal}
-        onSubmit={() => saveExchangeRatesMutation.mutate()}
-      />
+            setExchangeRateForm((current) => {
+              const currentValue = readExchangeRateFormValue(
+                current,
+                fromCurrency,
+                toCurrency,
+              ).trim();
+
+              if (currentValue) {
+                return current;
+              }
+
+              return writeExchangeRateFormValue(
+                current,
+                fromCurrency,
+                toCurrency,
+                autoExchangeRateValues[`${fromCurrency}:${toCurrency}`] ?? "",
+              );
+            });
+          }}
+          onClose={closeExchangeRatesModal}
+          onSubmit={() => saveExchangeRatesMutation.mutate()}
+        />
+      ) : null}
     </PageFrame>
   );
 }
