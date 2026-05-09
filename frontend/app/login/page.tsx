@@ -7,8 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
 import { Card, Button, Input } from "@/components/ui";
-import { ApiError } from "@/lib/api";
 import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
+import { describeError } from "@/lib/error-message";
 import { sanitizeRedirectTarget } from "@/lib/redirect";
 
 function LoginPageContent() {
@@ -89,9 +89,7 @@ function LoginPageContent() {
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
                 <div className="font-medium">Sign in failed</div>
                 <p className="mt-1 text-hazard/90">
-                  {mutation.error instanceof ApiError
-                    ? mutation.error.message
-                    : "Unable to sign in"}
+                  {describeError(mutation.error, "Unable to sign in")}
                 </p>
               </div>
             ) : null}

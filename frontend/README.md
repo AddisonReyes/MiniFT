@@ -53,6 +53,7 @@ cp .env.example .env
 npm ci
 npm run android:sync
 npm run android:emulator
+npm run android:reverse
 npm run android:open
 ```
 
@@ -64,6 +65,9 @@ This repo exports the frontend to `out/`, and Capacitor copies that build into
   restarts `adb` with your local private key, uses a safer GPU mode by default,
   and skips Quick Boot snapshot restore to avoid corrupted-snapshot startup
   failures.
+- `npm run android:reverse` maps the emulator's `localhost:8000` back to the
+  backend running on your machine. Run this before pressing Run in Android
+  Studio when `NEXT_PUBLIC_API_BASE_URL` points at `http://localhost:8000/api`.
 - `npm run android:adb-reset` manually restarts `adb` with the same SDK and key
   configuration if the emulator ever shows up as `offline` or `unauthorized`.
 - `npm run android:avd-fix` rewrites the selected AVD with safer defaults for
@@ -121,6 +125,9 @@ If an AVD gets into a bad state, add `ANDROID_EMULATOR_FLAGS=-wipe-data` to
 
 - Capacitor Android serves the app from `http://localhost`, so the backend must
   allow that origin in `CORS_ALLOWED_ORIGINS`.
+- Capacitor 8 defaults Android to `https://localhost`, but this repo overrides
+  the Android scheme to `http` in `capacitor.config.ts` so local cookie auth
+  stays same-site with `http://localhost:8000/api`.
 - If you test against a deployed backend over HTTPS, use
   `AUTH_COOKIE_SECURE=true` and `AUTH_COOKIE_SAME_SITE=none` so cookie auth
   continues to work inside the Android WebView.
@@ -135,7 +142,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - Build command: `npm run build`
 - Build output directory: `out`
 - Required build env: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
-- Backend env: `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000"]`
+- Backend env: `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000","http://localhost","https://localhost"]`
 - Backend env: `AUTH_COOKIE_SECURE=true`
 - Backend env: `AUTH_COOKIE_SAME_SITE=none`
 
@@ -145,6 +152,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - The frontend authenticates with HttpOnly cookies and automatically retries requests after a successful refresh.
 - Since the app is exported as static HTML, protected pages are enforced after the client-side session check rather than by a server render.
 - The backend must allow cross-origin requests from the Cloudflare Pages site and expose cookies with `AUTH_COOKIE_SECURE=true` plus `AUTH_COOKIE_SAME_SITE=none` in production.
+- If the Android app also talks to that deployed backend, the backend must also allow the localhost WebView origins. This repo uses `http://localhost` for Android, but allowing `https://localhost` too keeps stale native builds from failing CORS preflight.
 - Cookie auth requires explicit backend origins. Do not expect wildcard CORS to work for authenticated browser requests.
 - `/accounts` converts gross and net totals into the user's default currency using Frankfurter daily rates unless a pair is manually overridden.
 - `/settings` lets users change their default currency without re-registering.

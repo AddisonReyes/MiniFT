@@ -128,12 +128,13 @@ Build the frontend from `frontend/` with:
 
 Set the Railway backend allowlist with:
 
-- `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000"]`
+- `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000","http://localhost","https://localhost"]`
 - `AUTH_COOKIE_SECURE=true`
 - `AUTH_COOKIE_SAME_SITE=none`
 - `AUTH_COOKIE_DOMAIN=` optionally set to your API cookie domain when your production setup requires it
 
 The backend must use an explicit origin allowlist for cookie auth. Avoid `CORS_ALLOWED_ORIGINS=["*"]` in production.
+If you also package the frontend with Capacitor for Android against the same deployed backend, keep the localhost WebView origins in that allowlist. This repo pins Android to `http://localhost`, but allowing both `http://localhost` and `https://localhost` is safer during migrations and rebuilds.
 
 ## Local Development Without Docker
 

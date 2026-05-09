@@ -6,9 +6,9 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Card, Button, Input, Select } from "@/components/ui";
-import { ApiError } from "@/lib/api";
 import { register, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
+import { describeError } from "@/lib/error-message";
 import { sanitizeRedirectTarget } from "@/lib/redirect";
 
 function RegisterPageContent() {
@@ -105,9 +105,7 @@ function RegisterPageContent() {
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
                 <div className="font-medium">Registration failed</div>
                 <p className="mt-1 text-hazard/90">
-                  {mutation.error instanceof ApiError
-                    ? mutation.error.message
-                    : "Unable to register"}
+                  {describeError(mutation.error, "Unable to register")}
                 </p>
               </div>
             ) : null}

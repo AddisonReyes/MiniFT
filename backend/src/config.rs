@@ -109,7 +109,10 @@ pub struct CorsConfig {
 impl CorsConfig {
     pub fn from_env() -> Self {
         let raw_origins = env::var("CORS_ALLOWED_ORIGINS")
-            .unwrap_or_else(|_| "[\"http://localhost:3000\"]".to_string());
+            .unwrap_or_else(|_| {
+                "[\"http://localhost:3000\",\"http://localhost\",\"https://localhost\"]"
+                    .to_string()
+            });
 
         Self {
             allowed_origins: parse_allowed_origins(&raw_origins),

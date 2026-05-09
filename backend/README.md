@@ -22,7 +22,7 @@ SEED_DEV_DATA=false
 FRANKFURTER_ENABLED=true
 FRANKFURTER_API_BASE_URL=https://api.frankfurter.dev/v2
 FRANKFURTER_TIMEOUT_SECONDS=10
-CORS_ALLOWED_ORIGINS=["http://localhost:3000","http://localhost","https://minift.pages.dev"]
+CORS_ALLOWED_ORIGINS=["http://localhost:3000","http://localhost","https://localhost","https://minift.pages.dev"]
 ROCKET_ADDRESS=0.0.0.0
 ROCKET_PORT=8000
 ```
@@ -33,7 +33,7 @@ Frankfurter is used as the default online exchange-rate provider. Leave it enabl
 `ACCESS_COOKIE_NAME` and `REFRESH_COOKIE_NAME` are optional overrides for the auth cookie names.
 
 `CORS_ALLOWED_ORIGINS` accepts a JSON array of allowed frontend origins. Trailing slashes are normalized, so `http://localhost:3000/` and `http://localhost:3000` are treated the same.
-For Capacitor Android testing, also allow `http://localhost`, which is the WebView origin used by the app shell.
+For Capacitor Android testing, allow the localhost WebView origins used by the app shell. This repo pins Android to `http://localhost`, but keeping both `http://localhost` and `https://localhost` in the allowlist makes local and migrated builds more forgiving.
 For cross-origin production deployments such as Cloudflare Pages calling Railway, set `AUTH_COOKIE_SECURE=true` and `AUTH_COOKIE_SAME_SITE=none` so the browser will send auth cookies with API requests. Set `AUTH_COOKIE_DOMAIN` only when you intentionally need to scope cookies to a specific production domain.
 
 ## Run Locally
