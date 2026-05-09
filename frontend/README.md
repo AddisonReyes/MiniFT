@@ -14,6 +14,13 @@ Next.js App Router frontend for MiniFT. It renders the public landing page, prot
 - `/reports`: protected monthly reporting.
 - `/settings`: protected profile/session settings, including default currency.
 
+## Navigation Behavior
+
+- Desktop web uses the top navigation in the upper-right area of `AppShell`.
+- Web below `lg` switches that desktop nav to a compact `Menu` button instead of wrapping pills onto multiple lines.
+- Native Android uses the bottom navigation bar plus the secondary-route sheet opened from the `more` action.
+- The mobile bottom bar is intentionally native-only. A narrow desktop browser should still behave like web, not like the native shell.
+
 ## Environment Variables
 
 ```bash
@@ -157,4 +164,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - `/accounts` converts gross and net totals into the user's default currency using Frankfurter daily rates unless a pair is manually overridden.
 - `/settings` lets users change their default currency without re-registering.
 - Shared UI primitives live in `components/`; reusable product widgets include `BrandLink`, `SiteFooter`, `MonthPicker`, and `FinanceSnapshot`.
-- Read [DESIGN.md](/home/dakotitah/github/MiniFT/frontend/DESIGN.md) before making substantial UI changes so new work stays aligned with the product's visual language.
+- Shared frontend perf helpers live in `lib/`, including platform detection, debounced filter state, and media-query-based responsive branching.
+- Prefer real conditional rendering for mobile vs desktop data views instead of mounting both branches and hiding one with CSS alone.
+- The dashboard intentionally fetches only the recent transaction slice it displays, and transaction filters debounce network churn during typing.
+- Read [DESIGN.md](./DESIGN.md) before making substantial UI changes so new work stays aligned with the product's visual language.

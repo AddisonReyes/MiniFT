@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { BrandLink } from "@/components/brand-link";
 import { cn } from "@/components/ui";
+import { isNativeAppShell } from "@/lib/platform";
 
 type NavigationIcon =
   | "home"
@@ -15,6 +16,7 @@ type NavigationIcon =
   | "budgets"
   | "reports"
   | "settings"
+  | "menu"
   | "more";
 
 const navigation = [
@@ -128,6 +130,14 @@ function NavIcon({
           <circle cx="11" cy="18" r="2" />
         </svg>
       );
+    case "menu":
+      return (
+        <svg {...props}>
+          <path d="M4 7h16" />
+          <path d="M4 12h16" />
+          <path d="M10 17h10" />
+        </svg>
+      );
     case "more":
       return (
         <svg {...props}>
@@ -152,6 +162,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isCompactWebNavOpen, setCompactWebNavOpen] = useState(false);
   const primaryNavigation = navigation.filter(
     (item) => item.section === "primary",
   );
@@ -162,39 +173,119 @@ export function AppShell({
   const isSecondaryRoute = secondaryNavigation.some(
     (item) => item.href === pathname,
   );
+  const showNativeMobileNavigation = isNativeAppShell();
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-3 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8 lg:pb-0">
+    <div
+      className={cn(
+        "mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8",
+        showNativeMobileNavigation
+          ? "pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:pb-0"
+          : "pb-0",
+      )}
+    >
       <header className="mb-5 space-y-4 sm:mb-6 sm:space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <BrandLink
-            href="/dashboard"
-            onClick={() => setMobileNavOpen(false)}
-          />
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3">
+            <BrandLink
+              href="/dashboard"
+              onClick={() => {
+                setMobileNavOpen(false);
+                setCompactWebNavOpen(false);
+              }}
+            />
 
-          <nav className="hidden rounded-full border border-white/10 bg-ink/55 p-1 shadow-soft backdrop-blur lg:flex lg:items-center lg:gap-1">
-            {navigation.map((item) => {
-              const active = pathname === item.href;
+            <nav
+              className={cn(
+                "hidden rounded-full border border-white/10 bg-ink/55 p-1 shadow-soft backdrop-blur lg:flex lg:items-center lg:gap-1",
+                !showNativeMobileNavigation && "ml-auto",
+              )}
+            >
+              {navigation.map((item) => {
+                const active = pathname === item.href;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "whitespace-nowrap rounded-full px-3 py-2 text-sm transition lg:px-4",
-                    active
-                      ? "bg-white text-ink shadow-sm"
-                      : "text-mist hover:bg-white/[0.06] hover:text-white",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="inline-flex rounded-full border border-white/10 bg-ink/55 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-mist shadow-soft backdrop-blur lg:hidden">
-            {currentItem?.label ?? "Workspace"}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "whitespace-nowrap rounded-full px-3 py-2 text-sm transition lg:px-4",
+                      active
+                        ? "bg-white text-ink shadow-sm"
+                        : "text-mist hover:bg-white/[0.06] hover:text-white",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {showNativeMobileNavigation ? (
+              <div className="inline-flex rounded-full border border-white/10 bg-ink/55 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-mist shadow-soft backdrop-blur lg:hidden">
+                {currentItem?.label ?? "Workspace"}
+              </div>
+            ) : (
+              <button
+                aria-controls="compact-web-navigation"
+                aria-expanded={isCompactWebNavOpen}
+                aria-label={
+                  isCompactWebNavOpen
+                    ? "Close navigation menu"
+                    : "Open navigation menu"
+                }
+                className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-ink/55 px-4 py-2 text-sm text-mist shadow-soft backdrop-blur transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white lg:hidden"
+                type="button"
+                onClick={() => setCompactWebNavOpen((current) => !current)}
+              >
+                <NavIcon icon="menu" className="h-[18px] w-[18px]" />
+                <span>Menu</span>
+              </button>
+            )}
           </div>
+
+          {!showNativeMobileNavigation && isCompactWebNavOpen ? (
+            <>
+              <button
+                aria-label="Close navigation menu"
+                className="fixed inset-0 z-30 bg-ink/20 backdrop-blur-[1px] lg:hidden"
+                type="button"
+                onClick={() => setCompactWebNavOpen(false)}
+              />
+              <div className="absolute right-0 top-[calc(100%+0.75rem)] z-40 w-full max-w-[19rem] lg:hidden">
+                <div
+                  id="compact-web-navigation"
+                  className="grid gap-2 rounded-[24px] border border-white/10 bg-ink/94 p-2 shadow-panel backdrop-blur-xl"
+                >
+                  {navigation.map((item) => {
+                    const active = pathname === item.href;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setCompactWebNavOpen(false)}
+                        className={cn(
+                          "flex min-h-12 items-center justify-between rounded-[18px] border px-4 py-3 text-sm transition",
+                          active
+                            ? "border-white/20 bg-white text-ink shadow-sm"
+                            : "border-white/10 bg-white/[0.03] text-mist hover:bg-white/[0.08] hover:text-white",
+                        )}
+                      >
+                        <span className="flex items-center gap-3">
+                          <NavIcon
+                            icon={item.icon}
+                            className="h-[18px] w-[18px]"
+                          />
+                          <span>{item.label}</span>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -220,7 +311,7 @@ export function AppShell({
 
       <main className="min-w-0 flex-1 pb-4 sm:pb-6 lg:pb-10">{children}</main>
 
-      {isMobileNavOpen ? (
+      {showNativeMobileNavigation && isMobileNavOpen ? (
         <>
           <button
             aria-label="Close more navigation"
@@ -260,48 +351,56 @@ export function AppShell({
         </>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[rgba(9,12,17,0.92)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-5 gap-2 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2">
-          {primaryNavigation.map((item) => {
-            const active = pathname === item.href;
+      {showNativeMobileNavigation ? (
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[rgba(9,12,17,0.92)] backdrop-blur-xl lg:hidden">
+          <div className="mx-auto grid max-w-xl grid-cols-5 gap-2 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2">
+            {primaryNavigation.map((item) => {
+              const active = pathname === item.href;
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-label={item.label}
-                className={cn(
-                  "flex min-h-12 items-center justify-center rounded-[18px] px-2 py-2 transition",
-                  active
-                    ? "bg-white text-ink shadow-sm"
-                    : "text-mist hover:bg-white/[0.06] hover:text-white",
-                )}
-              >
-                <span className="sr-only">{item.label}</span>
-                <NavIcon icon={item.icon} />
-              </Link>
-            );
-          })}
-          <button
-            aria-controls="mobile-navigation"
-            aria-expanded={isMobileNavOpen}
-            aria-label={isMobileNavOpen ? "Close more navigation" : "Open more navigation"}
-            className={cn(
-              "flex min-h-12 items-center justify-center rounded-[18px] px-2 py-2 transition",
-              isMobileNavOpen || isSecondaryRoute
-                ? "bg-white text-ink shadow-sm"
-                : "text-mist hover:bg-white/[0.06] hover:text-white",
-            )}
-            type="button"
-            onClick={() => setMobileNavOpen((current) => !current)}
-          >
-            <span className="sr-only">
-              {isMobileNavOpen ? "Close more navigation" : "Open more navigation"}
-            </span>
-            <NavIcon icon="more" />
-          </button>
-        </div>
-      </nav>
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-label={item.label}
+                  className={cn(
+                    "flex min-h-12 items-center justify-center rounded-[18px] px-2 py-2 transition",
+                    active
+                      ? "bg-white text-ink shadow-sm"
+                      : "text-mist hover:bg-white/[0.06] hover:text-white",
+                  )}
+                >
+                  <span className="sr-only">{item.label}</span>
+                  <NavIcon icon={item.icon} />
+                </Link>
+              );
+            })}
+            <button
+              aria-controls="mobile-navigation"
+              aria-expanded={isMobileNavOpen}
+              aria-label={
+                isMobileNavOpen
+                  ? "Close more navigation"
+                  : "Open more navigation"
+              }
+              className={cn(
+                "flex min-h-12 items-center justify-center rounded-[18px] px-2 py-2 transition",
+                isMobileNavOpen || isSecondaryRoute
+                  ? "bg-white text-ink shadow-sm"
+                  : "text-mist hover:bg-white/[0.06] hover:text-white",
+              )}
+              type="button"
+              onClick={() => setMobileNavOpen((current) => !current)}
+            >
+              <span className="sr-only">
+                {isMobileNavOpen
+                  ? "Close more navigation"
+                  : "Open more navigation"}
+              </span>
+              <NavIcon icon="more" />
+            </button>
+          </div>
+        </nav>
+      ) : null}
     </div>
   );
 }

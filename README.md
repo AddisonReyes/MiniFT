@@ -77,6 +77,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 - Public landing page plus protected dashboard workspace
 - Dark-mode-first UI with a subtle ledger-grid background
+- Platform-aware app shell: desktop web uses top-right navigation, compact web uses a menu button instead of wrapping nav pills, and the native Android shell uses a bottom navigation bar
 - `/accounts` shows gross and net totals in the user's default currency, per-account currencies, and an editable conversions modal with Frankfurter-backed daily rates plus manual overrides
 - `/settings` lets users update their default currency after registration
 - Static HTML export compatible with Cloudflare Pages
@@ -84,6 +85,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 - CRUD screens for accounts, transactions, budgets, and recurring transactions
 - Reports page for monthly totals and category breakdowns
 - Shared UI widgets for branding, footer, finance snapshots, month picking, and transaction display styles
+- Responsive data views favor real conditional rendering over CSS-only hiding, debounce transaction filters, and lazy-load heavy modals to keep mobile interactions smoother
 - `frontend/DESIGN.md` documents the design language for future UI work
 
 ## Testing
@@ -96,7 +98,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 Backend integration tests try `TEST_DATABASE_URL` first and then `DATABASE_URL`. If neither points to a reachable PostgreSQL instance, those integration tests exit early without failing.
 
-GitHub Actions mirrors this baseline in [.github/workflows/ci.yml](/home/dakotitah/github/MiniFT/.github/workflows/ci.yml).
+GitHub Actions mirrors this baseline in [.github/workflows/ci.yml](./.github/workflows/ci.yml).
 
 ## API Documentation
 
@@ -138,7 +140,7 @@ If you also package the frontend with Capacitor for Android against the same dep
 
 ## Local Development Without Docker
 
-- Copy [backend/.env.example](/home/dakotitah/github/MiniFT/backend/.env.example) to `backend/.env` and adjust values if needed.
-- Copy [frontend/.env.example](/home/dakotitah/github/MiniFT/frontend/.env.example) to `frontend/.env`.
-- Backend instructions: [backend/README.md](/home/dakotitah/github/MiniFT/backend/README.md)
-- Frontend instructions: [frontend/README.md](/home/dakotitah/github/MiniFT/frontend/README.md)
+- Copy [backend/.env.example](./backend/.env.example) to `backend/.env` and adjust values if needed.
+- Copy [frontend/.env.example](./frontend/.env.example) to `frontend/.env`.
+- Backend instructions: [backend/README.md](./backend/README.md)
+- Frontend instructions: [frontend/README.md](./frontend/README.md)

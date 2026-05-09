@@ -9,7 +9,9 @@ MiniFT is a two-app repository:
 - Auth model: the backend issues `HttpOnly` access and refresh cookies, persists rotated refresh sessions in PostgreSQL, and exposes session-aware auth routes under `/api/auth/*`.
 - Frontend route intent: `/` is the public landing page; `/dashboard`, `/transactions`, `/accounts`, `/budgets`, `/reports`, and `/settings` are protected app routes wrapped by `PageFrame`.
 - Frontend deployment note: `frontend/` is exported as static HTML, so protected app routes are guarded after the client session check rather than by server-side rendering.
+- Frontend shell intent: desktop web uses the top-right nav in `AppShell`; compact web swaps that nav for a `Menu` button panel below `lg`; native mobile keeps the bottom navigation bar and secondary-route sheet.
 - Shared frontend widgets should live in `frontend/components/`. Prefer reusing existing primitives such as `BrandLink`, `SiteFooter`, `MonthPicker`, `SummaryCard`, `FinanceSnapshot`, and `components/ui.tsx` before creating page-local duplicates.
+- Shared frontend interaction helpers live in `frontend/lib/`, including `useMediaQuery`, `useDebouncedValue`, platform detection, and view/state formatting helpers.
 - Read `frontend/DESIGN.md` before making substantial UI changes. It captures the current visual language, component priorities, and design constraints for agents.
 - Tooling files: `frontend/eslint.config.mjs` configures frontend linting, and `.github/workflows/ci.yml` mirrors the default CI verification pipeline.
 - Root files: `docker-compose.yml` wires local services together; `README.md` documents the full-stack setup.
@@ -35,6 +37,10 @@ Use 4-space indentation in Rust and 2-space indentation in TypeScript, JSX, JSON
 Write code for human readers first: prefer clear names, small functions, straightforward control flow, and comments only where intent is not obvious from the code itself. Favor clean, maintainable implementations over clever shortcuts, and follow the existing stack conventions and standard best practices for Rust, React, and SQLx.
 
 For frontend changes, avoid duplicating display logic in pages. Put shared formatting/state-free view helpers in `frontend/lib/` and reusable UI in `frontend/components/`. Keep page files focused on data fetching, mutations, and route-specific composition.
+
+Avoid CSS-only responsive duplication for heavy UI. If mobile and desktop layouts are materially different, prefer rendering one branch at a time with shared helpers such as `useMediaQuery` instead of mounting both and hiding one.
+
+When filter inputs drive network queries, prefer debounced or deferred updates over firing a new request on every keystroke unless the page explicitly needs live-as-you-type behavior.
 
 ## Testing Guidelines
 

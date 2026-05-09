@@ -188,6 +188,7 @@ MiniFT prefers structured, readable layouts over novelty.
 - Keep pages inside a centered max-width container similar to the existing `max-w-7xl` shell.
 - Public pages work best as split layouts: narrative copy on one side, product preview or snapshot on the other.
 - Authenticated routes should follow the `PageFrame` and `AppShell` pattern: top navigation, page label, H1, short supporting description, then content.
+- Responsive navigation is platform-aware: desktop web keeps the top-right nav, compact web uses a menu trigger instead of wrapped nav pills, and the native mobile shell owns the bottom bar experience.
 - Favor one to three strong content groups per screen instead of many small widgets.
 - Use grids for summaries and responsive cards, but keep the visual rhythm relaxed with generous gaps.
 - Prefer tables on desktop when scanning matters, then switch to stacked cards on mobile.
@@ -224,6 +225,7 @@ Use the existing shared building blocks before inventing new local patterns.
 - `Badge` is the semantic pill for counts, transaction types, and status callouts. Keep badge text uppercase and brief.
 - `Modal` is a large dark sheet with a short title, optional subtitle, and a right-aligned action row.
 - `BrandLink` should remain a compact pill-shaped brand marker rather than becoming a full logo lockup.
+- `AppShell` should preserve the current navigation split: full top nav on desktop web, compact menu panel on smaller web widths, and bottom navigation only for the native app shell.
 - `SummaryCard` is the preferred pattern for top-line metrics on dashboard and reports screens.
 - `MonthPicker` is the standard date-period control for monthly views and should stay aligned with page actions when space allows.
 - `FinanceSnapshot` belongs to marketing and auth-adjacent storytelling surfaces. Do not duplicate it inside every product page.
