@@ -52,11 +52,70 @@ Next.js frontend.
 cp .env.example .env
 npm ci
 npm run android:sync
+npm run android:emulator
 npm run android:open
 ```
 
 This repo exports the frontend to `out/`, and Capacitor copies that build into
 `android/` during `android:sync`.
+
+- `npm run android:open` opens the native Android project in Android Studio.
+- `npm run android:emulator` boots the configured Android emulator from `.env`,
+  restarts `adb` with your local private key, uses a safer GPU mode by default,
+  and skips Quick Boot snapshot restore to avoid corrupted-snapshot startup
+  failures.
+- `npm run android:adb-reset` manually restarts `adb` with the same SDK and key
+  configuration if the emulator ever shows up as `offline` or `unauthorized`.
+- `npm run android:avd-fix` rewrites the selected AVD with safer defaults for
+  Linux development: cold boot, software GPU rendering, more RAM, and a larger
+  VM heap.
+
+### Android from terminal only
+
+If you want to avoid Android Studio entirely, you can work from the VS Code
+terminal:
+
+```bash
+npm run android:emulator
+```
+
+Leave that running in one terminal, then use a second terminal for the app:
+
+```bash
+npm run android:run
+```
+
+Useful terminal-only commands:
+
+- `npm run android:devices`: show connected devices and emulators.
+- `npm run android:wait-device`: wait until the emulator is fully booted.
+- `npm run android:reverse`: expose your local backend on emulator `localhost`
+  through `adb reverse` using the ports listed in `ANDROID_REVERSE_PORTS`.
+- `npm run android:build-debug`: export the web app, sync Capacitor, and build
+  the Android debug APK.
+- `npm run android:install-debug`: install the current debug APK on the running
+  emulator.
+- `npm run android:launch`: open the installed app on the running emulator.
+- `npm run android:run`: build, install, and launch in one command.
+- `npm run android:logcat`: stream Android logs for the active device.
+
+If `adb` says the emulator is `unauthorized`, unlock the emulator and accept the
+USB debugging prompt once. After that, `android:run` and `android:logcat`
+should work normally from the terminal.
+
+For local backend development, keep `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api`
+in `frontend/.env` and run:
+
+```bash
+npm run android:reverse
+```
+
+That maps the emulator's `localhost:8000` back to the backend running on your
+machine, which keeps cookie auth much more reliable than pointing the app at
+`10.0.2.2`.
+
+If an AVD gets into a bad state, add `ANDROID_EMULATOR_FLAGS=-wipe-data` to
+`.env`, run `npm run android:emulator` once, and then remove the flag again.
 
 ### Backend notes for Android auth
 
@@ -65,9 +124,8 @@ This repo exports the frontend to `out/`, and Capacitor copies that build into
 - If you test against a deployed backend over HTTPS, use
   `AUTH_COOKIE_SECURE=true` and `AUTH_COOKIE_SAME_SITE=none` so cookie auth
   continues to work inside the Android WebView.
-- If you test against a backend running on your development machine, the Android
-  emulator usually reaches it at `http://10.0.2.2:8000` rather than
-  `http://localhost:8000`.
+- For local Android auth, prefer `adb reverse` plus `http://localhost:8000/api`
+  instead of `10.0.2.2`, so the app and API stay on the same site for cookies.
 
 ## Cloudflare Pages
 

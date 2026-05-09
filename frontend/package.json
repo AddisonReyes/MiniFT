@@ -8,13 +8,24 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "android:sync": "npm run build && cap sync android",
-    "android:open": "cap open android"
+    "android:open": "sh -ac 'set -a; . ./.env; set +a; exec cap open android'",
+    "android:adb-reset": "sh -ac 'set -a; . ./.env; set +a; SDK_ROOT=\"${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}\"; export ADB_VENDOR_KEYS=\"${ADB_VENDOR_KEYS:-$HOME/.android/adbkey}\"; \"$SDK_ROOT/platform-tools/adb\" kill-server >/dev/null 2>&1 || true; exec \"$SDK_ROOT/platform-tools/adb\" start-server'",
+    "android:avd-fix": "sh ./scripts/fix-android-avd.sh",
+    "android:emulator": "sh -ac 'set -a; . ./.env; set +a; SDK_ROOT=\"${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}\"; GPU_MODE=\"${ANDROID_EMULATOR_GPU_MODE:-swiftshader_indirect}\"; export PATH=\"$SDK_ROOT/platform-tools:$PATH\"; export ADB_VENDOR_KEYS=\"${ADB_VENDOR_KEYS:-$HOME/.android/adbkey}\"; \"$SDK_ROOT/platform-tools/adb\" kill-server >/dev/null 2>&1 || true; \"$SDK_ROOT/platform-tools/adb\" start-server >/dev/null; exec \"$SDK_ROOT/emulator/emulator\" -avd \"${ANDROID_EMULATOR_NAME:-Small_Phone}\" -gpu \"$GPU_MODE\" -no-snapshot-load ${ANDROID_EMULATOR_FLAGS:-}'",
+    "android:devices": "sh ./scripts/android-cli.sh devices",
+    "android:wait-device": "sh ./scripts/android-cli.sh wait-device",
+    "android:reverse": "sh ./scripts/android-cli.sh reverse",
+    "android:build-debug": "sh ./scripts/android-cli.sh build-debug",
+    "android:install-debug": "sh ./scripts/android-cli.sh install-debug",
+    "android:launch": "sh ./scripts/android-cli.sh launch",
+    "android:run": "sh ./scripts/android-cli.sh run",
+    "android:logcat": "sh ./scripts/android-cli.sh logcat"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.3",
     "@capacitor/core": "^8.3.3",
     "@tanstack/react-query": "^5.59.20",
-    "next": "^15.0.3",
+    "next": "^16.2.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
