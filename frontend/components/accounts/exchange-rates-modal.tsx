@@ -3,7 +3,7 @@
 import { FormEvent } from "react";
 
 import { FormError } from "@/components/form-error";
-import { Button, Input, Modal, cn } from "@/components/ui";
+import { Button, Input, Modal, ModalActions, cn } from "@/components/ui";
 import {
   formatExchangeRateValue,
   readExchangeRateFormValue,
@@ -197,14 +197,14 @@ export function ExchangeRatesModal({
           fallbackMessage="Unable to save exchange rate overrides"
         />
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <ModalActions>
+          <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">
+          <Button className="flex-1 sm:flex-none" type="submit">
             {isPending ? "Saving..." : "Save overrides"}
           </Button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );

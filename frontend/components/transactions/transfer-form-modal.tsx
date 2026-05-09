@@ -1,7 +1,14 @@
 "use client";
 
 import { FormError } from "@/components/form-error";
-import { Button, Input, Modal, Select, TextArea } from "@/components/ui";
+import {
+  Button,
+  Input,
+  Modal,
+  ModalActions,
+  Select,
+  TextArea,
+} from "@/components/ui";
 import type { Account } from "@/lib/types";
 import type { TransferFormValues } from "@/lib/transactions";
 
@@ -118,14 +125,14 @@ export function TransferFormModal({
 
         <FormError error={error} fallbackMessage="Unable to create transfer" />
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <ModalActions>
+          <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">
+          <Button className="flex-1 sm:flex-none" type="submit">
             {isPending ? "Creating..." : "Create transfer"}
           </Button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );

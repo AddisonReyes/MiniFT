@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { PageFrame } from "@/components/page-frame";
-import { Button } from "@/components/ui";
+import { Button, Card } from "@/components/ui";
 import { RecurringFormModal } from "@/components/transactions/recurring-form-modal";
 import { RecurringRulesSection } from "@/components/transactions/recurring-rules";
 import { TransactionFiltersCard } from "@/components/transactions/transaction-filters";
@@ -40,6 +40,7 @@ export default function TransactionsPage() {
   const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
   const [isTransferModalOpen, setTransferModalOpen] = useState(false);
   const [isRecurringModalOpen, setRecurringModalOpen] = useState(false);
+  const [isMobileActionMenuOpen, setMobileActionMenuOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [editingRecurring, setEditingRecurring] =
@@ -89,6 +90,7 @@ export default function TransactionsPage() {
   }
 
   function openNewTransaction(type: Exclude<TransactionType, "transfer">) {
+    setMobileActionMenuOpen(false);
     setEditingTransaction(null);
     setTransactionForm(createTransactionForm(type));
     setTransactionModalOpen(true);
@@ -101,9 +103,15 @@ export default function TransactionsPage() {
   }
 
   function openNewRecurring() {
+    setMobileActionMenuOpen(false);
     setEditingRecurring(null);
     setRecurringForm(createRecurringForm());
     setRecurringModalOpen(true);
+  }
+
+  function openNewTransfer() {
+    setMobileActionMenuOpen(false);
+    setTransferModalOpen(true);
   }
 
   function openEditRecurring(recurringTransaction: RecurringTransaction) {
@@ -206,28 +214,73 @@ export default function TransactionsPage() {
       title="Transactions"
       description="Track one-off entries, internal transfers, and recurring items from the same workspace."
       actions={
-        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap">
-          <Button onClick={() => openNewTransaction("expense")}>
-            New expense
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => openNewTransaction("income")}
-          >
-            New income
-          </Button>
-          <Button variant="ghost" onClick={() => setTransferModalOpen(true)}>
-            New transfer
-          </Button>
-          <Button variant="ghost" onClick={openNewRecurring}>
-            New recurring
-          </Button>
-        </div>
+        <>
+          <div className="grid w-full gap-3 sm:hidden">
+            <Button onClick={() => setMobileActionMenuOpen((current) => !current)}>
+              {isMobileActionMenuOpen ? "Close new activity" : "New activity"}
+            </Button>
+          </div>
+
+          <div className="hidden w-full sm:grid sm:grid-cols-2 sm:gap-3 sm:w-auto lg:flex lg:flex-wrap">
+            <Button
+              variant="danger"
+              onClick={() => openNewTransaction("expense")}
+            >
+              New expense
+            </Button>
+            <Button onClick={() => openNewTransaction("income")}>
+              New income
+            </Button>
+            <Button variant="secondary" onClick={openNewTransfer}>
+              New transfer
+            </Button>
+            <Button variant="secondary" onClick={openNewRecurring}>
+              New recurring
+            </Button>
+          </div>
+        </>
       }
     >
+      {isMobileActionMenuOpen ? (
+        <Card className="mb-6 space-y-4 p-4 sm:hidden">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
+              Quick create
+            </p>
+            <p className="mt-2 text-sm text-mist">
+              Pick the type of movement you want to add.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              className="w-full"
+              variant="danger"
+              onClick={() => openNewTransaction("expense")}
+            >
+              New expense
+            </Button>
+            <Button className="w-full" onClick={() => openNewTransaction("income")}>
+              New income
+            </Button>
+            <Button className="w-full" variant="secondary" onClick={openNewTransfer}>
+              New transfer
+            </Button>
+            <Button
+              className="w-full"
+              variant="secondary"
+              onClick={openNewRecurring}
+            >
+              New recurring
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
       <TransactionFiltersCard
         filters={filters}
         accounts={accounts}
+        onReset={() => setFilters(createTransactionFilters())}
         onChange={(patch) =>
           setFilters((current) => ({ ...current, ...patch }))
         }

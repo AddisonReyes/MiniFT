@@ -8,7 +8,15 @@ import type {
 } from "@/lib/transactions";
 import type { Account } from "@/lib/types";
 import { FormError } from "@/components/form-error";
-import { Button, Input, Modal, Select, TextArea } from "@/components/ui";
+import {
+  Button,
+  Input,
+  Modal,
+  ModalActions,
+  SegmentedControl,
+  Select,
+  TextArea,
+} from "@/components/ui";
 
 export function TransactionFormModal({
   open,
@@ -47,19 +55,19 @@ export function TransactionFormModal({
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="transaction_type">Type</label>
-            <Select
-              id="transaction_type"
+            <label>Type</label>
+            <SegmentedControl
+              options={[
+                { label: "Expense", value: "expense" },
+                { label: "Income", value: "income" },
+              ]}
               value={form.type}
-              onChange={(event) =>
+              onChange={(value) =>
                 onChange({
-                  type: event.target.value as NonTransferTransactionType,
+                  type: value as NonTransferTransactionType,
                 })
               }
-            >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </Select>
+            />
           </div>
 
           <div className="space-y-2">
@@ -133,18 +141,18 @@ export function TransactionFormModal({
 
         <FormError error={error} fallbackMessage="Unable to save transaction" />
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <ModalActions>
+          <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">
+          <Button className="flex-1 sm:flex-none" type="submit">
             {isPending
               ? "Saving..."
               : editingTransaction
                 ? "Save changes"
                 : "Create transaction"}
           </Button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );

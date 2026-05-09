@@ -52,8 +52,8 @@ function LoginPageContent() {
                 Welcome back
               </h1>
               <p className="text-sm leading-6 text-mist">
-                Sign in to continue managing accounts, budgets, and monthly
-                cash flow.
+                Sign in to continue managing accounts, budgets, and monthly cash
+                flow.
               </p>
             </div>
           </div>
@@ -96,7 +96,11 @@ function LoginPageContent() {
               </div>
             ) : null}
 
-            <Button className="w-full" type="submit" disabled={mutation.isPending}>
+            <Button
+              className="w-full"
+              type="submit"
+              disabled={mutation.isPending}
+            >
               {mutation.isPending ? "Signing in..." : "Sign in"}
             </Button>
           </form>

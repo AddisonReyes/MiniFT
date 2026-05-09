@@ -8,19 +8,23 @@ import { Card } from "@/components/ui";
 const features = [
   {
     title: "Accounts",
-    description: "Keep cash, bank, credit, and loan balances separated without spreadsheet drift.",
+    description:
+      "Keep cash, bank, credit, and loan balances separated without spreadsheet drift.",
   },
   {
     title: "Budgets",
-    description: "Set monthly category caps and track remaining spend in context.",
+    description:
+      "Set monthly category caps and track remaining spend in context.",
   },
   {
     title: "Recurring",
-    description: "Schedule repeated income and expenses so your month stays current.",
+    description:
+      "Schedule repeated income and expenses so your month stays current.",
   },
   {
     title: "Reports",
-    description: "Review income, expenses, net cash flow, and category concentration.",
+    description:
+      "Review income, expenses, net cash flow, and category concentration.",
   },
 ];
 
@@ -78,16 +82,18 @@ export default function LandingPage() {
           </div>
 
           <div className="grid gap-3 text-sm text-mist sm:grid-cols-3">
-            {["No spreadsheet drift", "Monthly budget clarity", "Clean reports"].map(
-              (item) => (
-                <div
-                  key={item}
-                  className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
-                >
-                  {item}
-                </div>
-              ),
-            )}
+            {[
+              "No spreadsheet drift",
+              "Monthly budget clarity",
+              "Clean reports",
+            ].map((item) => (
+              <div
+                key={item}
+                className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
+              >
+                {item}
+              </div>
+            ))}
           </div>
         </div>
 

@@ -1,7 +1,15 @@
 "use client";
 
 import { FormError } from "@/components/form-error";
-import { Button, Input, Modal, Select, TextArea } from "@/components/ui";
+import {
+  Button,
+  Input,
+  Modal,
+  ModalActions,
+  SegmentedControl,
+  Select,
+  TextArea,
+} from "@/components/ui";
 import type { Account } from "@/lib/types";
 import type {
   NonTransferTransactionType,
@@ -66,19 +74,19 @@ export function RecurringFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="recurring_type">Type</label>
-            <Select
-              id="recurring_type"
+            <label>Type</label>
+            <SegmentedControl
+              options={[
+                { label: "Expense", value: "expense" },
+                { label: "Income", value: "income" },
+              ]}
               value={form.type}
-              onChange={(event) =>
+              onChange={(value) =>
                 onChange({
-                  type: event.target.value as NonTransferTransactionType,
+                  type: value as NonTransferTransactionType,
                 })
               }
-            >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </Select>
+            />
           </div>
         </div>
 
@@ -155,18 +163,18 @@ export function RecurringFormModal({
           fallbackMessage="Unable to save recurring transaction"
         />
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+        <ModalActions>
+          <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">
+          <Button className="flex-1 sm:flex-none" type="submit">
             {isPending
               ? "Saving..."
               : editingLabel
                 ? "Save changes"
                 : "Create recurring"}
           </Button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );

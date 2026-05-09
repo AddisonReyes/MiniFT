@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MonthPicker } from "@/components/month-picker";
 import { PageFrame } from "@/components/page-frame";
 import { SummaryCard } from "@/components/summary-card";
-import { Card, Select } from "@/components/ui";
+import { Card, SegmentedControl } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import {
@@ -55,17 +55,17 @@ export default function ReportsPage() {
             value={month}
             onChange={setMonth}
           />
-          <Select
+          <SegmentedControl
+            className="sm:min-w-[220px]"
+            options={[
+              { label: "Expenses", value: "expense" },
+              { label: "Income", value: "income" },
+            ]}
             value={type}
-            onChange={(event) =>
-              setType(
-                event.target.value as Exclude<TransactionType, "transfer">,
-              )
+            onChange={(value) =>
+              setType(value as Exclude<TransactionType, "transfer">)
             }
-          >
-            <option value="expense">Expenses</option>
-            <option value="income">Income</option>
-          </Select>
+          />
         </div>
       }
     >

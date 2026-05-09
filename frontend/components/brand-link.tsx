@@ -15,9 +15,7 @@ export function BrandLink({
   return (
     <Link
       href={href}
-      className={[brandLinkClassName, className]
-        .filter(Boolean)
-        .join(" ")}
+      className={[brandLinkClassName, className].filter(Boolean).join(" ")}
       onClick={onClick}
     >
       <span className="sm:hidden">MiniFT</span>

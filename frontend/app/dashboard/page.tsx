@@ -51,7 +51,7 @@ export default function DashboardPage() {
 
   const currency = session.data?.currency || "USD";
   const summary = summaryQuery.data;
-  const recentTransactions = (transactionsQuery.data || []).slice(0, 6);
+  const recentTransactions = (transactionsQuery.data || []).slice(0, 20);
   const topBudgets = (budgetsQuery.data || []).slice(0, 4);
 
   return (
@@ -124,9 +124,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="mt-3 flex items-center justify-between gap-3">
-                    <Badge
-                      tone={transactionTone(transaction.display_type)}
-                    >
+                    <Badge tone={transactionTone(transaction.display_type)}>
                       {transaction.display_type}
                     </Badge>
                     {transaction.note ? (
@@ -139,7 +137,9 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="empty-state">
-                <div className="font-medium text-white">No transactions yet</div>
+                <div className="font-medium text-white">
+                  No transactions yet
+                </div>
                 <p className="mt-1 text-sm text-mist">
                   Create your first income, expense, or transfer to bring the
                   dashboard to life.
@@ -149,10 +149,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="table-shell hidden sm:block">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w text-left text-sm">
               <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
                 <tr>
-                  <th className="px-3 py-3 font-medium sm:px-4">Type</th>
                   <th className="px-3 py-3 font-medium sm:px-4">Category</th>
                   <th className="px-3 py-3 font-medium sm:px-4">Account</th>
                   <th className="px-3 py-3 font-medium sm:px-4">Date</th>
@@ -168,13 +167,6 @@ export default function DashboardPage() {
                       key={transaction.id}
                       className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                     >
-                      <td className="px-3 py-4 sm:px-4">
-                        <Badge
-                          tone={transactionTone(transaction.display_type)}
-                        >
-                          {transaction.display_type}
-                        </Badge>
-                      </td>
                       <td className="px-3 py-4 sm:px-4">
                         <div className="font-medium text-white">
                           {transaction.category}
@@ -238,16 +230,17 @@ export default function DashboardPage() {
                   className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4 transition hover:bg-white/[0.045] sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
-                  <div className="font-medium text-white">{account.name}</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
-                      {formatAccountTypeLabel(account.type)} · {account.currency}
+                    <div className="font-medium text-white">{account.name}</div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
+                      {formatAccountTypeLabel(account.type)} ·{" "}
+                      {account.currency}
+                    </div>
+                  </div>
+                  <div className="break-words font-semibold text-white sm:text-right">
+                    {formatCurrency(account.balance, account.currency)}
                   </div>
                 </div>
-                <div className="break-words font-semibold text-white sm:text-right">
-                    {formatCurrency(account.balance, account.currency)}
-                </div>
-              </div>
-            ))}
+              ))}
             </div>
           </Card>
 

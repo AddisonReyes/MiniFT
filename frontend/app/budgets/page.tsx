@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormError } from "@/components/form-error";
 import { MonthPicker } from "@/components/month-picker";
 import { PageFrame } from "@/components/page-frame";
-import { Button, Card, Input, Modal } from "@/components/ui";
+import { Button, Card, Input, Modal, ModalActions } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import {
@@ -252,8 +252,9 @@ export default function BudgetsPage() {
             fallbackMessage="Unable to save budget"
           />
 
-          <div className="flex justify-end gap-3">
+          <ModalActions>
             <Button
+              className="flex-1 sm:flex-none"
               type="button"
               variant="ghost"
               onClick={() => {
@@ -264,14 +265,14 @@ export default function BudgetsPage() {
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button className="flex-1 sm:flex-none" type="submit">
               {saveMutation.isPending
                 ? "Saving..."
                 : editing
                   ? "Save changes"
                   : "Create budget"}
             </Button>
-          </div>
+          </ModalActions>
         </form>
       </Modal>
     </PageFrame>

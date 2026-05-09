@@ -112,7 +112,11 @@ function RegisterPageContent() {
               </div>
             ) : null}
 
-            <Button className="w-full" type="submit" disabled={mutation.isPending}>
+            <Button
+              className="w-full"
+              type="submit"
+              disabled={mutation.isPending}
+            >
               {mutation.isPending ? "Creating account..." : "Create account"}
             </Button>
           </form>

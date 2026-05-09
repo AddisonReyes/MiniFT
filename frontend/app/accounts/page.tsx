@@ -7,7 +7,16 @@ import { ExchangeRatesModal } from "@/components/accounts/exchange-rates-modal";
 import { FormError } from "@/components/form-error";
 import { PageFrame } from "@/components/page-frame";
 import { SummaryCard } from "@/components/summary-card";
-import { Badge, Button, Card, Input, Modal, Select, cn } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  Input,
+  Modal,
+  ModalActions,
+  Select,
+  cn,
+} from "@/components/ui";
 import {
   ACCOUNT_TYPE_OPTIONS,
   buildTrackedCurrencyOptions,
@@ -199,7 +208,9 @@ export default function AccountsPage() {
   }
 
   function openExchangeRates() {
-    setExchangeRateForm(createExchangeRateFormValues(currencies, exchangeRates));
+    setExchangeRateForm(
+      createExchangeRateFormValues(currencies, exchangeRates),
+    );
     setManualExchangeRateForm(
       createExchangeRateManualValues(currencies, exchangeRates),
     );
@@ -405,18 +416,23 @@ export default function AccountsPage() {
             fallbackMessage="Unable to save account"
           />
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={closeAccountModal}>
+          <ModalActions>
+            <Button
+              className="flex-1 sm:flex-none"
+              type="button"
+              variant="ghost"
+              onClick={closeAccountModal}
+            >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button className="flex-1 sm:flex-none" type="submit">
               {saveMutation.isPending
                 ? "Saving..."
                 : editing
                   ? "Save changes"
                   : "Create account"}
             </Button>
-          </div>
+          </ModalActions>
         </form>
       </Modal>
 
@@ -439,54 +455,52 @@ export default function AccountsPage() {
             ),
           )
         }
-        onManualChange={(fromCurrency, toCurrency, value) =>
-          {
-            const autoValues = createExchangeRateAutoValues(
-              currencies,
-              exchangeRates,
-            );
+        onManualChange={(fromCurrency, toCurrency, value) => {
+          const autoValues = createExchangeRateAutoValues(
+            currencies,
+            exchangeRates,
+          );
 
-            setManualExchangeRateForm((current) =>
-              writeExchangeRateManualValue(
-                current,
-                fromCurrency,
-                toCurrency,
-                value,
-              ),
-            );
+          setManualExchangeRateForm((current) =>
+            writeExchangeRateManualValue(
+              current,
+              fromCurrency,
+              toCurrency,
+              value,
+            ),
+          );
 
-            if (!value) {
-              setExchangeRateForm((current) =>
-                writeExchangeRateFormValue(
-                  current,
-                  fromCurrency,
-                  toCurrency,
-                  autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
-                ),
-              );
-              return;
-            }
-
-            setExchangeRateForm((current) => {
-              const currentValue = readExchangeRateFormValue(
-                current,
-                fromCurrency,
-                toCurrency,
-              ).trim();
-
-              if (currentValue) {
-                return current;
-              }
-
-              return writeExchangeRateFormValue(
+          if (!value) {
+            setExchangeRateForm((current) =>
+              writeExchangeRateFormValue(
                 current,
                 fromCurrency,
                 toCurrency,
                 autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
-              );
-            });
+              ),
+            );
+            return;
           }
-        }
+
+          setExchangeRateForm((current) => {
+            const currentValue = readExchangeRateFormValue(
+              current,
+              fromCurrency,
+              toCurrency,
+            ).trim();
+
+            if (currentValue) {
+              return current;
+            }
+
+            return writeExchangeRateFormValue(
+              current,
+              fromCurrency,
+              toCurrency,
+              autoValues[`${fromCurrency}:${toCurrency}`] ?? "",
+            );
+          });
+        }}
         onClose={closeExchangeRatesModal}
         onSubmit={() => saveExchangeRatesMutation.mutate()}
       />

@@ -100,9 +100,7 @@ export default function SettingsPage() {
               <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
                 Preferences
               </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Default currency
-              </h2>
+              <h2 className="mt-2 text-2xl font-semibold">Default currency</h2>
               <p className="mt-2 text-sm text-mist">
                 This becomes the suggested currency for new accounts and the
                 base currency for converted totals across the app.
@@ -131,7 +129,10 @@ export default function SettingsPage() {
               />
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={updateCurrencyMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={updateCurrencyMutation.isPending}
+                >
                   {updateCurrencyMutation.isPending
                     ? "Saving..."
                     : "Save default currency"}

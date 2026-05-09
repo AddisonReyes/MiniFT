@@ -1,28 +1,114 @@
 "use client";
 
-import { Card, Input, Select } from "@/components/ui";
+import { useMemo, useState } from "react";
+
+import { Button, Card, Input, Select, cn } from "@/components/ui";
 import type { Account } from "@/lib/types";
 import type { TransactionFiltersState } from "@/lib/transactions";
+
+function createActiveFilters(
+  filters: TransactionFiltersState,
+  accounts: Account[],
+) {
+  const items: string[] = [];
+
+  if (filters.type) {
+    items.push(filters.type);
+  }
+
+  if (filters.category.trim()) {
+    items.push(filters.category.trim());
+  }
+
+  if (filters.account_id) {
+    const account = accounts.find((item) => item.id === filters.account_id);
+
+    if (account) {
+      items.push(account.name);
+    }
+  }
+
+  if (filters.start_date) {
+    items.push(`from ${filters.start_date}`);
+  }
+
+  if (filters.end_date) {
+    items.push(`to ${filters.end_date}`);
+  }
+
+  return items;
+}
 
 export function TransactionFiltersCard({
   filters,
   accounts,
   onChange,
+  onReset,
 }: {
   filters: TransactionFiltersState;
   accounts: Account[];
   onChange: (patch: Partial<TransactionFiltersState>) => void;
+  onReset: () => void;
 }) {
+  const [isOpen, setOpen] = useState(false);
+  const activeFilters = useMemo(
+    () => createActiveFilters(filters, accounts),
+    [accounts, filters],
+  );
+  const hasActiveFilters = activeFilters.length > 0;
+
   return (
     <Card className="space-y-5">
-      <div>
-        <h2 className="text-xl font-semibold">Filters</h2>
-        <p className="mt-1 text-sm text-mist">
-          Narrow entries by type, category, account, or date range.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-xl font-semibold">Filters</h2>
+          <p className="mt-1 text-sm text-mist">
+            Narrow entries by type, category, account, or date range.
+          </p>
+          {hasActiveFilters ? (
+            <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
+              {activeFilters.map((filter) => (
+                <span
+                  key={filter}
+                  className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-mist"
+                >
+                  {filter}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex gap-2 sm:shrink-0">
+          {hasActiveFilters ? (
+            <Button
+              className="flex-1 sm:flex-none"
+              variant="ghost"
+              onClick={onReset}
+            >
+              Reset
+            </Button>
+          ) : null}
+          <Button
+            className="sm:hidden"
+            variant="secondary"
+            onClick={() => setOpen((current) => !current)}
+          >
+            {isOpen
+              ? "Hide filters"
+              : hasActiveFilters
+                ? `Filters (${activeFilters.length})`
+                : "Filters"}
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div
+        className={cn(
+          "grid gap-4 sm:grid-cols-2 xl:grid-cols-5",
+          !isOpen && "hidden sm:grid",
+        )}
+      >
         <div className="space-y-2">
           <label htmlFor="type">Type</label>
           <Select
