@@ -152,3 +152,33 @@ async fn monthly_summary_excludes_transfer_rows() {
 
     database.cleanup().await;
 }
+
+#[tokio::test]
+async fn create_transaction_rejects_category_longer_than_32_characters() {
+    let Some(database) = TestDatabase::new().await else {
+        return;
+    };
+
+    let user_id = register_test_user(&database.pool, "transactions-category-limit", "USD")
+        .await
+        .expect("test user");
+
+    let error = transactions::create_transaction(
+        &database.pool,
+        user_id,
+        CreateTransactionRequest {
+            account_id: None,
+            amount: Decimal::new(25_00, 2),
+            r#type: TransactionType::Expense,
+            category: "a".repeat(33),
+            note: None,
+            date: chrono::NaiveDate::from_ymd_opt(2026, 5, 11).unwrap(),
+        },
+    )
+    .await
+    .expect_err("category should be rejected");
+
+    assert_eq!(error.message, "Category must be 32 characters or fewer");
+
+    database.cleanup().await;
+}

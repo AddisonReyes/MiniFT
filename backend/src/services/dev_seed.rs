@@ -482,9 +482,9 @@ pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
         return Ok(());
     }
 
-    let auth_response = auth::register_user(
+    let registration = auth::register_user(
         &state.pool,
-        &state.auth,
+        state.email.config.verification_ttl_hours,
         RegisterRequest {
             email: DEMO_EMAIL.to_string(),
             password: DEMO_PASSWORD.to_string(),
@@ -492,8 +492,9 @@ pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
         },
     )
     .await?;
+    auth::mark_user_email_verified(&state.pool, registration.user.id).await?;
 
-    let user_id = auth_response.user.id;
+    let user_id = registration.user.id;
     let today = Utc::now().date_naive();
 
     let demo_accounts = create_demo_accounts(state, user_id).await?;

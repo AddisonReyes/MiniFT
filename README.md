@@ -21,6 +21,7 @@ Commercial use is not permitted under this license. If you need commercial right
 - The browser calls the backend API directly using `NEXT_PUBLIC_API_BASE_URL`.
 - `backend/` exposes the Rocket API under `/api/*`.
 - The backend authenticates users with `HttpOnly` access cookies plus rotated refresh sessions persisted in PostgreSQL.
+- New accounts are verified by email before the first browser session is issued.
 - Because the frontend is a static export, authenticated routes are client-guarded after the session check instead of server-rendered behind middleware.
 - `postgres` stores users, accounts, per-account currencies, exchange rates, transactions, transfers, recurring rules, and budgets.
 - The backend runs a background worker to materialize due recurring transactions.
@@ -54,15 +55,17 @@ When `SEED_DEV_DATA=true`, the backend also creates a demo workspace automatical
 
 1. Open `http://localhost:3000/register`
 2. Create an account
-3. Sign in and continue to `/dashboard`
-4. Set your default currency in `/settings` if needed
-5. Start adding multi-currency accounts, transactions, transfers, budgets, and recurring entries
+3. Verify the email link that MiniFT sends you
+4. Sign in and continue to `/dashboard`
+5. Set your default currency in `/settings` if needed
+6. Start adding multi-currency accounts, transactions, transfers, budgets, and recurring entries
 
 Or, if development seed data is enabled, open `http://localhost:3000/login` and sign in with the demo credentials above.
 
 ## Backend Highlights
 
 - JWT access cookies with rotated refresh sessions
+- Email verification on registration plus Resend-backed password reset and password change confirmations
 - Generated OpenAPI 3.1 spec with embedded Swagger UI
 - Argon2 password hashing
 - Default `Cash` account created at registration using the user's default currency
@@ -76,6 +79,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 ## Frontend Highlights
 
 - Public landing page plus protected dashboard workspace
+- Email verification screen, forgot-password flow, and settings-based password change confirmations
 - Dark-mode-first UI with a subtle ledger-grid background
 - Platform-aware app shell: desktop web uses top-right navigation, compact web uses a menu button instead of wrapping nav pills, and the native Android shell uses a bottom navigation bar
 - `/accounts` shows gross and net totals in the user's default currency, per-account currencies, and an editable conversions modal with Frankfurter-backed daily rates plus manual overrides

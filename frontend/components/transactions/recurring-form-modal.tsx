@@ -15,6 +15,10 @@ import type {
   NonTransferTransactionType,
   RecurringFormValues,
 } from "@/lib/transactions";
+import {
+  TRANSACTION_CATEGORY_MAX_LENGTH,
+  TRANSACTION_NOTE_MAX_LENGTH,
+} from "@/lib/transactions";
 
 export function RecurringFormModal({
   open,
@@ -125,13 +129,21 @@ export function RecurringFormModal({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label htmlFor="recurring_category">Category</label>
-            <Input
-              id="recurring_category"
-              value={form.category}
-              onChange={(event) => onChange({ category: event.target.value })}
-              placeholder="Rent"
-              required
-            />
+          <Input
+            id="recurring_category"
+            value={form.category}
+            maxLength={TRANSACTION_CATEGORY_MAX_LENGTH}
+            onChange={(event) =>
+              onChange({
+                category: event.target.value.slice(
+                  0,
+                  TRANSACTION_CATEGORY_MAX_LENGTH,
+                ),
+              })
+            }
+            placeholder="Rent"
+            required
+          />
           </div>
 
           <div className="space-y-2">
@@ -153,7 +165,12 @@ export function RecurringFormModal({
           <TextArea
             id="recurring_note"
             value={form.note}
-            onChange={(event) => onChange({ note: event.target.value })}
+            maxLength={TRANSACTION_NOTE_MAX_LENGTH}
+            onChange={(event) =>
+              onChange({
+                note: event.target.value.slice(0, TRANSACTION_NOTE_MAX_LENGTH),
+              })
+            }
             placeholder="Optional context"
           />
         </div>

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::{env, sync::Arc};
 
 use minift_backend::{
@@ -115,9 +117,9 @@ pub async fn register_test_user(
     currency: &str,
 ) -> Result<Uuid, minift_backend::errors::ApiError> {
     let email = format!("{email_prefix}-{}@example.test", Uuid::new_v4().simple());
-    let auth_response = auth::register_user(
+    let registration = auth::register_user(
         pool,
-        &test_auth_config(),
+        24,
         RegisterRequest {
             email,
             password: "password123".to_string(),
@@ -125,6 +127,7 @@ pub async fn register_test_user(
         },
     )
     .await?;
+    auth::mark_user_email_verified(pool, registration.user.id).await?;
 
-    Ok(auth_response.user.id)
+    Ok(registration.user.id)
 }

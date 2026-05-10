@@ -3,7 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
-import type { AuthSessionResponse, User } from "@/lib/types";
+import type {
+  AuthSessionResponse,
+  MessageResponse,
+  RegistrationResponse,
+  User,
+} from "@/lib/types";
 
 export const sessionQueryKey = ["auth", "session"];
 
@@ -11,10 +16,7 @@ type AuthResponsePayload = {
   user: User;
 };
 
-async function authenticate(
-  path: "/auth/login" | "/auth/register",
-  payload: { email: string; password: string; currency?: string },
-) {
+async function authenticate(path: "/auth/login", payload: { email: string; password: string }) {
   const response = await api.post<AuthResponsePayload>(path, payload);
 
   return {
@@ -43,11 +45,55 @@ export async function register(payload: {
   password: string;
   currency: string;
 }) {
-  return authenticate("/auth/register", payload);
+  return api.post<RegistrationResponse>("/auth/register", payload);
+}
+
+export async function resendVerificationEmail(payload: { email: string }) {
+  return api.post<MessageResponse>("/auth/register/resend-verification", payload);
+}
+
+export async function verifyEmail(payload: { token: string }) {
+  const response = await api.post<AuthResponsePayload>("/auth/verify-email", payload);
+
+  return {
+    user: response.user,
+  } satisfies AuthSessionResponse;
+}
+
+export async function requestPasswordReset(payload: { email: string }) {
+  return api.post<MessageResponse>("/auth/password/reset/request", payload);
+}
+
+export async function confirmPasswordReset(payload: {
+  email: string;
+  code: string;
+  password: string;
+  password_confirmation: string;
+}) {
+  return api.post<MessageResponse>("/auth/password/reset/confirm", payload);
+}
+
+export async function requestPasswordChange() {
+  return api.post<MessageResponse>("/auth/password/change/request");
+}
+
+export async function confirmPasswordChange(payload: {
+  code: string;
+  password: string;
+  password_confirmation: string;
+}) {
+  const response = await api.post<AuthResponsePayload>(
+    "/auth/password/change/confirm",
+    payload,
+  );
+
+  return {
+    user: response.user,
+  } satisfies AuthSessionResponse;
 }
 
 export async function logout() {
-  return api.post<{ message: string }>("/auth/logout");
+  return api.post<MessageResponse>("/auth/logout");
 }
 
 export async function updateDefaultCurrency(payload: { currency: string }) {

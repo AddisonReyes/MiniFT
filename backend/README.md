@@ -10,6 +10,11 @@ Set these before running locally outside Docker:
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/minift
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/minift
 JWT_SECRET=change-me
+RESEND_API_KEY=re_xxxxxxxxx
+RESEND_FROM_EMAIL=MiniFT <onboarding@resend.dev>
+APP_BASE_URL=http://localhost:3000
+EMAIL_VERIFICATION_TTL_HOURS=24
+PASSWORD_RESET_CODE_TTL_MINUTES=15
 ACCESS_TOKEN_TTL_MINUTES=15
 REFRESH_TOKEN_TTL_DAYS=30
 ACCESS_COOKIE_NAME=minift_access_token
@@ -30,6 +35,8 @@ ROCKET_PORT=8000
 `TEST_DATABASE_URL` is optional but recommended for integration tests. If it is omitted, the test helpers fall back to `DATABASE_URL`.
 Frankfurter is used as the default online exchange-rate provider. Leave it enabled unless you want accounts to rely only on manual overrides.
 `JWT_SECRET` is required and the backend will refuse to boot without it.
+`RESEND_API_KEY` is required because registration, email verification, password reset, and password change confirmations are now email-backed.
+`APP_BASE_URL` is the frontend origin used in verification links sent by email. For local web development, `http://localhost:3000` is the expected default.
 `ACCESS_COOKIE_NAME` and `REFRESH_COOKIE_NAME` are optional overrides for the auth cookie names.
 
 `CORS_ALLOWED_ORIGINS` accepts a JSON array of allowed frontend origins. Trailing slashes are normalized, so `http://localhost:3000/` and `http://localhost:3000` are treated the same.
@@ -68,7 +75,13 @@ Unit tests live next to the modules they cover. Integration tests live under `ba
 ## API Areas
 
 - `POST /api/auth/register`
+- `POST /api/auth/register/resend-verification`
+- `POST /api/auth/verify-email`
 - `POST /api/auth/login`
+- `POST /api/auth/password/reset/request`
+- `POST /api/auth/password/reset/confirm`
+- `POST /api/auth/password/change/request`
+- `POST /api/auth/password/change/confirm`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
@@ -93,7 +106,9 @@ The backend now publishes an OpenAPI 3.1 document and an embedded Swagger UI.
 ## Notes
 
 - A default `Cash` account is created for every new user using that user's default currency.
+- New accounts start in a pending-verification state until the email link is completed.
 - Auth sessions use HttpOnly cookies plus rotated refresh sessions stored in PostgreSQL.
+- Password reset and settings password changes both use emailed one-time codes delivered through Resend.
 - `POST /api/auth/refresh` rotates the persisted refresh session and reads the refresh token from the auth cookie instead of expecting a request body.
 - Accounts can be `cash`, `bank_account`, `credit_card`, or `loan`.
 - Transfers are stored in `transfers` and mirrored into `transactions`.

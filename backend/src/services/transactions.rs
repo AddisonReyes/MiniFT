@@ -19,7 +19,8 @@ use crate::{
     },
     services::{
         accounts::ensure_account_ownership, ensure_positive_amount, month_bounds,
-        normalize_optional_text, normalize_required_text, parse_optional_date,
+        normalize_optional_text_with_max_length, normalize_required_text_with_max_length,
+        parse_optional_date, CATEGORY_MAX_LENGTH, NOTE_MAX_LENGTH,
     },
 };
 
@@ -235,8 +236,12 @@ pub async fn create_transaction(
     }
 
     ensure_positive_amount(payload.amount, "Amount")?;
-    let category = normalize_required_text(&payload.category, "Category")?;
-    let note = normalize_optional_text(&payload.note);
+    let category = normalize_required_text_with_max_length(
+        &payload.category,
+        "Category",
+        CATEGORY_MAX_LENGTH,
+    )?;
+    let note = normalize_optional_text_with_max_length(&payload.note, "Note", NOTE_MAX_LENGTH)?;
     let account = resolve_account_or_default_cash(pool, user_id, payload.account_id).await?;
 
     let created = sqlx::query_as::<_, TransactionRow>(
@@ -306,8 +311,12 @@ pub async fn update_transaction(
     }
 
     ensure_positive_amount(payload.amount, "Amount")?;
-    let category = normalize_required_text(&payload.category, "Category")?;
-    let note = normalize_optional_text(&payload.note);
+    let category = normalize_required_text_with_max_length(
+        &payload.category,
+        "Category",
+        CATEGORY_MAX_LENGTH,
+    )?;
+    let note = normalize_optional_text_with_max_length(&payload.note, "Note", NOTE_MAX_LENGTH)?;
     let account = resolve_account_or_default_cash(pool, user_id, payload.account_id).await?;
 
     sqlx::query(

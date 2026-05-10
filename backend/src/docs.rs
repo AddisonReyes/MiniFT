@@ -15,7 +15,13 @@ use crate::config::AppState;
     paths(
         crate::handlers::health::health,
         crate::handlers::auth::register,
+        crate::handlers::auth::resend_verification,
+        crate::handlers::auth::verify_email,
         crate::handlers::auth::login,
+        crate::handlers::auth::request_password_reset,
+        crate::handlers::auth::confirm_password_reset,
+        crate::handlers::auth::request_password_change,
+        crate::handlers::auth::confirm_password_change,
         crate::handlers::auth::refresh,
         crate::handlers::auth::logout,
         crate::handlers::auth::me,
@@ -49,7 +55,7 @@ use crate::config::AppState;
     ),
     tags(
         (name = "system", description = "Operational endpoints for health checks and backend status."),
-        (name = "auth", description = "Registration, login, cookie rotation, and current-user profile endpoints."),
+        (name = "auth", description = "Registration, verification, password recovery, cookie rotation, and current-user profile endpoints."),
         (name = "accounts", description = "User-owned financial accounts and balances."),
         (name = "exchange_rates", description = "Effective and manual exchange rates used for conversions."),
         (name = "transactions", description = "Income, expense, transfer mirrors, and summary reporting."),
@@ -76,10 +82,12 @@ pub fn build_openapi(state: &AppState) -> utoipa::openapi::OpenApi {
 Cookie-backed personal finance API for MiniFT.
 
 ### Authentication
-- Browser clients should authenticate through the HttpOnly cookies set by `POST /api/auth/register`, `POST /api/auth/login`, and `POST /api/auth/refresh`.
+- Browser clients should authenticate through the HttpOnly cookies set by `POST /api/auth/verify-email`, `POST /api/auth/login`, `POST /api/auth/password/change/confirm`, and `POST /api/auth/refresh`.
+- `POST /api/auth/register` creates the account and sends the verification email, but it does not sign the browser in immediately.
 - Protected endpoints also accept `Authorization: Bearer <access-token>` for non-browser clients and manual testing.
 - `POST /api/auth/refresh` reads the `{}` refresh cookie, rotates the persisted refresh session, and sends back fresh auth cookies.
 - `POST /api/auth/logout` clears both auth cookies and revokes the refresh session when present.
+- Password recovery is handled by the public `POST /api/auth/password/reset/request` and `POST /api/auth/password/reset/confirm` endpoints.
 
 ### Conventions
 - Request and response bodies are JSON unless noted otherwise.

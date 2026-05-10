@@ -54,7 +54,7 @@ export function RecurringRulesSection({
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
-                  <div className="font-medium text-white">
+                  <div className="break-all font-medium text-white">
                     {recurringTransaction.category}
                   </div>
                   <div className="mt-1 text-sm text-mist">
@@ -85,7 +85,9 @@ export function RecurringRulesSection({
                   Next run: {formatDate(recurringTransaction.next_run_date)}
                 </div>
                 {recurringTransaction.note ? (
-                  <div>Note: {recurringTransaction.note}</div>
+                  <div className="break-all">
+                    Note: {recurringTransaction.note}
+                  </div>
                 ) : null}
               </div>
 

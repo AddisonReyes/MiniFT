@@ -28,10 +28,10 @@ pub struct CreateRecurringTransactionRequest {
     /// Recurring transaction kind. `transfer` is not supported.
     pub r#type: TransactionType,
     /// Category label.
-    #[schema(min_length = 1, example = "Salary")]
+    #[schema(min_length = 1, max_length = 32, example = "Salary")]
     pub category: String,
     /// Optional free-form note.
-    #[schema(example = "Monthly payroll")]
+    #[schema(max_length = 128, example = "Monthly payroll")]
     pub note: Option<String>,
     /// Recurrence cadence.
     pub frequency: RecurringFrequency,
@@ -60,10 +60,10 @@ pub struct UpdateRecurringTransactionRequest {
     /// Recurring transaction kind. `transfer` is not supported.
     pub r#type: TransactionType,
     /// Category label.
-    #[schema(min_length = 1, example = "Streaming")]
+    #[schema(min_length = 1, max_length = 32, example = "Streaming")]
     pub category: String,
     /// Optional free-form note.
-    #[schema(example = "Monthly subscriptions")]
+    #[schema(max_length = 128, example = "Monthly subscriptions")]
     pub note: Option<String>,
     /// Recurrence cadence.
     pub frequency: RecurringFrequency,

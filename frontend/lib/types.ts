@@ -12,10 +12,20 @@ export interface User {
   email: string;
   currency: string;
   created_at: string;
+  email_verified_at: string | null;
 }
 
 export interface AuthSessionResponse {
   user: User;
+}
+
+export interface RegistrationResponse {
+  message: string;
+  email: string;
+}
+
+export interface MessageResponse {
+  message: string;
 }
 
 export interface Account {

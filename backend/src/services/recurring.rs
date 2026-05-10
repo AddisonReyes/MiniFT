@@ -18,8 +18,9 @@ use crate::{
         UpdateRecurringTransactionRequest,
     },
     services::{
-        accounts::ensure_account_ownership, ensure_positive_amount, normalize_optional_text,
-        normalize_required_text,
+        accounts::ensure_account_ownership, ensure_positive_amount,
+        normalize_optional_text_with_max_length, normalize_required_text_with_max_length,
+        CATEGORY_MAX_LENGTH, NOTE_MAX_LENGTH,
     },
 };
 
@@ -144,8 +145,12 @@ async fn build_recurring_write_input(
         account_currency: account.currency,
         amount,
         transaction_type,
-        category: normalize_required_text(category, "Category")?,
-        note: normalize_optional_text(note),
+        category: normalize_required_text_with_max_length(
+            category,
+            "Category",
+            CATEGORY_MAX_LENGTH,
+        )?,
+        note: normalize_optional_text_with_max_length(note, "Note", NOTE_MAX_LENGTH)?,
         frequency,
         next_run_date,
     })

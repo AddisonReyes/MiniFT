@@ -23,9 +23,11 @@ function RegisterPageContent() {
 
   const mutation = useMutation({
     mutationFn: register,
-    onSuccess: async () => {
+    onSuccess: async (response) => {
       await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      router.replace(nextPath);
+      router.replace(
+        `/verify-email?email=${encodeURIComponent(response.email)}&next=${encodeURIComponent(nextPath)}`,
+      );
     },
   });
 
@@ -54,7 +56,8 @@ function RegisterPageContent() {
               </h1>
               <p className="text-sm leading-6 text-mist">
                 Set up a focused finance workspace with a default Cash account
-                ready to use.
+                ready to use. We will send a verification link before the first
+                sign-in.
               </p>
             </div>
           </div>
@@ -156,6 +159,7 @@ function RegisterPageContent() {
                 {[
                   "Default Cash account is created automatically",
                   "Choose your preferred default account currency",
+                  "Verify your email to open the app session",
                   "Add budgets and recurring rules when you are ready",
                 ].map((item, index) => (
                   <div

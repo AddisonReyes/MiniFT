@@ -253,3 +253,50 @@ async fn create_transfer_rejects_missing_exchange_rate_for_different_currencies(
 
     database.cleanup().await;
 }
+
+#[tokio::test]
+async fn create_transfer_rejects_note_longer_than_128_characters() {
+    let Some(database) = TestDatabase::new().await else {
+        return;
+    };
+
+    let user_id = register_test_user(&database.pool, "transfers-note-limit", "USD")
+        .await
+        .expect("test user");
+    let cash_account = accounts::list_accounts(&database.pool, user_id)
+        .await
+        .expect("accounts")
+        .into_iter()
+        .find(|account| account.r#type == AccountType::Cash)
+        .expect("cash account");
+    let savings_account = accounts::create_account(
+        &database.pool,
+        user_id,
+        CreateAccountRequest {
+            name: "Savings".to_string(),
+            r#type: AccountType::BankAccount,
+            currency: Some("USD".to_string()),
+        },
+    )
+    .await
+    .expect("savings");
+
+    let error = transfers::create_transfer(
+        &database.pool,
+        user_id,
+        &disabled_exchange_rate_provider_config(),
+        CreateTransferRequest {
+            from_account_id: cash_account.id,
+            to_account_id: savings_account.id,
+            amount: Decimal::new(125_00, 2),
+            date: chrono::NaiveDate::from_ymd_opt(2026, 5, 11).unwrap(),
+            note: Some("a".repeat(129)),
+        },
+    )
+    .await
+    .expect_err("note should be rejected");
+
+    assert_eq!(error.message, "Note must be 128 characters or fewer");
+
+    database.cleanup().await;
+}

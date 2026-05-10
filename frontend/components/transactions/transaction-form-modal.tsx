@@ -6,6 +6,10 @@ import type {
   NonTransferTransactionType,
   TransactionFormValues,
 } from "@/lib/transactions";
+import {
+  TRANSACTION_CATEGORY_MAX_LENGTH,
+  TRANSACTION_NOTE_MAX_LENGTH,
+} from "@/lib/transactions";
 import type { Account } from "@/lib/types";
 import { FormError } from "@/components/form-error";
 import {
@@ -118,7 +122,15 @@ export function TransactionFormModal({
             id="transaction_category"
             list="category-suggestions"
             value={form.category}
-            onChange={(event) => onChange({ category: event.target.value })}
+            maxLength={TRANSACTION_CATEGORY_MAX_LENGTH}
+            onChange={(event) =>
+              onChange({
+                category: event.target.value.slice(
+                  0,
+                  TRANSACTION_CATEGORY_MAX_LENGTH,
+                ),
+              })
+            }
             placeholder="Groceries"
             required
           />
@@ -134,7 +146,12 @@ export function TransactionFormModal({
           <TextArea
             id="transaction_note"
             value={form.note}
-            onChange={(event) => onChange({ note: event.target.value })}
+            maxLength={TRANSACTION_NOTE_MAX_LENGTH}
+            onChange={(event) =>
+              onChange({
+                note: event.target.value.slice(0, TRANSACTION_NOTE_MAX_LENGTH),
+              })
+            }
             placeholder="Optional context"
           />
         </div>

@@ -12,7 +12,10 @@ use crate::{
         transfer::{TransferRecord, TransferRow},
     },
     schema::transfer::{CreateTransferRequest, TransferResponse},
-    services::{ensure_positive_amount, exchange_rates, normalize_optional_text},
+    services::{
+        ensure_positive_amount, exchange_rates, normalize_optional_text_with_max_length,
+        NOTE_MAX_LENGTH,
+    },
 };
 
 fn map_transfer(row: TransferRow) -> TransferResponse {
@@ -131,7 +134,7 @@ pub async fn create_transfer(
         payload.to_account_id,
     )
     .await?;
-    let note = normalize_optional_text(&payload.note);
+    let note = normalize_optional_text_with_max_length(&payload.note, "Note", NOTE_MAX_LENGTH)?;
     let same_currency_transfer = from_account.currency == to_account.currency;
     let mut applied_exchange_rate = None;
     let destination_amount = if same_currency_transfer {

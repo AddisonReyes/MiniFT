@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
 import { Card, Button, Input } from "@/components/ui";
+import { ApiError } from "@/lib/api";
 import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 import { describeError } from "@/lib/error-message";
 import { sanitizeRedirectTarget } from "@/lib/redirect";
@@ -38,6 +39,9 @@ function LoginPageContent() {
     event.preventDefault();
     mutation.mutate({ email, password });
   }
+
+  const shouldOfferVerificationResend =
+    mutation.error instanceof ApiError && mutation.error.status === 403 && email;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
@@ -73,7 +77,15 @@ function LoginPageContent() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password">Password</label>
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="password">Password</label>
+                <Link
+                  className="text-xs text-signal hover:text-signal/80"
+                  href="/forgot-password"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -91,6 +103,16 @@ function LoginPageContent() {
                 <p className="mt-1 text-hazard/90">
                   {describeError(mutation.error, "Unable to sign in")}
                 </p>
+                {shouldOfferVerificationResend ? (
+                  <p className="mt-3">
+                    <Link
+                      className="text-signal hover:text-signal/80"
+                      href={`/verify-email?email=${encodeURIComponent(email)}`}
+                    >
+                      Resend verification email
+                    </Link>
+                  </p>
+                ) : null}
               </div>
             ) : null}
 

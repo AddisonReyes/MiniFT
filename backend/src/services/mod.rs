@@ -2,6 +2,7 @@ pub mod accounts;
 pub mod auth;
 pub mod budgets;
 pub mod dev_seed;
+pub mod email;
 pub mod exchange_rates;
 pub mod recurring;
 pub mod transactions;
@@ -11,6 +12,9 @@ use chrono::{Datelike, Months, NaiveDate, Utc};
 use rust_decimal::Decimal;
 
 use crate::errors::ApiError;
+
+pub const CATEGORY_MAX_LENGTH: usize = 32;
+pub const NOTE_MAX_LENGTH: usize = 128;
 
 pub fn normalize_required_text(value: &str, field_name: &str) -> Result<String, ApiError> {
     let trimmed = value.trim();
@@ -43,6 +47,44 @@ pub fn normalize_optional_text(value: &Option<String>) -> Option<String> {
         let trimmed = item.trim();
         (!trimmed.is_empty()).then(|| trimmed.to_string())
     })
+}
+
+fn ensure_text_max_length(
+    value: &str,
+    field_name: &str,
+    max_length: usize,
+) -> Result<(), ApiError> {
+    if value.chars().count() > max_length {
+        return Err(ApiError::bad_request(format!(
+            "{field_name} must be {max_length} characters or fewer"
+        )));
+    }
+
+    Ok(())
+}
+
+pub fn normalize_required_text_with_max_length(
+    value: &str,
+    field_name: &str,
+    max_length: usize,
+) -> Result<String, ApiError> {
+    let normalized = normalize_required_text(value, field_name)?;
+    ensure_text_max_length(&normalized, field_name, max_length)?;
+    Ok(normalized)
+}
+
+pub fn normalize_optional_text_with_max_length(
+    value: &Option<String>,
+    field_name: &str,
+    max_length: usize,
+) -> Result<Option<String>, ApiError> {
+    let normalized = normalize_optional_text(value);
+
+    if let Some(text) = normalized.as_deref() {
+        ensure_text_max_length(text, field_name, max_length)?;
+    }
+
+    Ok(normalized)
 }
 
 pub fn ensure_positive_amount(amount: Decimal, field_name: &str) -> Result<(), ApiError> {
@@ -88,7 +130,11 @@ pub fn parse_optional_date(
 mod tests {
     use chrono::NaiveDate;
 
-    use super::{month_bounds, normalize_currency_code, parse_optional_date};
+    use super::{
+        month_bounds, normalize_currency_code, normalize_optional_text_with_max_length,
+        normalize_required_text_with_max_length, parse_optional_date, CATEGORY_MAX_LENGTH,
+        NOTE_MAX_LENGTH,
+    };
 
     #[test]
     fn normalizes_currency_codes_to_uppercase() {
@@ -103,6 +149,28 @@ mod tests {
         let error = normalize_currency_code("usd1", "Currency").expect_err("currency should fail");
 
         assert_eq!(error.message, "Currency must be a 3-letter currency code");
+    }
+
+    #[test]
+    fn rejects_required_text_that_exceeds_max_length() {
+        let value = "a".repeat(CATEGORY_MAX_LENGTH + 1);
+        let error =
+            normalize_required_text_with_max_length(&value, "Category", CATEGORY_MAX_LENGTH)
+                .expect_err("category should fail");
+
+        assert_eq!(error.message, "Category must be 32 characters or fewer");
+    }
+
+    #[test]
+    fn rejects_optional_text_that_exceeds_max_length() {
+        let error = normalize_optional_text_with_max_length(
+            &Some("a".repeat(NOTE_MAX_LENGTH + 1)),
+            "Note",
+            NOTE_MAX_LENGTH,
+        )
+        .expect_err("note should fail");
+
+        assert_eq!(error.message, "Note must be 128 characters or fewer");
     }
 
     #[test]

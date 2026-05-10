@@ -1,5 +1,6 @@
 use std::env;
 
+use resend_rs::Resend;
 use rocket::http::SameSite;
 use sqlx::PgPool;
 
@@ -198,6 +199,53 @@ impl ExchangeRateProviderConfig {
 }
 
 #[derive(Debug, Clone)]
+pub struct EmailConfig {
+    pub from_email: String,
+    pub app_base_url: String,
+    pub verification_ttl_hours: i64,
+    pub password_reset_code_ttl_minutes: i64,
+}
+
+impl EmailConfig {
+    pub fn from_env() -> Self {
+        Self {
+            from_email: env::var("RESEND_FROM_EMAIL")
+                .unwrap_or_else(|_| "MiniFT <onboarding@resend.dev>".to_string()),
+            app_base_url: env::var("APP_BASE_URL")
+                .unwrap_or_else(|_| "http://localhost:3000".to_string())
+                .trim_end_matches('/')
+                .to_string(),
+            verification_ttl_hours: env::var("EMAIL_VERIFICATION_TTL_HOURS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(24),
+            password_reset_code_ttl_minutes: env::var("PASSWORD_RESET_CODE_TTL_MINUTES")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(15),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct EmailState {
+    pub client: Resend,
+    pub config: EmailConfig,
+}
+
+impl EmailState {
+    pub fn from_env() -> Result<Self, String> {
+        let api_key =
+            env::var("RESEND_API_KEY").map_err(|_| "RESEND_API_KEY must be set".to_string())?;
+
+        Ok(Self {
+            client: Resend::new(&api_key),
+            config: EmailConfig::from_env(),
+        })
+    }
+}
+
+#[derive(Clone)]
 pub struct AppState {
     pub pool: PgPool,
     pub auth: AuthConfig,
@@ -205,6 +253,7 @@ pub struct AppState {
     pub worker: WorkerConfig,
     pub seed: SeedConfig,
     pub exchange_rates: ExchangeRateProviderConfig,
+    pub email: EmailState,
 }
 
 #[cfg(test)]

@@ -28,7 +28,7 @@ pub struct CreateTransferRequest {
     #[schema(example = "2026-05-04")]
     pub date: NaiveDate,
     /// Optional free-form note reused by the mirrored entries.
-    #[schema(example = "Move money to savings")]
+    #[schema(max_length = 128, example = "Move money to savings")]
     pub note: Option<String>,
 }
 

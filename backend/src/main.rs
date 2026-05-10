@@ -2,7 +2,8 @@ use std::env;
 
 use minift_backend::{
     config::{
-        AppState, AuthConfig, CorsConfig, ExchangeRateProviderConfig, SeedConfig, WorkerConfig,
+        AppState, AuthConfig, CorsConfig, EmailState, ExchangeRateProviderConfig, SeedConfig,
+        WorkerConfig,
     },
     cors, db, docs, logging, routes, services,
 };
@@ -24,6 +25,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         worker: WorkerConfig::from_env(),
         seed: SeedConfig::from_env(),
         exchange_rates: ExchangeRateProviderConfig::from_env(),
+        email: EmailState::from_env().map_err(std::io::Error::other)?,
     };
 
     logging::info(

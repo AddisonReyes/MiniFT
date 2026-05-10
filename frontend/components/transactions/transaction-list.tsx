@@ -40,7 +40,7 @@ export function TransactionListSection({
 
       {showDesktopTable ? (
         <div className="table-shell">
-          <table className="w-full min-w-[860px] text-left text-sm">
+          <table className="w-full min-w-[860px] table-fixed text-left text-sm">
             <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
               <tr>
                 <th className="px-3 py-3 font-medium sm:px-4">Type</th>
@@ -84,17 +84,17 @@ export function TransactionListSection({
                         {transaction.display_type}
                       </Badge>
                     </td>
-                    <td className="px-3 py-4 sm:px-4">
-                      <div className="font-medium text-white">
+                    <td className="px-3 py-4 align-top sm:px-4">
+                      <div className="break-all font-medium text-white">
                         {transaction.category}
                       </div>
                       {transaction.note ? (
-                        <div className="mt-1 max-w-xs text-xs text-mist">
+                        <div className="mt-1 break-all text-xs text-mist">
                           {transaction.note}
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-4 text-mist sm:px-4">
+                    <td className="break-all px-3 py-4 text-mist sm:px-4">
                       {transaction.account_name || "Cash"}
                     </td>
                     <td className="px-3 py-4 text-mist sm:px-4">
@@ -170,7 +170,7 @@ export function TransactionListSection({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-white">
+                    <div className="break-all font-medium text-white">
                       {transaction.category}
                     </div>
                     <div className="mt-1 text-xs text-mist">
@@ -192,7 +192,7 @@ export function TransactionListSection({
                 </div>
 
                 {transaction.note ? (
-                  <div className="mt-3 text-xs text-mist">
+                  <div className="mt-3 break-all text-xs text-mist">
                     {transaction.note}
                   </div>
                 ) : null}

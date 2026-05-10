@@ -28,10 +28,10 @@ pub struct CreateTransactionRequest {
     /// Transaction kind. Use the transfers endpoints for transfer creation.
     pub r#type: TransactionType,
     /// Category label.
-    #[schema(min_length = 1, example = "Groceries")]
+    #[schema(min_length = 1, max_length = 32, example = "Groceries")]
     pub category: String,
     /// Optional free-form note.
-    #[schema(example = "Weekly supermarket run")]
+    #[schema(max_length = 128, example = "Weekly supermarket run")]
     pub note: Option<String>,
     /// Booking date in `YYYY-MM-DD` format.
     #[schema(example = "2026-05-01")]
@@ -57,10 +57,10 @@ pub struct UpdateTransactionRequest {
     /// Transaction kind. Use the transfers endpoints for transfer creation.
     pub r#type: TransactionType,
     /// Category label.
-    #[schema(min_length = 1, example = "Utilities")]
+    #[schema(min_length = 1, max_length = 32, example = "Utilities")]
     pub category: String,
     /// Optional free-form note.
-    #[schema(example = "Electricity bill")]
+    #[schema(max_length = 128, example = "Electricity bill")]
     pub note: Option<String>,
     /// Booking date in `YYYY-MM-DD` format.
     #[schema(example = "2026-05-03")]

@@ -10,7 +10,10 @@ import {
   TextArea,
 } from "@/components/ui";
 import type { Account } from "@/lib/types";
-import type { TransferFormValues } from "@/lib/transactions";
+import {
+  TRANSACTION_NOTE_MAX_LENGTH,
+  type TransferFormValues,
+} from "@/lib/transactions";
 
 export function TransferFormModal({
   open,
@@ -118,7 +121,12 @@ export function TransferFormModal({
           <TextArea
             id="transfer_note"
             value={form.note}
-            onChange={(event) => onChange({ note: event.target.value })}
+            maxLength={TRANSACTION_NOTE_MAX_LENGTH}
+            onChange={(event) =>
+              onChange({
+                note: event.target.value.slice(0, TRANSACTION_NOTE_MAX_LENGTH),
+              })
+            }
             placeholder="Optional transfer note"
           />
         </div>

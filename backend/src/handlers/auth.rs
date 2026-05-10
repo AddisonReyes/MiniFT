@@ -8,12 +8,17 @@ use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
     guards::AuthUser,
+    logging::{self, field},
     models::auth::UserProfile,
     schema::{
-        auth::{AuthResponse, LoginRequest, RegisterRequest, UpdateDefaultCurrencyRequest},
+        auth::{
+            AuthResponse, ConfirmPasswordChangeRequest, ConfirmPasswordResetRequest, LoginRequest,
+            PasswordResetRequest, RegisterRequest, RegistrationResponse, ResendVerificationRequest,
+            UpdateDefaultCurrencyRequest, VerifyEmailRequest,
+        },
         common::MessageResponse,
     },
-    services::auth,
+    services::{auth, email, email::PasswordCodeEmailKind},
 };
 
 fn add_auth_cookie(
@@ -81,16 +86,13 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
     path = "/api/auth/register",
     tag = "auth",
     summary = "Register a new user",
-    description = "Creates a user, provisions the default cash account, and signs the user in by setting both HttpOnly auth cookies.",
+    description = "Creates a user, provisions the default cash account, and sends a verification email. The browser session is created only after the verification link is completed.",
     request_body = RegisterRequest,
     responses(
         (
             status = 200,
-            description = "User registered and auth cookies issued",
-            body = AuthResponse,
-            headers(
-                ("Set-Cookie" = String, description = "Sets two HttpOnly cookies: the access cookie and the refresh cookie.")
-            )
+            description = "User created and verification email flow started",
+            body = RegistrationResponse
         ),
         (status = 400, description = "Invalid registration payload", body = ErrorResponse),
         (status = 409, description = "Email already registered", body = ErrorResponse),
@@ -100,10 +102,112 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
 #[post("/api/auth/register", format = "json", data = "<payload>")]
 pub async fn register(
     state: &State<AppState>,
-    cookies: &CookieJar<'_>,
     payload: Json<RegisterRequest>,
+) -> Result<Json<RegistrationResponse>, ApiError> {
+    let registration = auth::register_user(
+        &state.pool,
+        state.email.config.verification_ttl_hours,
+        payload.into_inner(),
+    )
+    .await?;
+    let email_address = registration.user.email.clone();
+    let message = match email::send_verification_email(
+        &state.email,
+        &email_address,
+        &registration.verification_token,
+    )
+    .await
+    {
+        Ok(()) => "Account created. Check your email to verify it.".to_string(),
+        Err(error) => {
+            logging::error(
+                "auth.register.verification_email.failed",
+                &[
+                    field("email", &email_address),
+                    field("error", &error.message),
+                ],
+            );
+            "Account created, but the verification email could not be sent yet. Request a new verification link from the app."
+                .to_string()
+        }
+    };
+
+    Ok(Json(RegistrationResponse {
+        message,
+        email: email_address,
+    }))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "auth_resend_verification",
+    path = "/api/auth/register/resend-verification",
+    tag = "auth",
+    summary = "Resend a verification email",
+    description = "If the email belongs to an existing unverified account, a fresh verification link is generated and sent.",
+    request_body = ResendVerificationRequest,
+    responses(
+        (status = 200, description = "Resend request accepted", body = MessageResponse),
+        (status = 400, description = "Invalid email address", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
+#[post(
+    "/api/auth/register/resend-verification",
+    format = "json",
+    data = "<payload>"
+)]
+pub async fn resend_verification(
+    state: &State<AppState>,
+    payload: Json<ResendVerificationRequest>,
+) -> Result<Json<MessageResponse>, ApiError> {
+    let email_address = payload.email.clone();
+
+    if let Some(delivery) = auth::prepare_verification_email(
+        &state.pool,
+        &email_address,
+        state.email.config.verification_ttl_hours,
+    )
+    .await?
+    {
+        email::send_verification_email(&state.email, &delivery.email, &delivery.verification_token)
+            .await?;
+    }
+
+    Ok(Json(MessageResponse::new(
+        "If an unverified account exists for that email, a new verification link has been sent.",
+    )))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "auth_verify_email",
+    path = "/api/auth/verify-email",
+    tag = "auth",
+    summary = "Verify an email address and start a browser session",
+    description = "Consumes the verification token from the email link, marks the user as verified, and signs the browser in by setting both HttpOnly auth cookies.",
+    request_body = VerifyEmailRequest,
+    responses(
+        (
+            status = 200,
+            description = "Email verified and auth cookies issued",
+            body = AuthResponse,
+            headers(
+                ("Set-Cookie" = String, description = "Sets two HttpOnly cookies: the access cookie and the refresh cookie.")
+            )
+        ),
+        (status = 401, description = "Verification token missing, invalid, or expired", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
+#[post("/api/auth/verify-email", format = "json", data = "<payload>")]
+pub async fn verify_email(
+    state: &State<AppState>,
+    cookies: &CookieJar<'_>,
+    payload: Json<VerifyEmailRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
-    let session = auth::register_user(&state.pool, &state.auth, payload.into_inner()).await?;
+    let session = auth::verify_email_token(&state.pool, &state.auth, &payload.token).await?;
     set_auth_cookies(cookies, state, &session);
     Ok(Json(auth::auth_response(&session)))
 }
@@ -114,7 +218,7 @@ pub async fn register(
     path = "/api/auth/login",
     tag = "auth",
     summary = "Authenticate an existing user",
-    description = "Validates credentials and signs the user in by setting both HttpOnly auth cookies.",
+    description = "Validates credentials and signs the user in by setting both HttpOnly auth cookies. Email verification must be completed before login succeeds.",
     request_body = LoginRequest,
     responses(
         (
@@ -127,6 +231,7 @@ pub async fn register(
         ),
         (status = 400, description = "Invalid login payload", body = ErrorResponse),
         (status = 401, description = "Invalid credentials", body = ErrorResponse),
+        (status = 403, description = "Email address has not been verified yet", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
     )
 )]
@@ -137,6 +242,169 @@ pub async fn login(
     payload: Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
     let session = auth::login_user(&state.pool, &state.auth, payload.into_inner()).await?;
+    set_auth_cookies(cookies, state, &session);
+    Ok(Json(auth::auth_response(&session)))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "auth_request_password_reset",
+    path = "/api/auth/password/reset/request",
+    tag = "auth",
+    summary = "Request a password reset code",
+    description = "If the email belongs to an account, a one-time reset code is sent to that address.",
+    request_body = PasswordResetRequest,
+    responses(
+        (status = 200, description = "Reset request accepted", body = MessageResponse),
+        (status = 400, description = "Invalid email address", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
+#[post(
+    "/api/auth/password/reset/request",
+    format = "json",
+    data = "<payload>"
+)]
+pub async fn request_password_reset(
+    state: &State<AppState>,
+    payload: Json<PasswordResetRequest>,
+) -> Result<Json<MessageResponse>, ApiError> {
+    if let Some(delivery) = auth::request_password_reset_code(
+        &state.pool,
+        &payload.email,
+        state.email.config.password_reset_code_ttl_minutes,
+    )
+    .await?
+    {
+        email::send_password_code_email(
+            &state.email,
+            &delivery.email,
+            &delivery.code,
+            PasswordCodeEmailKind::Reset,
+        )
+        .await?;
+    }
+
+    Ok(Json(MessageResponse::new(
+        "If that email exists in MiniFT, a reset code has been sent.",
+    )))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "auth_confirm_password_reset",
+    path = "/api/auth/password/reset/confirm",
+    tag = "auth",
+    summary = "Confirm a password reset with an emailed code",
+    description = "Consumes the latest active reset code for the email address, updates the password, and revokes existing refresh sessions.",
+    request_body = ConfirmPasswordResetRequest,
+    responses(
+        (status = 200, description = "Password updated successfully", body = MessageResponse),
+        (status = 400, description = "Invalid input or mismatched passwords", body = ErrorResponse),
+        (status = 401, description = "Reset code missing, invalid, or expired", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
+#[post(
+    "/api/auth/password/reset/confirm",
+    format = "json",
+    data = "<payload>"
+)]
+pub async fn confirm_password_reset(
+    state: &State<AppState>,
+    payload: Json<ConfirmPasswordResetRequest>,
+) -> Result<Json<MessageResponse>, ApiError> {
+    auth::confirm_password_reset(&state.pool, payload.into_inner()).await?;
+
+    Ok(Json(MessageResponse::new(
+        "Password updated. You can now sign in with the new password.",
+    )))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "auth_request_password_change",
+    path = "/api/auth/password/change/request",
+    tag = "auth",
+    summary = "Send a password change code to the current user",
+    description = "Generates a one-time code and emails it to the authenticated user's address.",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Change code sent", body = MessageResponse),
+        (status = 401, description = "Authentication required or access token invalid", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
+#[post("/api/auth/password/change/request")]
+pub async fn request_password_change(
+    state: &State<AppState>,
+    user: AuthUser,
+) -> Result<Json<MessageResponse>, ApiError> {
+    let delivery = auth::request_password_change_code(
+        &state.pool,
+        user.user_id,
+        state.email.config.password_reset_code_ttl_minutes,
+    )
+    .await?;
+
+    email::send_password_code_email(
+        &state.email,
+        &delivery.email,
+        &delivery.code,
+        PasswordCodeEmailKind::Change,
+    )
+    .await?;
+
+    Ok(Json(MessageResponse::new(
+        "A confirmation code has been sent to your email.",
+    )))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "auth_confirm_password_change",
+    path = "/api/auth/password/change/confirm",
+    tag = "auth",
+    summary = "Confirm a password change from settings",
+    description = "Consumes the latest active password-change code, updates the password, revokes previous refresh sessions, and issues a fresh browser session for the current client.",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    request_body = ConfirmPasswordChangeRequest,
+    responses(
+        (
+            status = 200,
+            description = "Password changed and fresh auth cookies issued",
+            body = AuthResponse,
+            headers(
+                ("Set-Cookie" = String, description = "Sets two fresh HttpOnly auth cookies for the current browser.")
+            )
+        ),
+        (status = 400, description = "Invalid input or mismatched passwords", body = ErrorResponse),
+        (status = 401, description = "Authentication required, access token invalid, or code invalid", body = ErrorResponse),
+        (status = 404, description = "User not found", body = ErrorResponse),
+        (status = 500, description = "Server error", body = ErrorResponse)
+    )
+)]
+#[post(
+    "/api/auth/password/change/confirm",
+    format = "json",
+    data = "<payload>"
+)]
+pub async fn confirm_password_change(
+    state: &State<AppState>,
+    cookies: &CookieJar<'_>,
+    user: AuthUser,
+    payload: Json<ConfirmPasswordChangeRequest>,
+) -> Result<Json<AuthResponse>, ApiError> {
+    let session =
+        auth::confirm_password_change(&state.pool, &state.auth, user.user_id, payload.into_inner())
+            .await?;
     set_auth_cookies(cookies, state, &session);
     Ok(Json(auth::auth_response(&session)))
 }
@@ -161,6 +429,7 @@ pub async fn login(
             )
         ),
         (status = 401, description = "Refresh cookie missing, invalid, or expired", body = ErrorResponse),
+        (status = 403, description = "Email address has not been verified yet", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
     )
 )]

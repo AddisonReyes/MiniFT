@@ -44,6 +44,10 @@ function shouldSkipRefresh(path: string) {
   return [
     "/auth/login",
     "/auth/register",
+    "/auth/register/resend-verification",
+    "/auth/verify-email",
+    "/auth/password/reset/request",
+    "/auth/password/reset/confirm",
     "/auth/refresh",
     "/auth/logout",
   ].includes(normalizePath(path));

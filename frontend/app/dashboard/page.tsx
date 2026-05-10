@@ -102,11 +102,15 @@ export default function DashboardPage() {
 
           {showDesktopTransactions ? (
             <div className="table-shell">
-              <table className="w-full min-w-[680px] text-left text-sm">
+              <table className="w-full table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[30%]" />
+                  <col className="w-[30%]" />
+                  <col className="w-[40%]" />
+                </colgroup>
                 <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
                   <tr>
                     <th className="px-3 py-3 font-medium sm:px-4">Category</th>
-                    <th className="px-3 py-3 font-medium sm:px-4">Account</th>
                     <th className="px-3 py-3 font-medium sm:px-4">Date</th>
                     <th className="px-3 py-3 text-right font-medium sm:px-4">
                       Amount
@@ -120,25 +124,22 @@ export default function DashboardPage() {
                         key={transaction.id}
                         className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                       >
-                        <td className="px-3 py-4 sm:px-4">
-                          <div className="font-medium text-white">
+                        <td className="px-3 py-4 align-top sm:px-4">
+                          <div className="break-words font-medium text-white">
                             {transaction.category}
                           </div>
                           {transaction.note ? (
-                            <div className="mt-1 text-xs text-mist">
+                            <div className="mt-1 break-words text-xs text-mist">
                               {transaction.note}
                             </div>
                           ) : null}
-                        </td>
-                        <td className="px-3 py-4 text-mist sm:px-4">
-                          {transaction.account_name || "Cash"}
                         </td>
                         <td className="px-3 py-4 text-mist sm:px-4">
                           {formatDate(transaction.date)}
                         </td>
                         <td
                           className={cn(
-                            "px-3 py-4 text-right font-medium sm:px-4",
+                            "whitespace-nowrap px-3 py-4 text-right font-medium sm:px-4",
                             transactionAmountClass(transaction.display_type),
                           )}
                         >
@@ -151,7 +152,7 @@ export default function DashboardPage() {
                     ))
                   ) : (
                     <tr>
-                      <td className="px-4 py-7" colSpan={4}>
+                      <td className="px-4 py-7" colSpan={3}>
                         <div className="font-medium text-white">
                           No transactions yet
                         </div>

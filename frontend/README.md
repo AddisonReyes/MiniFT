@@ -6,13 +6,15 @@ Next.js App Router frontend for MiniFT. It renders the public landing page, prot
 
 - `/`: public landing page.
 - `/login`: sign in page.
+- `/forgot-password`: public password reset flow with emailed code confirmation.
 - `/register`: account creation page.
+- `/verify-email`: verification inbox screen plus email-link handoff that starts the browser session.
 - `/dashboard`: protected monthly overview.
 - `/transactions`: protected transaction, transfer, and recurring workspace.
 - `/accounts`: protected account management with gross/net totals, Frankfurter-backed rates, and editable manual overrides.
 - `/budgets`: protected monthly budget management.
 - `/reports`: protected monthly reporting.
-- `/settings`: protected profile/session settings, including default currency.
+- `/settings`: protected profile, password-confirmation, and session settings.
 
 ## Navigation Behavior
 
@@ -157,6 +159,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 
 - `next.config.ts` uses `output: "export"` so `npm run build` emits a deploy-ready `out/` folder.
 - The frontend authenticates with HttpOnly cookies and automatically retries requests after a successful refresh.
+- Registration now pauses on an email verification step before the first authenticated session starts.
 - Since the app is exported as static HTML, protected pages are enforced after the client-side session check rather than by a server render.
 - The backend must allow cross-origin requests from the Cloudflare Pages site and expose cookies with `AUTH_COOKIE_SECURE=true` plus `AUTH_COOKIE_SAME_SITE=none` in production.
 - If the Android app also talks to that deployed backend, the backend must also allow the localhost WebView origins. This repo uses `http://localhost` for Android, but allowing `https://localhost` too keeps stale native builds from failing CORS preflight.

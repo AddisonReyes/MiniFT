@@ -7,6 +7,8 @@ import type {
 import { currentDateInput } from "@/lib/format";
 
 export type NonTransferTransactionType = Exclude<TransactionType, "transfer">;
+export const TRANSACTION_CATEGORY_MAX_LENGTH = 32;
+export const TRANSACTION_NOTE_MAX_LENGTH = 128;
 
 export interface TransactionFiltersState {
   type: string;
