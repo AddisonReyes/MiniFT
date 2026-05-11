@@ -126,6 +126,7 @@ export interface GmailIntegrationStatus {
   connection_id: string | null;
   google_email: string | null;
   sync_enabled: boolean;
+  auto_approve_ready_imports: boolean;
   sync_in_progress: boolean;
   scopes: string[];
   last_sync_started_at: string | null;
@@ -133,6 +134,7 @@ export interface GmailIntegrationStatus {
   last_error: string | null;
   imported_count: number;
   pending_review_count: number;
+  ready_count: number;
   failed_count: number;
   connect_url: string | null;
 }
@@ -162,8 +164,24 @@ export interface EmailTransactionImport {
   status: EmailImportStatus;
   matched_account_id: string | null;
   matched_account_name: string | null;
+  suggested_category: string | null;
+  confidence_score: number;
+  ready_to_approve: boolean;
+  auto_approved: boolean;
+  account_match_reason: string | null;
+  category_match_reason: string | null;
   created_transaction_id: string | null;
   created_at: string;
+}
+
+export interface ApproveReadyImportsResponse {
+  approved_count: number;
+  message: string;
+}
+
+export interface BulkImportActionResponse {
+  affected_count: number;
+  message: string;
 }
 
 export interface ApiMessage {

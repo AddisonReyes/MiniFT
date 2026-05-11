@@ -12,6 +12,7 @@ use uuid::Uuid;
     "connection_id": "7be3c133-4c46-4f4f-bb49-95d9a09cdc0a",
     "google_email": "user@gmail.com",
     "sync_enabled": true,
+    "auto_approve_ready_imports": false,
     "sync_in_progress": false,
     "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
     "last_sync_started_at": "2026-05-10T13:00:00Z",
@@ -19,6 +20,7 @@ use uuid::Uuid;
     "last_error": null,
     "imported_count": 24,
     "pending_review_count": 2,
+    "ready_count": 1,
     "failed_count": 1,
     "connect_url": "/api/integrations/google/connect"
 }))]
@@ -28,6 +30,7 @@ pub struct GmailIntegrationStatusResponse {
     pub connection_id: Option<Uuid>,
     pub google_email: Option<String>,
     pub sync_enabled: bool,
+    pub auto_approve_ready_imports: bool,
     pub sync_in_progress: bool,
     pub scopes: Vec<String>,
     pub last_sync_started_at: Option<DateTime<Utc>>,
@@ -35,6 +38,15 @@ pub struct GmailIntegrationStatusResponse {
     pub last_error: Option<String>,
     pub imported_count: i64,
     pub pending_review_count: i64,
+    pub ready_count: i64,
     pub failed_count: i64,
     pub connect_url: Option<String>,
+}
+
+#[derive(Debug, serde::Deserialize, ToSchema)]
+#[schema(example = json!({
+    "auto_approve_ready_imports": true
+}))]
+pub struct UpdateGmailPreferencesRequest {
+    pub auto_approve_ready_imports: bool,
 }

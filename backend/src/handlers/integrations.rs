@@ -4,7 +4,10 @@ use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
     guards::AuthUser,
-    schema::{common::MessageResponse, integration::GmailIntegrationStatusResponse},
+    schema::{
+        common::MessageResponse,
+        integration::{GmailIntegrationStatusResponse, UpdateGmailPreferencesRequest},
+    },
     services::gmail_sync_service,
 };
 
@@ -159,5 +162,36 @@ pub async fn sync_now(
 ) -> Result<Json<GmailIntegrationStatusResponse>, ApiError> {
     Ok(Json(
         gmail_sync_service::trigger_manual_sync(state.inner().clone(), user.user_id).await?,
+    ))
+}
+
+#[utoipa::path(
+    put,
+    operation_id = "gmail_update_preferences",
+    path = "/api/integrations/gmail/preferences",
+    tag = "integrations",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    request_body = UpdateGmailPreferencesRequest,
+    responses(
+        (status = 200, description = "Updated Gmail automation preferences", body = GmailIntegrationStatusResponse),
+        (status = 401, description = "Authentication required", body = ErrorResponse)
+    )
+)]
+#[put(
+    "/api/integrations/gmail/preferences",
+    format = "json",
+    data = "<payload>"
+)]
+pub async fn update_preferences(
+    state: &State<AppState>,
+    user: AuthUser,
+    payload: Json<UpdateGmailPreferencesRequest>,
+) -> Result<Json<GmailIntegrationStatusResponse>, ApiError> {
+    Ok(Json(
+        gmail_sync_service::update_gmail_preferences(state, user.user_id, payload.into_inner())
+            .await?,
     ))
 }

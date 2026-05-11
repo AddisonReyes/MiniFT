@@ -6,8 +6,8 @@ use crate::{
     errors::{ApiError, ErrorResponse},
     guards::AuthUser,
     schema::imports::{
-        ApproveImportRequest, EmailTransactionImportResponse, ImportListQuery, LinkAccountRequest,
-        RejectImportRequest,
+        ApproveImportRequest, ApproveReadyImportsResponse, EmailTransactionImportResponse,
+        ImportListQuery, LinkAccountRequest, RejectImportRequest,
     },
     services::gmail_sync_service,
 };
@@ -147,5 +147,29 @@ pub async fn link_account(
             payload.into_inner(),
         )
         .await?,
+    ))
+}
+
+#[utoipa::path(
+    post,
+    operation_id = "imports_approve_ready",
+    path = "/api/imports/approve-ready",
+    tag = "imports",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Approved all pending imports that are ready", body = ApproveReadyImportsResponse),
+        (status = 401, description = "Authentication required", body = ErrorResponse)
+    )
+)]
+#[post("/api/imports/approve-ready")]
+pub async fn approve_ready(
+    state: &State<AppState>,
+    user: AuthUser,
+) -> Result<Json<ApproveReadyImportsResponse>, ApiError> {
+    Ok(Json(
+        gmail_sync_service::approve_ready_imports(&state.pool, user.user_id).await?,
     ))
 }

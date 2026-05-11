@@ -19,20 +19,21 @@ use crate::{
     errors::ApiError,
     logging::{self, field},
     models::{
-        account::AccountRecord,
+        account::{AccountRecord, AccountType},
         integration::{
             EmailImportStatus, EmailTransactionImportRecord, EmailTransactionImportRow,
-            GmailConnectionRecord, GmailConnectionStatusRow,
+            GmailConnectionRecord, GmailConnectionStatusRow, MerchantAliasRuleRecord,
+            MerchantCategoryRuleRecord,
         },
         transaction::TransactionType,
     },
-    parsers::{infer_category, parse_email_with_registered_parser, ParsedTransaction},
+    parsers::{normalize_merchant, parse_email_with_registered_parser, ParsedTransaction},
     schema::{
         imports::{
-            ApproveImportRequest, EmailTransactionImportResponse, ImportListQuery,
-            LinkAccountRequest, ParsedTransactionPayload, RejectImportRequest,
+            ApproveImportRequest, ApproveReadyImportsResponse, EmailTransactionImportResponse,
+            ImportListQuery, LinkAccountRequest, ParsedTransactionPayload, RejectImportRequest,
         },
-        integration::GmailIntegrationStatusResponse,
+        integration::{GmailIntegrationStatusResponse, UpdateGmailPreferencesRequest},
     },
     services::{
         accounts::ensure_account_ownership, normalize_optional_text_with_max_length,
@@ -45,6 +46,8 @@ const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const GOOGLE_REVOKE_URL: &str = "https://oauth2.googleapis.com/revoke";
 const GMAIL_API_BASE_URL: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 const IMPORT_SOURCE: &str = "gmail_import";
+const READY_TO_APPROVE_SCORE_THRESHOLD: i32 = 60;
+const USER_CONFIRMED_ACCOUNT_REASON: &str = "Confirmed by you";
 
 #[derive(Debug, Clone)]
 struct GmailSyncSummary {
@@ -83,6 +86,55 @@ struct MutableParsedTransaction {
     transaction_datetime: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone)]
+struct AccountSuggestion {
+    account: AccountRecord,
+    reason: String,
+    score: i32,
+}
+
+#[derive(Debug, Clone)]
+struct CategorySuggestion {
+    category: String,
+    reason: String,
+    learned_rule_applied: bool,
+}
+
+#[derive(Debug, Clone)]
+struct MerchantResolution {
+    merchant: String,
+    learned_rule_applied: bool,
+}
+
+#[derive(Debug, Clone)]
+struct ImportPrediction {
+    parsed: MutableParsedTransaction,
+    matched_account: Option<AccountRecord>,
+    suggested_category: String,
+    confidence_score: i32,
+    ready_to_approve: bool,
+    account_match_reason: Option<String>,
+    category_match_reason: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct ApproveImportSelection {
+    account_id: Option<Uuid>,
+    category: Option<String>,
+    merchant: Option<String>,
+    note: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct ApproveImportOptions {
+    auto_approved: bool,
+    create_mapping: bool,
+    set_bank_default: bool,
+    save_merchant_rule: bool,
+    save_category_rule: bool,
+    recompute_predictions: bool,
+}
+
 pub async fn integration_status(
     state: &AppState,
     user_id: Uuid,
@@ -94,6 +146,7 @@ pub async fn integration_status(
             connection_id: None,
             google_email: None,
             sync_enabled: false,
+            auto_approve_ready_imports: false,
             sync_in_progress: false,
             scopes: Vec::new(),
             last_sync_started_at: None,
@@ -101,6 +154,7 @@ pub async fn integration_status(
             last_error: None,
             imported_count: 0,
             pending_review_count: 0,
+            ready_count: 0,
             failed_count: 0,
             connect_url: None,
         });
@@ -112,12 +166,14 @@ pub async fn integration_status(
             gc.google_email,
             gc.scopes,
             gc.sync_enabled,
+            gc.auto_approve_ready_imports,
             gc.sync_in_progress,
             gc.last_sync_started_at,
             gc.last_synced_at,
             gc.last_error,
             COALESCE(SUM(CASE WHEN eti.status = 'imported' THEN 1 ELSE 0 END), 0)::bigint AS imported_count,
             COALESCE(SUM(CASE WHEN eti.status = 'pending_review' THEN 1 ELSE 0 END), 0)::bigint AS pending_review_count,
+            COALESCE(SUM(CASE WHEN eti.status = 'pending_review' AND eti.ready_to_approve THEN 1 ELSE 0 END), 0)::bigint AS ready_count,
             COALESCE(SUM(CASE WHEN eti.status = 'failed' THEN 1 ELSE 0 END), 0)::bigint AS failed_count
          FROM gmail_connections gc
          LEFT JOIN email_transaction_imports eti ON eti.user_id = gc.user_id
@@ -127,6 +183,7 @@ pub async fn integration_status(
            gc.google_email,
            gc.scopes,
            gc.sync_enabled,
+           gc.auto_approve_ready_imports,
            gc.sync_in_progress,
            gc.last_sync_started_at,
            gc.last_synced_at,
@@ -143,6 +200,7 @@ pub async fn integration_status(
             connection_id: Some(connection.id),
             google_email: Some(connection.google_email),
             sync_enabled: connection.sync_enabled,
+            auto_approve_ready_imports: connection.auto_approve_ready_imports,
             sync_in_progress: connection.sync_in_progress,
             scopes: split_scopes(&connection.scopes),
             last_sync_started_at: connection.last_sync_started_at,
@@ -150,6 +208,7 @@ pub async fn integration_status(
             last_error: connection.last_error,
             imported_count: connection.imported_count,
             pending_review_count: connection.pending_review_count,
+            ready_count: connection.ready_count,
             failed_count: connection.failed_count,
             connect_url: Some("/api/integrations/google/connect".to_string()),
         },
@@ -159,6 +218,7 @@ pub async fn integration_status(
             connection_id: None,
             google_email: None,
             sync_enabled: false,
+            auto_approve_ready_imports: false,
             sync_in_progress: false,
             scopes: vec![state.google.gmail_readonly_scope.clone()],
             last_sync_started_at: None,
@@ -166,10 +226,44 @@ pub async fn integration_status(
             last_error: None,
             imported_count: 0,
             pending_review_count: 0,
+            ready_count: 0,
             failed_count: 0,
             connect_url: Some("/api/integrations/google/connect".to_string()),
         },
     })
+}
+
+pub async fn update_gmail_preferences(
+    state: &AppState,
+    user_id: Uuid,
+    payload: UpdateGmailPreferencesRequest,
+) -> Result<GmailIntegrationStatusResponse, ApiError> {
+    let result = sqlx::query(
+        "UPDATE gmail_connections
+         SET auto_approve_ready_imports = $1, updated_at = NOW()
+         WHERE user_id = $2",
+    )
+    .bind(payload.auto_approve_ready_imports)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(ApiError::not_found("No Gmail connection found"));
+    }
+
+    logging::info(
+        "integrations.gmail.preferences_updated",
+        &[
+            field("user_id", user_id),
+            field(
+                "auto_approve_ready_imports",
+                payload.auto_approve_ready_imports,
+            ),
+        ],
+    );
+
+    integration_status(state, user_id).await
 }
 
 pub fn google_connect_url(state: &AppState, user_id: Uuid) -> Result<String, ApiError> {
@@ -388,12 +482,22 @@ pub async fn list_imports(
                 eti.status,
                 eti.matched_account_id,
                 a.name AS matched_account_name,
+                eti.suggested_category,
+                eti.confidence_score,
+                eti.ready_to_approve,
+                eti.auto_approved,
+                eti.account_match_reason,
+                eti.category_match_reason,
                 eti.created_transaction_id,
                 eti.created_at
              FROM email_transaction_imports eti
              LEFT JOIN accounts a ON a.id = eti.matched_account_id
              WHERE eti.user_id = $1 AND eti.status = $2
-             ORDER BY eti.email_date DESC, eti.created_at DESC
+             ORDER BY
+               eti.ready_to_approve DESC,
+               eti.confidence_score DESC,
+               eti.email_date DESC,
+               eti.created_at DESC
              LIMIT $3",
         )
         .bind(user_id)
@@ -418,12 +522,22 @@ pub async fn list_imports(
                 eti.status,
                 eti.matched_account_id,
                 a.name AS matched_account_name,
+                eti.suggested_category,
+                eti.confidence_score,
+                eti.ready_to_approve,
+                eti.auto_approved,
+                eti.account_match_reason,
+                eti.category_match_reason,
                 eti.created_transaction_id,
                 eti.created_at
              FROM email_transaction_imports eti
              LEFT JOIN accounts a ON a.id = eti.matched_account_id
              WHERE eti.user_id = $1
-             ORDER BY eti.email_date DESC, eti.created_at DESC
+             ORDER BY
+               CASE WHEN eti.status = 'pending_review' AND eti.ready_to_approve THEN 0 ELSE 1 END,
+               eti.confidence_score DESC,
+               eti.email_date DESC,
+               eti.created_at DESC
              LIMIT $2",
         )
         .bind(user_id)
@@ -444,13 +558,25 @@ pub async fn link_import_account(
     let import = get_import_for_user(pool, user_id, import_id).await?;
     let parsed = parse_import_payload(&import)?;
     let account = ensure_account_ownership(pool, user_id, payload.account_id).await?;
+    let confidence_score = import
+        .confidence_score
+        .max(READY_TO_APPROVE_SCORE_THRESHOLD + 10);
+    let ready_to_approve =
+        import.parsed_successfully && import.status == EmailImportStatus::PendingReview;
 
     sqlx::query(
         "UPDATE email_transaction_imports
-         SET matched_account_id = $1
-         WHERE id = $2 AND user_id = $3",
+         SET
+           matched_account_id = $1,
+           confidence_score = $2,
+           ready_to_approve = $3,
+           account_match_reason = $4
+         WHERE id = $5 AND user_id = $6",
     )
     .bind(account.id)
+    .bind(confidence_score)
+    .bind(ready_to_approve)
+    .bind(USER_CONFIRMED_ACCOUNT_REASON)
     .bind(import_id)
     .bind(user_id)
     .execute(pool)
@@ -461,6 +587,17 @@ pub async fn link_import_account(
             upsert_bank_account_mapping(pool, user_id, &import.bank_name, card_last4, account.id)
                 .await?;
         }
+    }
+
+    if payload.set_bank_default.unwrap_or(true) {
+        upsert_bank_default_account(
+            pool,
+            user_id,
+            &import.bank_name,
+            &parsed.currency,
+            account.id,
+        )
+        .await?;
     }
 
     logging::info(
@@ -482,104 +619,26 @@ pub async fn approve_import(
     import_id: Uuid,
     payload: ApproveImportRequest,
 ) -> Result<EmailTransactionImportResponse, ApiError> {
-    let import = get_import_for_user(pool, user_id, import_id).await?;
-    let mut parsed = parse_import_payload(&import)?;
-    let account_id = payload
-        .account_id
-        .or(import.matched_account_id)
-        .ok_or_else(|| ApiError::bad_request("Link an account before approving this import"))?;
-    let account = ensure_account_ownership(pool, user_id, account_id).await?;
-
-    if let Some(merchant) = payload.merchant.as_deref() {
-        parsed.merchant = merchant.trim().to_string();
-    }
-
-    let default_category = infer_category(&ParsedTransaction {
-        amount: parsed.amount,
-        currency: parsed.currency.clone(),
-        merchant: parsed.merchant.clone(),
-        transaction_type: parsed.transaction_type,
-        account_hint: parsed.account_hint.clone(),
-        card_last4: parsed.card_last4.clone(),
-        transaction_datetime: parsed.transaction_datetime,
-    });
-    let category = normalize_required_text_with_max_length(
-        payload.category.as_deref().unwrap_or(&default_category),
-        "Category",
-        CATEGORY_MAX_LENGTH,
-    )?;
-    let note = normalize_optional_text_with_max_length(
-        &Some(
-            payload
-                .note
-                .unwrap_or_else(|| format!("{} via Gmail import", parsed.merchant)),
-        ),
-        "Note",
-        NOTE_MAX_LENGTH,
-    )?;
-
-    let mut transaction = pool.begin().await?;
-    let transaction_id = create_imported_transaction(
-        &mut transaction,
+    approve_import_internal(
+        pool,
         user_id,
-        &account,
-        &import,
-        &parsed,
-        &category,
-        &note,
+        import_id,
+        ApproveImportSelection {
+            account_id: payload.account_id,
+            category: payload.category,
+            merchant: payload.merchant,
+            note: payload.note,
+        },
+        ApproveImportOptions {
+            auto_approved: false,
+            create_mapping: payload.create_mapping.unwrap_or(true),
+            set_bank_default: payload.set_bank_default.unwrap_or(true),
+            save_merchant_rule: payload.save_merchant_rule.unwrap_or(true),
+            save_category_rule: payload.save_category_rule.unwrap_or(true),
+            recompute_predictions: true,
+        },
     )
-    .await?;
-
-    sqlx::query(
-        "UPDATE email_transaction_imports
-         SET
-           parsed_transaction = $1,
-           matched_account_id = $2,
-           created_transaction_id = $3,
-           status = 'imported',
-           reviewed_at = NOW(),
-           parsed_successfully = TRUE,
-           parsing_error = NULL
-         WHERE id = $4 AND user_id = $5",
-    )
-    .bind(
-        serde_json::to_value(&parsed)
-            .map_err(|_| ApiError::internal("Unable to store parsed import"))?,
-    )
-    .bind(account.id)
-    .bind(transaction_id)
-    .bind(import_id)
-    .bind(user_id)
-    .execute(&mut *transaction)
-    .await?;
-
-    if payload.create_mapping.unwrap_or(true) {
-        if let Some(card_last4) = parsed.card_last4.as_deref() {
-            upsert_bank_account_mapping_in_transaction(
-                &mut transaction,
-                user_id,
-                &import.bank_name,
-                card_last4,
-                account.id,
-            )
-            .await?;
-        }
-    }
-
-    transaction.commit().await?;
-
-    logging::info(
-        "integrations.gmail.import.approved",
-        &[
-            field("user_id", user_id),
-            field("import_id", import_id),
-            field("account_id", account.id),
-            field("transaction_id", transaction_id),
-            field("bank_name", import.bank_name),
-        ],
-    );
-
-    get_import_response(pool, user_id, import_id).await
+    .await
 }
 
 pub async fn reject_import(
@@ -608,6 +667,72 @@ pub async fn reject_import(
     );
 
     get_import_response(pool, user_id, import_id).await
+}
+
+pub async fn approve_ready_imports(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<ApproveReadyImportsResponse, ApiError> {
+    let ready_import_ids = sqlx::query_scalar::<_, Uuid>(
+        "SELECT id
+         FROM email_transaction_imports
+         WHERE user_id = $1
+           AND status = 'pending_review'
+           AND ready_to_approve = TRUE
+         ORDER BY confidence_score DESC, email_date DESC",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await?;
+
+    let mut approved_count = 0usize;
+
+    for import_id in ready_import_ids {
+        match approve_import_internal(
+            pool,
+            user_id,
+            import_id,
+            ApproveImportSelection {
+                account_id: None,
+                category: None,
+                merchant: None,
+                note: None,
+            },
+            ApproveImportOptions {
+                auto_approved: false,
+                create_mapping: true,
+                set_bank_default: true,
+                save_merchant_rule: true,
+                save_category_rule: true,
+                recompute_predictions: false,
+            },
+        )
+        .await
+        {
+            Ok(_) => approved_count += 1,
+            Err(error) => {
+                logging::warn(
+                    "integrations.gmail.import.approve_ready_failed",
+                    &[
+                        field("user_id", user_id),
+                        field("import_id", import_id),
+                        field("error", error.message),
+                    ],
+                );
+            }
+        }
+    }
+
+    recompute_pending_import_predictions(pool, user_id).await?;
+
+    Ok(ApproveReadyImportsResponse {
+        approved_count,
+        message: if approved_count == 1 {
+            "Approved 1 ready import".to_string()
+        } else {
+            format!("Approved {approved_count} ready imports")
+        },
+    })
 }
 
 async fn sync_user_connection(
@@ -690,7 +815,14 @@ async fn sync_user_connection(
                         }
                     }
 
-                    match process_single_email(&state.pool, user_id, parsed_email).await? {
+                    match process_single_email(
+                        &state.pool,
+                        user_id,
+                        parsed_email,
+                        connection.auto_approve_ready_imports,
+                    )
+                    .await?
+                    {
                         EmailImportStatus::Imported => summary.imported += 1,
                         EmailImportStatus::PendingReview => summary.pending_review += 1,
                         EmailImportStatus::Ignored => summary.duplicates += 1,
@@ -745,6 +877,7 @@ async fn process_single_email(
     pool: &PgPool,
     user_id: Uuid,
     parsed_email: ParsedEmail,
+    auto_approve_ready_imports: bool,
 ) -> Result<EmailImportStatus, ApiError> {
     let (bank_name, parsed_transaction) = match parse_email_with_registered_parser(&parsed_email) {
         Ok(result) => result,
@@ -757,7 +890,13 @@ async fn process_single_email(
                 None,
                 EmailImportStatus::Failed,
                 None,
+                None,
+                0,
+                false,
+                false,
                 Some(error),
+                None,
+                None,
                 None,
                 None,
             )
@@ -766,14 +905,32 @@ async fn process_single_email(
         }
     };
 
-    let transaction_hash = build_transaction_hash(&parsed_transaction);
+    let prediction = predict_import_resolution(
+        pool,
+        user_id,
+        bank_name,
+        &MutableParsedTransaction {
+            amount: parsed_transaction.amount,
+            currency: parsed_transaction.currency.clone(),
+            merchant: parsed_transaction.merchant.clone(),
+            transaction_type: parsed_transaction.transaction_type,
+            account_hint: parsed_transaction.account_hint.clone(),
+            card_last4: parsed_transaction.card_last4.clone(),
+            transaction_datetime: parsed_transaction.transaction_datetime,
+        },
+        None,
+    )
+    .await?;
+    let transaction_hash = build_transaction_hash(&ParsedTransaction {
+        amount: prediction.parsed.amount,
+        currency: prediction.parsed.currency.clone(),
+        merchant: prediction.parsed.merchant.clone(),
+        transaction_type: prediction.parsed.transaction_type,
+        account_hint: prediction.parsed.account_hint.clone(),
+        card_last4: prediction.parsed.card_last4.clone(),
+        transaction_datetime: prediction.parsed.transaction_datetime,
+    });
     let duplicate_exists = import_hash_exists(pool, user_id, &transaction_hash).await?;
-    let matched_account_id = match parsed_transaction.card_last4.as_deref() {
-        Some(card_last4) => find_account_mapping(pool, user_id, bank_name, card_last4)
-            .await?
-            .map(|account| account.id),
-        None => None,
-    };
 
     if duplicate_exists {
         insert_import_record(
@@ -781,105 +938,107 @@ async fn process_single_email(
             user_id,
             &parsed_email,
             bank_name,
-            Some(parsed_transaction),
+            Some(ParsedTransaction {
+                amount: prediction.parsed.amount,
+                currency: prediction.parsed.currency.clone(),
+                merchant: prediction.parsed.merchant.clone(),
+                transaction_type: prediction.parsed.transaction_type,
+                account_hint: prediction.parsed.account_hint.clone(),
+                card_last4: prediction.parsed.card_last4.clone(),
+                transaction_datetime: prediction.parsed.transaction_datetime,
+            }),
             EmailImportStatus::Ignored,
-            matched_account_id,
+            prediction
+                .matched_account
+                .as_ref()
+                .map(|account| account.id),
+            Some(prediction.suggested_category.clone()),
+            prediction.confidence_score,
+            prediction.ready_to_approve,
+            false,
             Some("Duplicate transaction hash matched a prior import".to_string()),
             None,
             None,
+            prediction.account_match_reason.clone(),
+            prediction.category_match_reason.clone(),
         )
         .await?;
         return Ok(EmailImportStatus::Ignored);
     }
 
-    let mut transaction = pool.begin().await?;
-    let import_id = insert_import_record_in_transaction(
-        &mut transaction,
+    let import_id = insert_import_record(
+        pool,
         user_id,
         &parsed_email,
         bank_name,
-        Some(parsed_transaction.clone()),
-        if matched_account_id.is_some() {
-            EmailImportStatus::Imported
-        } else {
-            EmailImportStatus::PendingReview
-        },
-        matched_account_id,
+        Some(ParsedTransaction {
+            amount: prediction.parsed.amount,
+            currency: prediction.parsed.currency.clone(),
+            merchant: prediction.parsed.merchant.clone(),
+            transaction_type: prediction.parsed.transaction_type,
+            account_hint: prediction.parsed.account_hint.clone(),
+            card_last4: prediction.parsed.card_last4.clone(),
+            transaction_datetime: prediction.parsed.transaction_datetime,
+        }),
+        EmailImportStatus::PendingReview,
+        prediction
+            .matched_account
+            .as_ref()
+            .map(|account| account.id),
+        Some(prediction.suggested_category.clone()),
+        prediction.confidence_score,
+        prediction.ready_to_approve,
+        false,
         None,
         Some(transaction_hash),
         None,
+        prediction.account_match_reason.clone(),
+        prediction.category_match_reason.clone(),
     )
     .await?;
 
-    if let Some(account_id) = matched_account_id {
-        let account = ensure_account_ownership(pool, user_id, account_id).await?;
-        let category = normalize_required_text_with_max_length(
-            &infer_category(&parsed_transaction),
-            "Category",
-            CATEGORY_MAX_LENGTH,
-        )?;
-        let note = normalize_optional_text_with_max_length(
-            &Some(format!("{} via Gmail import", parsed_transaction.merchant)),
-            "Note",
-            NOTE_MAX_LENGTH,
-        )?;
-        let transaction_id = create_imported_transaction(
-            &mut transaction,
+    if auto_approve_ready_imports && prediction.ready_to_approve {
+        match approve_import_internal(
+            pool,
             user_id,
-            &account,
-            &EmailTransactionImportRecord {
-                id: import_id,
-                user_id,
-                gmail_message_id: parsed_email.gmail_message_id.clone(),
-                gmail_thread_id: parsed_email.gmail_thread_id.clone(),
-                bank_name: bank_name.to_string(),
-                sender_email: parsed_email.sender.clone(),
-                email_subject: parsed_email.subject.clone(),
-                email_date: parsed_email.sent_at,
-                parsed_successfully: true,
-                parsing_error: None,
-                raw_email_snippet: parsed_email.raw_email_snippet.clone(),
-                parsed_transaction: Some(
-                    serde_json::to_value(&parsed_transaction)
-                        .map_err(|_| ApiError::internal("Unable to store parsed import"))?,
-                ),
-                transaction_hash: None,
-                status: EmailImportStatus::Imported,
-                matched_account_id: Some(account.id),
-                created_transaction_id: None,
-                sync_attempt_count: 1,
-                reviewed_at: None,
-                created_at: Utc::now(),
+            import_id,
+            ApproveImportSelection {
+                account_id: prediction
+                    .matched_account
+                    .as_ref()
+                    .map(|account| account.id),
+                category: Some(prediction.suggested_category),
+                merchant: Some(prediction.parsed.merchant),
+                note: None,
             },
-            &MutableParsedTransaction {
-                amount: parsed_transaction.amount,
-                currency: parsed_transaction.currency.clone(),
-                merchant: parsed_transaction.merchant.clone(),
-                transaction_type: parsed_transaction.transaction_type,
-                account_hint: parsed_transaction.account_hint.clone(),
-                card_last4: parsed_transaction.card_last4.clone(),
-                transaction_datetime: parsed_transaction.transaction_datetime,
+            ApproveImportOptions {
+                auto_approved: true,
+                create_mapping: true,
+                set_bank_default: true,
+                save_merchant_rule: true,
+                save_category_rule: true,
+                recompute_predictions: false,
             },
-            &category,
-            &note,
         )
-        .await?;
+        .await
+        {
+            Ok(_) => Ok(EmailImportStatus::Imported),
+            Err(error) => {
+                sqlx::query(
+                    "UPDATE email_transaction_imports
+                     SET parsing_error = $1
+                     WHERE id = $2 AND user_id = $3",
+                )
+                .bind(format!("Auto-approve failed: {}", error.message))
+                .bind(import_id)
+                .bind(user_id)
+                .execute(pool)
+                .await?;
 
-        sqlx::query(
-            "UPDATE email_transaction_imports
-             SET created_transaction_id = $1, status = 'imported'
-             WHERE id = $2 AND user_id = $3",
-        )
-        .bind(transaction_id)
-        .bind(import_id)
-        .bind(user_id)
-        .execute(&mut *transaction)
-        .await?;
-
-        transaction.commit().await?;
-        Ok(EmailImportStatus::Imported)
+                Ok(EmailImportStatus::PendingReview)
+            }
+        }
     } else {
-        transaction.commit().await?;
         Ok(EmailImportStatus::PendingReview)
     }
 }
@@ -892,9 +1051,15 @@ async fn insert_import_record(
     parsed_transaction: Option<ParsedTransaction>,
     status: EmailImportStatus,
     matched_account_id: Option<Uuid>,
+    suggested_category: Option<String>,
+    confidence_score: i32,
+    ready_to_approve: bool,
+    auto_approved: bool,
     parsing_error: Option<String>,
     transaction_hash: Option<String>,
     created_transaction_id: Option<Uuid>,
+    account_match_reason: Option<String>,
+    category_match_reason: Option<String>,
 ) -> Result<Uuid, ApiError> {
     let mut transaction = pool.begin().await?;
     let id = insert_import_record_in_transaction(
@@ -905,9 +1070,15 @@ async fn insert_import_record(
         parsed_transaction,
         status,
         matched_account_id,
+        suggested_category,
+        confidence_score,
+        ready_to_approve,
+        auto_approved,
         parsing_error,
         transaction_hash,
         created_transaction_id,
+        account_match_reason,
+        category_match_reason,
     )
     .await?;
     transaction.commit().await?;
@@ -922,9 +1093,15 @@ async fn insert_import_record_in_transaction(
     parsed_transaction: Option<ParsedTransaction>,
     status: EmailImportStatus,
     matched_account_id: Option<Uuid>,
+    suggested_category: Option<String>,
+    confidence_score: i32,
+    ready_to_approve: bool,
+    auto_approved: bool,
     parsing_error: Option<String>,
     transaction_hash: Option<String>,
     created_transaction_id: Option<Uuid>,
+    account_match_reason: Option<String>,
+    category_match_reason: Option<String>,
 ) -> Result<Uuid, ApiError> {
     let parsed_json = parsed_transaction
         .map(|value| serde_json::to_value(value))
@@ -951,10 +1128,16 @@ async fn insert_import_record_in_transaction(
             transaction_hash,
             status,
             matched_account_id,
+            suggested_category,
+            confidence_score,
+            ready_to_approve,
+            auto_approved,
+            account_match_reason,
+            category_match_reason,
             created_transaction_id,
             sync_attempt_count
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 1)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 1)
          RETURNING id",
     )
     .bind(user_id)
@@ -971,6 +1154,12 @@ async fn insert_import_record_in_transaction(
     .bind(transaction_hash)
     .bind(status)
     .bind(matched_account_id)
+    .bind(suggested_category)
+    .bind(confidence_score)
+    .bind(ready_to_approve)
+    .bind(auto_approved)
+    .bind(account_match_reason)
+    .bind(category_match_reason)
     .bind(created_transaction_id)
     .fetch_one(&mut **transaction)
     .await?;
@@ -1086,6 +1275,361 @@ async fn find_account_mapping(
     .map_err(ApiError::from)
 }
 
+async fn upsert_bank_default_account(
+    pool: &PgPool,
+    user_id: Uuid,
+    bank_name: &str,
+    currency: &str,
+    account_id: Uuid,
+) -> Result<(), ApiError> {
+    let mut transaction = pool.begin().await?;
+    upsert_bank_default_account_in_transaction(
+        &mut transaction,
+        user_id,
+        bank_name,
+        currency,
+        account_id,
+    )
+    .await?;
+    transaction.commit().await?;
+    Ok(())
+}
+
+async fn upsert_bank_default_account_in_transaction(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    bank_name: &str,
+    currency: &str,
+    account_id: Uuid,
+) -> Result<(), ApiError> {
+    sqlx::query(
+        "INSERT INTO bank_default_accounts (user_id, bank_name, currency, minift_account_id)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, bank_name, currency)
+         DO UPDATE SET
+           minift_account_id = EXCLUDED.minift_account_id,
+           updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(bank_name)
+    .bind(currency)
+    .bind(account_id)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn find_bank_default_account(
+    pool: &PgPool,
+    user_id: Uuid,
+    bank_name: &str,
+    currency: &str,
+) -> Result<Option<AccountRecord>, ApiError> {
+    sqlx::query_as::<_, AccountRecord>(
+        "SELECT a.id, a.name, a.type, a.currency, a.created_at
+         FROM bank_default_accounts bda
+         INNER JOIN accounts a ON a.id = bda.minift_account_id
+         WHERE bda.user_id = $1
+           AND bda.bank_name = $2
+           AND bda.currency = $3",
+    )
+    .bind(user_id)
+    .bind(bank_name)
+    .bind(currency)
+    .fetch_optional(pool)
+    .await
+    .map_err(ApiError::from)
+}
+
+async fn list_user_accounts(pool: &PgPool, user_id: Uuid) -> Result<Vec<AccountRecord>, ApiError> {
+    sqlx::query_as::<_, AccountRecord>(
+        "SELECT id, name, type, currency, created_at
+         FROM accounts
+         WHERE user_id = $1
+         ORDER BY created_at ASC",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
+    .map_err(ApiError::from)
+}
+
+fn canonicalize_merchant_key(value: &str) -> String {
+    value
+        .chars()
+        .map(|character| {
+            if character.is_ascii_alphanumeric() {
+                character.to_ascii_lowercase()
+            } else {
+                ' '
+            }
+        })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn normalize_user_merchant_input(value: &str) -> String {
+    let trimmed = value.trim();
+
+    if trimmed.is_empty() {
+        return "Imported transaction".to_string();
+    }
+
+    normalize_merchant(trimmed.to_string())
+}
+
+async fn resolve_merchant_with_rules(
+    pool: &PgPool,
+    user_id: Uuid,
+    merchant: &str,
+) -> Result<MerchantResolution, ApiError> {
+    let source_key = canonicalize_merchant_key(merchant);
+
+    let rule = sqlx::query_as::<_, MerchantAliasRuleRecord>(
+        "SELECT
+            id,
+            user_id,
+            source_merchant_key,
+            source_merchant_label,
+            normalized_merchant,
+            created_at,
+            updated_at
+         FROM merchant_alias_rules
+         WHERE user_id = $1
+           AND source_merchant_key = $2",
+    )
+    .bind(user_id)
+    .bind(&source_key)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(match rule {
+        Some(rule) => MerchantResolution {
+            merchant: rule.normalized_merchant,
+            learned_rule_applied: true,
+        },
+        None => MerchantResolution {
+            merchant: normalize_user_merchant_input(merchant),
+            learned_rule_applied: false,
+        },
+    })
+}
+
+async fn resolve_category_with_rules(
+    pool: &PgPool,
+    user_id: Uuid,
+    parsed: &MutableParsedTransaction,
+) -> Result<CategorySuggestion, ApiError> {
+    let merchant_key = canonicalize_merchant_key(&parsed.merchant);
+
+    let rule = sqlx::query_as::<_, MerchantCategoryRuleRecord>(
+        "SELECT
+            id,
+            user_id,
+            merchant_key,
+            merchant_name,
+            transaction_type,
+            category,
+            created_at,
+            updated_at
+         FROM merchant_category_rules
+         WHERE user_id = $1
+           AND merchant_key = $2
+           AND transaction_type = $3",
+    )
+    .bind(user_id)
+    .bind(&merchant_key)
+    .bind(parsed.transaction_type)
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(rule) = rule {
+        return Ok(CategorySuggestion {
+            category: rule.category,
+            reason: format!("Matched a learned category rule for {}", rule.merchant_name),
+            learned_rule_applied: true,
+        });
+    }
+
+    Ok(CategorySuggestion {
+        category: parsed.merchant.clone(),
+        reason: "Using the parsed merchant from the bank email".to_string(),
+        learned_rule_applied: false,
+    })
+}
+
+fn preferred_account_types(parsed: &MutableParsedTransaction) -> Vec<AccountType> {
+    let hint = parsed
+        .account_hint
+        .as_deref()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+
+    if hint.contains("credit") || hint.contains("visa") || hint.contains("master") {
+        vec![AccountType::CreditCard]
+    } else if hint.contains("debit") || hint.contains("atm") {
+        vec![AccountType::BankAccount]
+    } else if parsed.transaction_type == TransactionType::Income {
+        vec![AccountType::BankAccount, AccountType::Cash]
+    } else {
+        vec![AccountType::CreditCard, AccountType::BankAccount]
+    }
+}
+
+async fn resolve_account_suggestion(
+    pool: &PgPool,
+    user_id: Uuid,
+    bank_name: &str,
+    parsed: &MutableParsedTransaction,
+) -> Result<Option<AccountSuggestion>, ApiError> {
+    if let Some(card_last4) = parsed.card_last4.as_deref() {
+        if let Some(account) = find_account_mapping(pool, user_id, bank_name, card_last4).await? {
+            return Ok(Some(AccountSuggestion {
+                account,
+                reason: format!("Matched your learned card ending in {card_last4}"),
+                score: 70,
+            }));
+        }
+    }
+
+    if let Some(account) =
+        find_bank_default_account(pool, user_id, bank_name, &parsed.currency).await?
+    {
+        return Ok(Some(AccountSuggestion {
+            account,
+            reason: format!(
+                "Matched your learned default {} {} account",
+                bank_name, parsed.currency
+            ),
+            score: 45,
+        }));
+    }
+
+    let accounts = list_user_accounts(pool, user_id).await?;
+    let preferred_types = preferred_account_types(parsed);
+    let currency_matches = accounts
+        .iter()
+        .filter(|account| {
+            account.currency == parsed.currency && account.r#type != AccountType::Loan
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    let preferred_currency_matches = currency_matches
+        .iter()
+        .filter(|account| preferred_types.contains(&account.r#type))
+        .cloned()
+        .collect::<Vec<_>>();
+
+    if preferred_currency_matches.len() == 1 {
+        let account = preferred_currency_matches
+            .into_iter()
+            .next()
+            .expect("one match");
+        return Ok(Some(AccountSuggestion {
+            reason: format!(
+                "Only one {} account uses {}",
+                match account.r#type {
+                    AccountType::Cash => "cash",
+                    AccountType::BankAccount => "bank account",
+                    AccountType::CreditCard => "credit card",
+                    AccountType::Loan => "loan",
+                },
+                parsed.currency
+            ),
+            account,
+            score: 35,
+        }));
+    }
+
+    if currency_matches.len() == 1 {
+        let account = currency_matches.into_iter().next().expect("one match");
+        return Ok(Some(AccountSuggestion {
+            reason: format!("Only one account uses {}", parsed.currency),
+            account,
+            score: 25,
+        }));
+    }
+
+    Ok(None)
+}
+
+fn calculate_confidence_score(
+    account_suggestion: Option<&AccountSuggestion>,
+    merchant_rule_applied: bool,
+    category_rule_applied: bool,
+    parsed: &MutableParsedTransaction,
+) -> i32 {
+    let mut score = 10;
+
+    if parsed.card_last4.is_some() {
+        score += 10;
+    }
+
+    if merchant_rule_applied {
+        score += 10;
+    }
+
+    if category_rule_applied {
+        score += 10;
+    } else {
+        score += 4;
+    }
+
+    if let Some(account_suggestion) = account_suggestion {
+        score += account_suggestion.score;
+    }
+
+    score.clamp(0, 100)
+}
+
+async fn predict_import_resolution(
+    pool: &PgPool,
+    user_id: Uuid,
+    bank_name: &str,
+    parsed: &MutableParsedTransaction,
+    preserved_account_id: Option<Uuid>,
+) -> Result<ImportPrediction, ApiError> {
+    let merchant_resolution = resolve_merchant_with_rules(pool, user_id, &parsed.merchant).await?;
+    let mut parsed = parsed.clone();
+    parsed.merchant = merchant_resolution.merchant;
+
+    let category_suggestion = resolve_category_with_rules(pool, user_id, &parsed).await?;
+    let account_suggestion = if let Some(account_id) = preserved_account_id {
+        Some(AccountSuggestion {
+            account: ensure_account_ownership(pool, user_id, account_id).await?,
+            reason: USER_CONFIRMED_ACCOUNT_REASON.to_string(),
+            score: READY_TO_APPROVE_SCORE_THRESHOLD + 10,
+        })
+    } else {
+        resolve_account_suggestion(pool, user_id, bank_name, &parsed).await?
+    };
+    let confidence_score = calculate_confidence_score(
+        account_suggestion.as_ref(),
+        merchant_resolution.learned_rule_applied,
+        category_suggestion.learned_rule_applied,
+        &parsed,
+    );
+    let ready_to_approve = account_suggestion.is_some()
+        && !category_suggestion.category.trim().is_empty()
+        && confidence_score >= READY_TO_APPROVE_SCORE_THRESHOLD;
+
+    Ok(ImportPrediction {
+        parsed,
+        matched_account: account_suggestion
+            .as_ref()
+            .map(|suggestion| suggestion.account.clone()),
+        suggested_category: category_suggestion.category,
+        confidence_score,
+        ready_to_approve,
+        account_match_reason: account_suggestion.map(|suggestion| suggestion.reason),
+        category_match_reason: Some(category_suggestion.reason),
+    })
+}
+
 async fn import_hash_exists(
     pool: &PgPool,
     user_id: Uuid,
@@ -1119,6 +1663,336 @@ fn build_transaction_hash(parsed: &ParsedTransaction) -> String {
     format!("{:x}", Sha256::digest(payload.as_bytes()))
 }
 
+async fn upsert_merchant_alias_rule_in_transaction(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    source_label: &str,
+    normalized_merchant: &str,
+) -> Result<(), ApiError> {
+    let source_key = canonicalize_merchant_key(source_label);
+    let normalized_key = canonicalize_merchant_key(normalized_merchant);
+
+    if source_key.is_empty() || source_key == normalized_key {
+        return Ok(());
+    }
+
+    sqlx::query(
+        "INSERT INTO merchant_alias_rules (
+            user_id,
+            source_merchant_key,
+            source_merchant_label,
+            normalized_merchant
+         )
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, source_merchant_key)
+         DO UPDATE SET
+           source_merchant_label = EXCLUDED.source_merchant_label,
+           normalized_merchant = EXCLUDED.normalized_merchant,
+           updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(source_key)
+    .bind(source_label.trim())
+    .bind(normalized_merchant)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn upsert_merchant_category_rule_in_transaction(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    merchant_name: &str,
+    transaction_type: TransactionType,
+    category: &str,
+) -> Result<(), ApiError> {
+    let merchant_key = canonicalize_merchant_key(merchant_name);
+
+    if merchant_key.is_empty() {
+        return Ok(());
+    }
+
+    sqlx::query(
+        "INSERT INTO merchant_category_rules (
+            user_id,
+            merchant_key,
+            merchant_name,
+            transaction_type,
+            category
+         )
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (user_id, merchant_key, transaction_type)
+         DO UPDATE SET
+           merchant_name = EXCLUDED.merchant_name,
+           category = EXCLUDED.category,
+           updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(merchant_key)
+    .bind(merchant_name)
+    .bind(transaction_type)
+    .bind(category)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn approve_import_internal(
+    pool: &PgPool,
+    user_id: Uuid,
+    import_id: Uuid,
+    selection: ApproveImportSelection,
+    options: ApproveImportOptions,
+) -> Result<EmailTransactionImportResponse, ApiError> {
+    let import = get_import_for_user(pool, user_id, import_id).await?;
+
+    if import.status == EmailImportStatus::Imported {
+        return get_import_response(pool, user_id, import_id).await;
+    }
+
+    if import.status == EmailImportStatus::Ignored {
+        return Err(ApiError::bad_request("Ignored imports cannot be approved"));
+    }
+
+    let mut parsed = parse_import_payload(&import)?;
+    let original_merchant = parsed.merchant.clone();
+
+    if let Some(merchant) = selection.merchant.as_deref() {
+        parsed.merchant = normalize_user_merchant_input(merchant);
+    }
+
+    let default_category = import
+        .suggested_category
+        .clone()
+        .unwrap_or_else(|| parsed.merchant.clone());
+    let category = normalize_required_text_with_max_length(
+        selection.category.as_deref().unwrap_or(&default_category),
+        "Category",
+        CATEGORY_MAX_LENGTH,
+    )?;
+    let account_id = selection
+        .account_id
+        .or(import.matched_account_id)
+        .ok_or_else(|| ApiError::bad_request("Link an account before approving this import"))?;
+    let account = ensure_account_ownership(pool, user_id, account_id).await?;
+    let note = normalize_optional_text_with_max_length(
+        &Some(
+            selection
+                .note
+                .unwrap_or_else(|| format!("{} via Gmail import", parsed.merchant)),
+        ),
+        "Note",
+        NOTE_MAX_LENGTH,
+    )?;
+
+    let mut transaction = pool.begin().await?;
+    let transaction_id = create_imported_transaction(
+        &mut transaction,
+        user_id,
+        &account,
+        &import,
+        &parsed,
+        &category,
+        &note,
+    )
+    .await?;
+
+    sqlx::query(
+        "UPDATE email_transaction_imports
+         SET
+           parsed_transaction = $1,
+           matched_account_id = $2,
+           suggested_category = $3,
+           confidence_score = GREATEST(confidence_score, 100),
+           ready_to_approve = TRUE,
+           auto_approved = $4,
+           account_match_reason = $5,
+           category_match_reason = $6,
+           created_transaction_id = $7,
+           status = 'imported',
+           reviewed_at = NOW(),
+           parsed_successfully = TRUE,
+           parsing_error = NULL
+         WHERE id = $8 AND user_id = $9",
+    )
+    .bind(
+        serde_json::to_value(&parsed)
+            .map_err(|_| ApiError::internal("Unable to store parsed import"))?,
+    )
+    .bind(account.id)
+    .bind(&category)
+    .bind(options.auto_approved)
+    .bind(USER_CONFIRMED_ACCOUNT_REASON)
+    .bind(format!("Approved with category {}", category))
+    .bind(transaction_id)
+    .bind(import_id)
+    .bind(user_id)
+    .execute(&mut *transaction)
+    .await?;
+
+    if options.save_merchant_rule {
+        upsert_merchant_alias_rule_in_transaction(
+            &mut transaction,
+            user_id,
+            &original_merchant,
+            &parsed.merchant,
+        )
+        .await?;
+    }
+
+    if options.save_category_rule {
+        upsert_merchant_category_rule_in_transaction(
+            &mut transaction,
+            user_id,
+            &parsed.merchant,
+            parsed.transaction_type,
+            &category,
+        )
+        .await?;
+    }
+
+    if options.create_mapping {
+        if let Some(card_last4) = parsed.card_last4.as_deref() {
+            upsert_bank_account_mapping_in_transaction(
+                &mut transaction,
+                user_id,
+                &import.bank_name,
+                card_last4,
+                account.id,
+            )
+            .await?;
+        }
+    }
+
+    if options.set_bank_default {
+        upsert_bank_default_account_in_transaction(
+            &mut transaction,
+            user_id,
+            &import.bank_name,
+            &parsed.currency,
+            account.id,
+        )
+        .await?;
+    }
+
+    transaction.commit().await?;
+
+    logging::info(
+        "integrations.gmail.import.approved",
+        &[
+            field("user_id", user_id),
+            field("import_id", import_id),
+            field("account_id", account.id),
+            field("transaction_id", transaction_id),
+            field("bank_name", import.bank_name),
+            field("auto_approved", options.auto_approved),
+        ],
+    );
+
+    if options.recompute_predictions {
+        recompute_pending_import_predictions(pool, user_id).await?;
+    }
+
+    get_import_response(pool, user_id, import_id).await
+}
+
+async fn recompute_pending_import_predictions(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<(), ApiError> {
+    let pending_imports = sqlx::query_as::<_, EmailTransactionImportRecord>(
+        "SELECT
+            id,
+            user_id,
+            gmail_message_id,
+            gmail_thread_id,
+            bank_name,
+            sender_email,
+            email_subject,
+            email_date,
+            parsed_successfully,
+            parsing_error,
+            raw_email_snippet,
+            parsed_transaction,
+            transaction_hash,
+            status,
+            matched_account_id,
+            suggested_category,
+            confidence_score,
+            ready_to_approve,
+            auto_approved,
+            account_match_reason,
+            category_match_reason,
+            created_transaction_id,
+            sync_attempt_count,
+            reviewed_at,
+            created_at
+         FROM email_transaction_imports
+         WHERE user_id = $1
+           AND status = 'pending_review'
+           AND parsed_transaction IS NOT NULL",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await?;
+
+    for import in pending_imports {
+        let parsed = match parse_import_payload(&import) {
+            Ok(parsed) => parsed,
+            Err(_) => continue,
+        };
+        let preserved_account_id =
+            if import.account_match_reason.as_deref() == Some(USER_CONFIRMED_ACCOUNT_REASON) {
+                import.matched_account_id
+            } else {
+                None
+            };
+        let prediction = predict_import_resolution(
+            pool,
+            user_id,
+            &import.bank_name,
+            &parsed,
+            preserved_account_id,
+        )
+        .await?;
+        let parsed_value = serde_json::to_value(&prediction.parsed)
+            .map_err(|_| ApiError::internal("Unable to refresh parsed import"))?;
+
+        sqlx::query(
+            "UPDATE email_transaction_imports
+             SET
+               parsed_transaction = $1,
+               matched_account_id = $2,
+               suggested_category = $3,
+               confidence_score = $4,
+               ready_to_approve = $5,
+               account_match_reason = $6,
+               category_match_reason = $7
+             WHERE id = $8 AND user_id = $9 AND status = 'pending_review'",
+        )
+        .bind(parsed_value)
+        .bind(
+            prediction
+                .matched_account
+                .as_ref()
+                .map(|account| account.id),
+        )
+        .bind(prediction.suggested_category)
+        .bind(prediction.confidence_score)
+        .bind(prediction.ready_to_approve)
+        .bind(prediction.account_match_reason)
+        .bind(prediction.category_match_reason)
+        .bind(import.id)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
+}
+
 async fn get_connection_for_user(
     pool: &PgPool,
     user_id: Uuid,
@@ -1133,6 +2007,7 @@ async fn get_connection_for_user(
             expires_at,
             scopes,
             sync_enabled,
+            auto_approve_ready_imports,
             gmail_history_id,
             sync_in_progress,
             last_sync_started_at,
@@ -1214,11 +2089,12 @@ async fn upsert_gmail_connection(
             expires_at,
             scopes,
             sync_enabled,
+            auto_approve_ready_imports,
             gmail_history_id,
             last_error,
             updated_at
          )
-         VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7, NULL, NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE, COALESCE($7, FALSE), $8, NULL, NOW())
          ON CONFLICT (user_id)
          DO UPDATE SET
            google_email = EXCLUDED.google_email,
@@ -1227,6 +2103,7 @@ async fn upsert_gmail_connection(
            expires_at = EXCLUDED.expires_at,
            scopes = EXCLUDED.scopes,
            sync_enabled = TRUE,
+           auto_approve_ready_imports = gmail_connections.auto_approve_ready_imports,
            gmail_history_id = COALESCE(EXCLUDED.gmail_history_id, gmail_connections.gmail_history_id),
            last_error = NULL,
            updated_at = NOW()",
@@ -1237,6 +2114,7 @@ async fn upsert_gmail_connection(
     .bind(encrypted_refresh_token)
     .bind(expires_at)
     .bind(scopes)
+    .bind(maybe_existing.as_ref().map(|connection| connection.auto_approve_ready_imports))
     .bind(history_id)
     .execute(&state.pool)
     .await?;
@@ -1649,6 +2527,12 @@ async fn get_import_for_user(
             transaction_hash,
             status,
             matched_account_id,
+            suggested_category,
+            confidence_score,
+            ready_to_approve,
+            auto_approved,
+            account_match_reason,
+            category_match_reason,
             created_transaction_id,
             sync_attempt_count,
             reviewed_at,
@@ -1684,6 +2568,12 @@ async fn get_import_response(
             eti.status,
             eti.matched_account_id,
             a.name AS matched_account_name,
+            eti.suggested_category,
+            eti.confidence_score,
+            eti.ready_to_approve,
+            eti.auto_approved,
+            eti.account_match_reason,
+            eti.category_match_reason,
             eti.created_transaction_id,
             eti.created_at
          FROM email_transaction_imports eti
@@ -1728,6 +2618,12 @@ fn map_import_row(row: EmailTransactionImportRow) -> EmailTransactionImportRespo
         status: row.status,
         matched_account_id: row.matched_account_id,
         matched_account_name: row.matched_account_name,
+        suggested_category: row.suggested_category,
+        confidence_score: row.confidence_score,
+        ready_to_approve: row.ready_to_approve,
+        auto_approved: row.auto_approved,
+        account_match_reason: row.account_match_reason,
+        category_match_reason: row.category_match_reason,
         created_transaction_id: row.created_transaction_id,
         created_at: row.created_at,
     }

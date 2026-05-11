@@ -90,7 +90,7 @@ export function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "min-h-11 rounded-[16px] px-3 py-2 text-sm font-medium transition",
+              "min-h-10 whitespace-normal rounded-[16px] px-2 py-2 text-center text-xs font-medium leading-tight transition sm:min-h-11 sm:px-3 sm:text-sm",
               active
                 ? "bg-white text-ink shadow-sm"
                 : "text-mist hover:bg-white/[0.06] hover:text-white",

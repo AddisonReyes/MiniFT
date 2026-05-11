@@ -6,7 +6,7 @@ use sqlx::{FromRow, Type};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::transaction::TransactionType;
+use crate::models::{account::AccountType, transaction::TransactionType};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, FromFormField, ToSchema,
@@ -34,6 +34,7 @@ pub struct GmailConnectionRecord {
     pub expires_at: DateTime<Utc>,
     pub scopes: String,
     pub sync_enabled: bool,
+    pub auto_approve_ready_imports: bool,
     pub gmail_history_id: Option<i64>,
     pub sync_in_progress: bool,
     pub last_sync_started_at: Option<DateTime<Utc>>,
@@ -49,12 +50,14 @@ pub struct GmailConnectionStatusRow {
     pub google_email: String,
     pub scopes: String,
     pub sync_enabled: bool,
+    pub auto_approve_ready_imports: bool,
     pub sync_in_progress: bool,
     pub last_sync_started_at: Option<DateTime<Utc>>,
     pub last_synced_at: Option<DateTime<Utc>>,
     pub last_error: Option<String>,
     pub imported_count: i64,
     pub pending_review_count: i64,
+    pub ready_count: i64,
     pub failed_count: i64,
 }
 
@@ -100,6 +103,12 @@ pub struct EmailTransactionImportRecord {
     pub transaction_hash: Option<String>,
     pub status: EmailImportStatus,
     pub matched_account_id: Option<Uuid>,
+    pub suggested_category: Option<String>,
+    pub confidence_score: i32,
+    pub ready_to_approve: bool,
+    pub auto_approved: bool,
+    pub account_match_reason: Option<String>,
+    pub category_match_reason: Option<String>,
     pub created_transaction_id: Option<Uuid>,
     pub sync_attempt_count: i32,
     pub reviewed_at: Option<DateTime<Utc>>,
@@ -122,6 +131,55 @@ pub struct EmailTransactionImportRow {
     pub status: EmailImportStatus,
     pub matched_account_id: Option<Uuid>,
     pub matched_account_name: Option<String>,
+    pub suggested_category: Option<String>,
+    pub confidence_score: i32,
+    pub ready_to_approve: bool,
+    pub auto_approved: bool,
+    pub account_match_reason: Option<String>,
+    pub category_match_reason: Option<String>,
     pub created_transaction_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct MerchantAliasRuleRecord {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub source_merchant_key: String,
+    pub source_merchant_label: String,
+    pub normalized_merchant: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct MerchantCategoryRuleRecord {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub merchant_key: String,
+    pub merchant_name: String,
+    pub transaction_type: TransactionType,
+    pub category: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct BankDefaultAccountRecord {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub bank_name: String,
+    pub currency: String,
+    pub minift_account_id: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct AccountAutomationCandidateRow {
+    pub id: Uuid,
+    pub name: String,
+    pub r#type: AccountType,
+    pub currency: String,
     pub created_at: DateTime<Utc>,
 }

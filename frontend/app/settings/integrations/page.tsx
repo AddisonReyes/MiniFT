@@ -10,6 +10,7 @@ import {
   useDisconnectGmail,
   useGmailIntegration,
   useSyncImports,
+  useUpdateGmailPreferences,
 } from "@/lib/gmail-integration";
 import { formatDateTime } from "@/lib/format";
 
@@ -19,6 +20,7 @@ export default function IntegrationsPage() {
   const statusQuery = useGmailIntegration();
   const syncMutation = useSyncImports();
   const disconnectMutation = useDisconnectGmail();
+  const preferencesMutation = useUpdateGmailPreferences();
   const [isConsentModalOpen, setConsentModalOpen] = useState(false);
   const [googleConnected] = useState(() => {
     if (typeof window === "undefined") {
@@ -62,7 +64,7 @@ export default function IntegrationsPage() {
         </>
       }
     >
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
@@ -72,16 +74,16 @@ export default function IntegrationsPage() {
               MiniFT only reads bank alert emails
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-mist">
-              MiniFT solo procesa emails bancarios automáticos. Nunca accede a
-              tu banca en línea, nunca pide credenciales bancarias y solo usa el
-              scope de lectura de Gmail para detectar movimientos y ayudarte a
-              registrar gastos más rápido.
+              MiniFT only processes automatic bank alert emails. It never
+              accesses your online banking, never asks for banking credentials,
+              and only uses Gmail read access to detect activity and help you
+              capture spending faster.
             </p>
           </div>
 
           {googleConnected ? (
             <div className="rounded-[20px] border border-signal/20 bg-signal/10 px-4 py-3 text-sm text-signal">
-              Gmail quedó conectado y el primer sync ya fue programado.
+              Gmail is connected and the first sync has already been scheduled.
             </div>
           ) : null}
 
@@ -93,10 +95,10 @@ export default function IntegrationsPage() {
 
           {!status?.configured ? (
             <div className="rounded-[24px] border border-amber/20 bg-amber/10 p-5 text-sm text-amber">
-              Esta instancia todavía no tiene configuradas las variables de
-              Google OAuth y cifrado de tokens. Agrega `GOOGLE_CLIENT_ID`,
-              `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL` y
-              `GOOGLE_TOKEN_ENCRYPTION_KEY` para habilitar la integración.
+              This deployment is not configured for Google OAuth and token
+              encryption yet. Add `GOOGLE_CLIENT_ID`,
+              `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`, and
+              `GOOGLE_TOKEN_ENCRYPTION_KEY` to enable the integration.
             </div>
           ) : status?.connected ? (
             <div className="grid gap-4">
@@ -114,7 +116,7 @@ export default function IntegrationsPage() {
                     {status.sync_in_progress ? "Syncing" : "Connected"}
                   </Badge>
                 </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-mist">
                       Last sync
@@ -141,6 +143,14 @@ export default function IntegrationsPage() {
                       {status.pending_review_count}
                     </div>
                   </div>
+                  <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                      Ready now
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-white">
+                      {status.ready_count}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -150,8 +160,84 @@ export default function IntegrationsPage() {
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap gap-3">
+              {preferencesMutation.error instanceof Error ? (
+                <div className="rounded-[20px] border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
+                  {preferencesMutation.error.message}
+                </div>
+              ) : null}
+
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                      Automation
+                    </div>
+                    <div className="mt-2 text-lg font-semibold text-white">
+                      Ready imports and auto-approve
+                    </div>
+                  </div>
+                  <Badge
+                    tone={status.auto_approve_ready_imports ? "success" : "amber"}
+                  >
+                    {status.auto_approve_ready_imports
+                      ? "Auto-approve on"
+                      : "Manual approval"}
+                  </Badge>
+                </div>
+                <p className="mt-3 text-sm text-mist">
+                  MiniFT learns account, merchant, and category rules from each
+                  approval. Ready imports stay one click away in the queue, and
+                  you can optionally auto-approve future high-confidence
+                  imports.
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                      Ready to approve
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-white">
+                      {status.ready_count}
+                    </div>
+                  </div>
+                  <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                      Needs attention
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-white">
+                      {Math.max(status.pending_review_count - status.ready_count, 0)}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant={
+                      status.auto_approve_ready_imports ? "secondary" : "primary"
+                    }
+                    onClick={() =>
+                      preferencesMutation.mutate(
+                        !status.auto_approve_ready_imports,
+                      )
+                    }
+                    disabled={preferencesMutation.isPending}
+                  >
+                    {preferencesMutation.isPending
+                      ? "Saving..."
+                      : status.auto_approve_ready_imports
+                        ? "Disable auto-approve"
+                        : "Enable auto-approve"}
+                  </Button>
+                  <Link href="/imports" className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto" variant="secondary">
+                      Open ready imports
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:flex sm:flex-wrap">
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={() => syncMutation.mutate()}
                   disabled={syncMutation.isPending || status.sync_in_progress}
                 >
@@ -160,6 +246,7 @@ export default function IntegrationsPage() {
                     : "Sync now"}
                 </Button>
                 <Button
+                  className="w-full sm:w-auto"
                   variant="danger"
                   onClick={() => disconnectMutation.mutate()}
                   disabled={disconnectMutation.isPending}
@@ -191,7 +278,10 @@ export default function IntegrationsPage() {
               </div>
 
               <div className="mt-5">
-                <Button onClick={() => setConsentModalOpen(true)}>
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={() => setConsentModalOpen(true)}
+                >
                   Connect Gmail
                 </Button>
               </div>
@@ -229,12 +319,16 @@ export default function IntegrationsPage() {
               Review workflow
             </div>
             <p className="mt-2 text-sm text-mist">
-              Known cards can import automatically. Unknown cards stay in
-              pending review until you link them to an existing MiniFT account.
+              MiniFT now learns from every approval. High-confidence imports can
+              stay ready for one-click approval, and you can enable optional
+              auto-approve once you trust the learned account and category
+              rules.
             </p>
             <div className="mt-4">
-              <Link href="/imports">
-                <Button variant="secondary">Open import review</Button>
+              <Link href="/imports" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto" variant="secondary">
+                  Open import review
+                </Button>
               </Link>
             </div>
           </div>
@@ -244,7 +338,7 @@ export default function IntegrationsPage() {
       <Modal
         open={isConsentModalOpen}
         title="Connect Gmail"
-        subtitle="MiniFT solo lee emails bancarios automáticos. Nunca accede a tu banca en línea."
+        subtitle="MiniFT only reads automatic bank alert emails. It never accesses your online banking."
         onClose={() => setConsentModalOpen(false)}
       >
         <div className="space-y-4 pb-6 text-sm text-mist">

@@ -62,6 +62,12 @@ pub struct ImportListQuery {
     "status": "pending_review",
     "matched_account_id": null,
     "matched_account_name": null,
+    "suggested_category": "Groceries",
+    "confidence_score": 82,
+    "ready_to_approve": true,
+    "auto_approved": false,
+    "account_match_reason": "Matched your learned default Banco Popular DOP account",
+    "category_match_reason": "Matched a learned category rule for PriceSmart",
     "created_transaction_id": null,
     "created_at": "2026-05-10T10:44:02Z"
 }))]
@@ -80,6 +86,12 @@ pub struct EmailTransactionImportResponse {
     pub status: EmailImportStatus,
     pub matched_account_id: Option<Uuid>,
     pub matched_account_name: Option<String>,
+    pub suggested_category: Option<String>,
+    pub confidence_score: i32,
+    pub ready_to_approve: bool,
+    pub auto_approved: bool,
+    pub account_match_reason: Option<String>,
+    pub category_match_reason: Option<String>,
     pub created_transaction_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
@@ -90,7 +102,10 @@ pub struct EmailTransactionImportResponse {
     "category": "Groceries",
     "merchant": "PriceSmart",
     "note": "Imported from Gmail",
-    "create_mapping": true
+    "create_mapping": true,
+    "set_bank_default": true,
+    "save_merchant_rule": true,
+    "save_category_rule": true
 }))]
 pub struct ApproveImportRequest {
     pub account_id: Option<Uuid>,
@@ -98,16 +113,21 @@ pub struct ApproveImportRequest {
     pub merchant: Option<String>,
     pub note: Option<String>,
     pub create_mapping: Option<bool>,
+    pub set_bank_default: Option<bool>,
+    pub save_merchant_rule: Option<bool>,
+    pub save_category_rule: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[schema(example = json!({
     "account_id": "d5dcbe8d-bb41-49c4-939f-9adf5a8c6001",
-    "persist_mapping": true
+    "persist_mapping": true,
+    "set_bank_default": true
 }))]
 pub struct LinkAccountRequest {
     pub account_id: Uuid,
     pub persist_mapping: Option<bool>,
+    pub set_bank_default: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -116,4 +136,14 @@ pub struct LinkAccountRequest {
 }))]
 pub struct RejectImportRequest {
     pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(example = json!({
+    "approved_count": 3,
+    "message": "Approved 3 ready imports"
+}))]
+pub struct ApproveReadyImportsResponse {
+    pub approved_count: usize,
+    pub message: String,
 }

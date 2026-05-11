@@ -50,3 +50,19 @@ export function useDisconnectGmail() {
     },
   });
 }
+
+export function useUpdateGmailPreferences() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (autoApproveReadyImports: boolean) =>
+      api.put<GmailIntegrationStatus>("/integrations/gmail/preferences", {
+        auto_approve_ready_imports: autoApproveReadyImports,
+      }),
+    onSuccess: async (status) => {
+      await queryClient.setQueryData(gmailIntegrationQueryKey, status);
+      await queryClient.invalidateQueries({ queryKey: gmailIntegrationQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["imports"] });
+    },
+  });
+}
