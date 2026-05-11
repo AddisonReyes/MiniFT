@@ -4,6 +4,8 @@ use resend_rs::Resend;
 use rocket::http::SameSite;
 use sqlx::PgPool;
 
+use crate::{logging, security::encryption::TokenCipher};
+
 fn normalize_origin(origin: &str) -> Option<String> {
     let trimmed = origin.trim().trim_end_matches('/');
 
@@ -34,6 +36,13 @@ fn parse_allowed_origins(value: &str) -> Vec<String> {
             normalize_origin(origin.trim().trim_matches(&['[', ']', '"', '\''][..]))
         })
         .collect()
+}
+
+fn parse_optional_env(name: &str) -> Option<String> {
+    env::var(name)
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
 }
 
 #[derive(Debug, Clone)]
@@ -157,6 +166,72 @@ impl WorkerConfig {
 }
 
 #[derive(Debug, Clone)]
+pub struct GoogleIntegrationConfig {
+    pub client_id: Option<String>,
+    pub client_secret: Option<String>,
+    pub redirect_url: Option<String>,
+    pub token_cipher: Option<TokenCipher>,
+    pub gmail_readonly_scope: String,
+    pub sync_interval_seconds: u64,
+    pub request_timeout_seconds: u64,
+    pub max_sync_messages_per_run: usize,
+    pub min_manual_sync_interval_seconds: u64,
+    pub app_base_url: String,
+}
+
+impl GoogleIntegrationConfig {
+    pub fn from_env() -> Self {
+        let token_cipher = parse_optional_env("GOOGLE_TOKEN_ENCRYPTION_KEY").and_then(|value| {
+            match TokenCipher::from_encoded_key(&value) {
+                Ok(cipher) => Some(cipher),
+                Err(error) => {
+                    logging::warn(
+                        "integrations.google.config.invalid_encryption_key",
+                        &[logging::field("error", error)],
+                    );
+                    None
+                }
+            }
+        });
+
+        Self {
+            client_id: parse_optional_env("GOOGLE_CLIENT_ID"),
+            client_secret: parse_optional_env("GOOGLE_CLIENT_SECRET"),
+            redirect_url: parse_optional_env("GOOGLE_REDIRECT_URL"),
+            token_cipher,
+            gmail_readonly_scope: "https://www.googleapis.com/auth/gmail.readonly".to_string(),
+            sync_interval_seconds: env::var("GMAIL_SYNC_INTERVAL_SECONDS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(300),
+            request_timeout_seconds: env::var("GOOGLE_REQUEST_TIMEOUT_SECONDS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(15),
+            max_sync_messages_per_run: env::var("GMAIL_MAX_MESSAGES_PER_RUN")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(100),
+            min_manual_sync_interval_seconds: env::var("GMAIL_MIN_MANUAL_SYNC_INTERVAL_SECONDS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(60),
+            app_base_url: env::var("APP_BASE_URL")
+                .unwrap_or_else(|_| "http://localhost:3000".to_string())
+                .trim_end_matches('/')
+                .to_string(),
+        }
+    }
+
+    pub fn is_configured(&self) -> bool {
+        self.client_id.is_some()
+            && self.client_secret.is_some()
+            && self.redirect_url.is_some()
+            && self.token_cipher.is_some()
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct SeedConfig {
     pub enabled: bool,
 }
@@ -253,6 +328,7 @@ pub struct AppState {
     pub worker: WorkerConfig,
     pub seed: SeedConfig,
     pub exchange_rates: ExchangeRateProviderConfig,
+    pub google: GoogleIntegrationConfig,
     pub email: EmailState,
 }
 
@@ -260,7 +336,10 @@ pub struct AppState {
 mod tests {
     use rocket::http::SameSite;
 
-    use super::{parse_allowed_origins, parse_same_site, CorsConfig, ExchangeRateProviderConfig};
+    use super::{
+        parse_allowed_origins, parse_same_site, CorsConfig, ExchangeRateProviderConfig,
+        GoogleIntegrationConfig,
+    };
 
     #[test]
     fn parses_json_array_and_normalizes_trailing_slashes() {
@@ -322,5 +401,23 @@ mod tests {
         assert!(matches!(parse_same_site("lax"), Ok(SameSite::Lax)));
         assert!(matches!(parse_same_site("strict"), Ok(SameSite::Strict)));
         assert!(matches!(parse_same_site("none"), Ok(SameSite::None)));
+    }
+
+    #[test]
+    fn google_config_reports_unconfigured_by_default() {
+        let config = GoogleIntegrationConfig {
+            client_id: None,
+            client_secret: None,
+            redirect_url: None,
+            token_cipher: None,
+            gmail_readonly_scope: "scope".to_string(),
+            sync_interval_seconds: 300,
+            request_timeout_seconds: 15,
+            max_sync_messages_per_run: 100,
+            min_manual_sync_interval_seconds: 60,
+            app_base_url: "http://localhost:3000".to_string(),
+        };
+
+        assert!(!config.is_configured());
     }
 }

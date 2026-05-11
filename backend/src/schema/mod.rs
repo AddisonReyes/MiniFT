@@ -3,6 +3,8 @@ pub mod auth;
 pub mod budget;
 pub mod common;
 pub mod exchange_rate;
+pub mod imports;
+pub mod integration;
 pub mod recurring;
 pub mod transaction;
 pub mod transfer;
