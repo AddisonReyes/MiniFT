@@ -25,6 +25,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         worker: WorkerConfig::from_env(),
         seed: SeedConfig::from_env(),
         exchange_rates: ExchangeRateProviderConfig::from_env(),
+        google: minift_backend::config::GoogleIntegrationConfig::from_env(),
         email: EmailState::from_env().map_err(std::io::Error::other)?,
     };
 
@@ -35,6 +36,10 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
             logging::field("worker_interval_seconds", state.worker.interval_seconds),
             logging::field("seed_enabled", state.seed.enabled),
             logging::field("exchange_rates_enabled", state.exchange_rates.enabled),
+            logging::field(
+                "google_integration_configured",
+                state.google.is_configured(),
+            ),
             logging::field("auth_cookie_secure", state.auth.cookie_secure),
             logging::field(
                 "auth_cookie_same_site",
@@ -71,6 +76,22 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
                     );
                     tokio::spawn(async move {
                         services::recurring::run_worker(state).await;
+                    });
+                }
+            })
+        }))
+        .attach(AdHoc::on_liftoff("Gmail Sync Worker", |rocket| {
+            Box::pin(async move {
+                if let Some(state) = rocket.state::<AppState>().cloned() {
+                    logging::info(
+                        "worker.gmail_sync.spawned",
+                        &[logging::field(
+                            "interval_seconds",
+                            state.google.sync_interval_seconds.max(60),
+                        )],
+                    );
+                    tokio::spawn(async move {
+                        services::gmail_sync_service::run_worker(state).await;
                     });
                 }
             })

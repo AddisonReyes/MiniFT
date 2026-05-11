@@ -4,6 +4,7 @@ pub mod budgets;
 pub mod dev_seed;
 pub mod email;
 pub mod exchange_rates;
+pub mod gmail_sync_service;
 pub mod recurring;
 pub mod transactions;
 pub mod transfers;

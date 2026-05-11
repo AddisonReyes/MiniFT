@@ -14,6 +14,16 @@ use crate::config::AppState;
 #[openapi(
     paths(
         crate::handlers::health::health,
+        crate::handlers::integrations::connect,
+        crate::handlers::integrations::callback,
+        crate::handlers::integrations::disconnect,
+        crate::handlers::integrations::google_status,
+        crate::handlers::integrations::gmail_status,
+        crate::handlers::integrations::sync_now,
+        crate::handlers::imports::list,
+        crate::handlers::imports::approve,
+        crate::handlers::imports::reject,
+        crate::handlers::imports::link_account,
         crate::handlers::auth::register,
         crate::handlers::auth::resend_verification,
         crate::handlers::auth::verify_email,
@@ -55,6 +65,8 @@ use crate::config::AppState;
     ),
     tags(
         (name = "system", description = "Operational endpoints for health checks and backend status."),
+        (name = "integrations", description = "Google OAuth connection management and Gmail sync orchestration."),
+        (name = "imports", description = "Review and approve Gmail-derived bank transaction imports."),
         (name = "auth", description = "Registration, verification, password recovery, cookie rotation, and current-user profile endpoints."),
         (name = "accounts", description = "User-owned financial accounts and balances."),
         (name = "exchange_rates", description = "Effective and manual exchange rates used for conversions."),
