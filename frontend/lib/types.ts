@@ -6,6 +6,11 @@ export type AccountType =
   | "credit_card"
   | "loan";
 export type RecurringFrequency = "daily" | "weekly" | "monthly";
+export type EmailImportStatus =
+  | "pending_review"
+  | "imported"
+  | "failed"
+  | "ignored";
 
 export interface User {
   id: string;
@@ -113,6 +118,52 @@ export interface CategorySummary {
   month: string;
   type: Exclude<TransactionType, "transfer">;
   items: CategorySummaryItem[];
+}
+
+export interface GmailIntegrationStatus {
+  configured: boolean;
+  connected: boolean;
+  connection_id: string | null;
+  google_email: string | null;
+  sync_enabled: boolean;
+  sync_in_progress: boolean;
+  scopes: string[];
+  last_sync_started_at: string | null;
+  last_synced_at: string | null;
+  last_error: string | null;
+  imported_count: number;
+  pending_review_count: number;
+  failed_count: number;
+  connect_url: string | null;
+}
+
+export interface ParsedImportedTransaction {
+  amount: MoneyValue;
+  currency: string;
+  merchant: string;
+  transaction_type: Exclude<TransactionType, "transfer">;
+  account_hint: string | null;
+  card_last4: string | null;
+  transaction_datetime: string;
+}
+
+export interface EmailTransactionImport {
+  id: string;
+  gmail_message_id: string;
+  gmail_thread_id: string | null;
+  bank_name: string;
+  sender_email: string;
+  email_subject: string;
+  email_date: string;
+  parsed_successfully: boolean;
+  parsing_error: string | null;
+  raw_email_snippet: string | null;
+  parsed_transaction: ParsedImportedTransaction | null;
+  status: EmailImportStatus;
+  matched_account_id: string | null;
+  matched_account_name: string | null;
+  created_transaction_id: string | null;
+  created_at: string;
 }
 
 export interface ApiMessage {

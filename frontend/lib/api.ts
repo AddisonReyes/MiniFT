@@ -40,6 +40,10 @@ function buildApiUrl(path: string) {
   return `${apiBaseUrl()}${normalizePath(path)}`;
 }
 
+export function buildRawApiUrl(path: string) {
+  return buildApiUrl(path);
+}
+
 function shouldSkipRefresh(path: string) {
   return [
     "/auth/login",

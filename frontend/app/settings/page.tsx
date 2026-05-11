@@ -17,6 +17,7 @@ import {
 } from "@/lib/auth";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -204,6 +205,23 @@ export default function SettingsPage() {
               </Button>
             </div>
           </form>
+        </Card>
+
+        <Card className="space-y-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
+              Integrations
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Gmail imports</h2>
+            <p className="mt-2 text-sm text-mist">
+              Connect Gmail to import supported bank alert emails without
+              sharing banking credentials.
+            </p>
+          </div>
+
+          <Link href="/settings/integrations">
+            <Button variant="secondary">Open integrations</Button>
+          </Link>
         </Card>
 
         <Card className="space-y-5">

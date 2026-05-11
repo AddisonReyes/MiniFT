@@ -14,6 +14,7 @@ type NavigationIcon =
   | "activity"
   | "accounts"
   | "budgets"
+  | "imports"
   | "reports"
   | "settings"
   | "menu"
@@ -43,6 +44,12 @@ const navigation = [
     label: "Budgets",
     section: "primary",
     icon: "budgets" as NavigationIcon,
+  },
+  {
+    href: "/imports",
+    label: "Imports",
+    section: "secondary",
+    icon: "imports" as NavigationIcon,
   },
   {
     href: "/reports",
@@ -117,6 +124,15 @@ function NavIcon({
           <path d="M10 20V4" />
           <path d="M16 20v-7" />
           <path d="M22 20v-11" />
+        </svg>
+      );
+    case "imports":
+      return (
+        <svg {...props}>
+          <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z" />
+          <path d="M8 10h8" />
+          <path d="m12 10 3.5 3.5" />
+          <path d="M12 10 8.5 13.5" />
         </svg>
       );
     case "settings":

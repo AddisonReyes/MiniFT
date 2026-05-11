@@ -19,6 +19,12 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ./backend/.env
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:8000/api/integrations/google/callback}
+      GOOGLE_TOKEN_ENCRYPTION_KEY: ${GOOGLE_TOKEN_ENCRYPTION_KEY:-}
+      GMAIL_SYNC_INTERVAL_SECONDS: ${GMAIL_SYNC_INTERVAL_SECONDS:-300}
     depends_on:
       postgres:
         condition: service_healthy
