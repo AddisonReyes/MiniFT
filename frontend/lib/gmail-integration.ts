@@ -2,8 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, buildRawApiUrl } from "@/lib/api";
-import type { GmailIntegrationStatus, MessageResponse } from "@/lib/types";
+import { api } from "@/lib/api";
+import type {
+  GmailIntegrationStatus,
+  GoogleConnectUrlResponse,
+  MessageResponse,
+} from "@/lib/types";
 
 export const gmailIntegrationQueryKey = ["integrations", "gmail"];
 
@@ -17,11 +21,21 @@ export function useGmailIntegration() {
 }
 
 export function startGoogleConnectFlow() {
-  if (typeof window === "undefined") {
-    return;
-  }
+  return api
+    .get<GoogleConnectUrlResponse>("/integrations/google/connect-url")
+    .then((response) => {
+      if (typeof window === "undefined") {
+        return;
+      }
 
-  window.location.assign(buildRawApiUrl("/integrations/google/connect"));
+      window.location.assign(response.authorization_url);
+    });
+}
+
+export function useGoogleConnect() {
+  return useMutation({
+    mutationFn: startGoogleConnectFlow,
+  });
 }
 
 export function useSyncImports() {

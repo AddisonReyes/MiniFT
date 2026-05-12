@@ -6,7 +6,9 @@ use crate::{
     guards::AuthUser,
     schema::{
         common::MessageResponse,
-        integration::{GmailIntegrationStatusResponse, UpdateGmailPreferencesRequest},
+        integration::{
+            GmailIntegrationStatusResponse, GoogleConnectUrlResponse, UpdateGmailPreferencesRequest,
+        },
     },
     services::gmail_sync_service,
 };
@@ -36,6 +38,31 @@ pub struct GoogleCallbackQuery {
 pub async fn connect(state: &State<AppState>, user: AuthUser) -> Result<Redirect, ApiError> {
     let url = gmail_sync_service::google_connect_url(state, user.user_id)?;
     Ok(Redirect::to(url))
+}
+
+#[utoipa::path(
+    get,
+    operation_id = "google_connect_url",
+    path = "/api/integrations/google/connect-url",
+    tag = "integrations",
+    security(
+        ("bearer_auth" = []),
+        ("access_cookie_auth" = [])
+    ),
+    responses(
+        (status = 200, description = "Fresh Google OAuth authorization URL", body = GoogleConnectUrlResponse),
+        (status = 401, description = "Authentication required", body = ErrorResponse),
+        (status = 500, description = "Google integration is unavailable", body = ErrorResponse)
+    )
+)]
+#[get("/api/integrations/google/connect-url")]
+pub async fn connect_url(
+    state: &State<AppState>,
+    user: AuthUser,
+) -> Result<Json<GoogleConnectUrlResponse>, ApiError> {
+    Ok(Json(GoogleConnectUrlResponse {
+        authorization_url: gmail_sync_service::google_connect_url(state, user.user_id)?,
+    }))
 }
 
 #[utoipa::path(

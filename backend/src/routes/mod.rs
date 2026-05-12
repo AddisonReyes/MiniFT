@@ -7,6 +7,7 @@ pub fn all() -> Vec<Route> {
         crate::cors::preflight,
         handlers::health::health,
         handlers::integrations::connect,
+        handlers::integrations::connect_url,
         handlers::integrations::callback,
         handlers::integrations::disconnect,
         handlers::integrations::google_status,

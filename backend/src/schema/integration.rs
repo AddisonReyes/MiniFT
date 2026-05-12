@@ -43,6 +43,14 @@ pub struct GmailIntegrationStatusResponse {
     pub connect_url: Option<String>,
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(example = json!({
+    "authorization_url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=example.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fminift-backend.up.railway.app%2Fapi%2Fintegrations%2Fgoogle%2Fcallback&response_type=code"
+}))]
+pub struct GoogleConnectUrlResponse {
+    pub authorization_url: String,
+}
+
 #[derive(Debug, serde::Deserialize, ToSchema)]
 #[schema(example = json!({
     "auto_approve_ready_imports": true

@@ -6,9 +6,9 @@ import { useState } from "react";
 import { PageFrame } from "@/components/page-frame";
 import { Badge, Button, Card, Modal, ModalActions } from "@/components/ui";
 import {
-  startGoogleConnectFlow,
   useDisconnectGmail,
   useGmailIntegration,
+  useGoogleConnect,
   useSyncImports,
   useUpdateGmailPreferences,
 } from "@/lib/gmail-integration";
@@ -18,6 +18,7 @@ const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 
 export default function IntegrationsPage() {
   const statusQuery = useGmailIntegration();
+  const connectMutation = useGoogleConnect();
   const syncMutation = useSyncImports();
   const disconnectMutation = useDisconnectGmail();
   const preferencesMutation = useUpdateGmailPreferences();
@@ -56,9 +57,9 @@ export default function IntegrationsPage() {
             <Button
               className="w-full sm:w-auto"
               onClick={() => setConsentModalOpen(true)}
-              disabled={statusQuery.isLoading}
+              disabled={statusQuery.isLoading || connectMutation.isPending}
             >
-              Connect Gmail
+              {connectMutation.isPending ? "Opening Google..." : "Connect Gmail"}
             </Button>
           )}
         </>
@@ -90,6 +91,12 @@ export default function IntegrationsPage() {
           {statusQuery.error instanceof Error ? (
             <div className="rounded-[20px] border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
               {statusQuery.error.message}
+            </div>
+          ) : null}
+
+          {connectMutation.error instanceof Error ? (
+            <div className="rounded-[20px] border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
+              {connectMutation.error.message}
             </div>
           ) : null}
 
@@ -281,8 +288,9 @@ export default function IntegrationsPage() {
                 <Button
                   className="w-full sm:w-auto"
                   onClick={() => setConsentModalOpen(true)}
+                  disabled={connectMutation.isPending}
                 >
-                  Connect Gmail
+                  {connectMutation.isPending ? "Opening Google..." : "Connect Gmail"}
                 </Button>
               </div>
             </div>
@@ -357,16 +365,21 @@ export default function IntegrationsPage() {
           </div>
         </div>
         <ModalActions>
-          <Button variant="ghost" onClick={() => setConsentModalOpen(false)}>
+          <Button
+            variant="ghost"
+            onClick={() => setConsentModalOpen(false)}
+            disabled={connectMutation.isPending}
+          >
             Cancel
           </Button>
           <Button
             onClick={() => {
               setConsentModalOpen(false);
-              startGoogleConnectFlow();
+              connectMutation.mutate();
             }}
+            disabled={connectMutation.isPending}
           >
-            Continue to Google
+            {connectMutation.isPending ? "Opening Google..." : "Continue to Google"}
           </Button>
         </ModalActions>
       </Modal>

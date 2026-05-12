@@ -15,6 +15,7 @@ use crate::config::AppState;
     paths(
         crate::handlers::health::health,
         crate::handlers::integrations::connect,
+        crate::handlers::integrations::connect_url,
         crate::handlers::integrations::callback,
         crate::handlers::integrations::disconnect,
         crate::handlers::integrations::google_status,

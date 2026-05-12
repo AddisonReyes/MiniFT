@@ -139,6 +139,10 @@ export interface GmailIntegrationStatus {
   connect_url: string | null;
 }
 
+export interface GoogleConnectUrlResponse {
+  authorization_url: string;
+}
+
 export interface ParsedImportedTransaction {
   amount: MoneyValue;
   currency: string;
