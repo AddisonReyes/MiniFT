@@ -38,11 +38,12 @@ Once the stack is ready:
 
 - Frontend: `http://localhost:3000`
 - Backend health: `http://localhost:8000/health`
+- Railway backend: `https://minift-backend.up.railway.app/`
+
+If you configure `DOCS_BASIC_AUTH_USERNAME` and `DOCS_BASIC_AUTH_PASSWORD`, the backend also exposes:
+
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
-- Railway backend: `https://minift-backend.up.railway.app/`
-- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
-- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
 
 The development stack keeps PostgreSQL data in the Docker volume `postgres_data`. Avoid `docker-compose down -v` if you want to preserve your local workspace data between runs.
 
@@ -66,7 +67,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 - JWT access cookies with rotated refresh sessions
 - Email verification on registration plus Resend-backed password reset and password change confirmations
-- Generated OpenAPI 3.1 spec with embedded Swagger UI
+- Generated OpenAPI 3.1 spec with embedded Swagger UI behind optional Basic Auth
 - Argon2 password hashing
 - Default `Cash` account created at registration using the user's default currency
 - Per-account currencies plus user-owned exchange rate overrides layered over Frankfurter daily rates
@@ -106,14 +107,14 @@ GitHub Actions mirrors this baseline in [.github/workflows/ci.yml](./.github/wor
 
 ## API Documentation
 
-The backend serves interactive API docs directly from Rocket:
+The backend serves interactive API docs directly from Rocket when both `DOCS_BASIC_AUTH_USERNAME` and `DOCS_BASIC_AUTH_PASSWORD` are configured:
 
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
-- Railway Swagger UI: `https://minift-backend.up.railway.app/docs`
-- Railway OpenAPI JSON: `https://minift-backend.up.railway.app/api-docs/openapi.json`
+- Both routes stay disabled if those variables are omitted.
+- Both routes use HTTP Basic Auth with those credentials.
 
-Protected endpoints accept either a Bearer access token or the configured HttpOnly access cookie. Since Swagger UI cannot read HttpOnly cookies automatically, Bearer auth is the easiest option when you want to manually exercise protected routes from the docs page.
+Protected API endpoints still accept either a Bearer access token or the configured HttpOnly access cookie once you're inside the docs.
 
 ## Exchange Rates
 

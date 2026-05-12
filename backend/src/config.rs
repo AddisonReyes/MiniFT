@@ -57,6 +57,17 @@ pub struct AuthConfig {
     pub cookie_domain: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct DocsBasicAuthCredentials {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct DocsConfig {
+    pub basic_auth: Option<DocsBasicAuthCredentials>,
+}
+
 fn parse_bool_env(name: &str, default: bool) -> bool {
     env::var(name)
         .ok()
@@ -75,6 +86,20 @@ fn parse_same_site(value: &str) -> Result<SameSite, String> {
         "strict" => Ok(SameSite::Strict),
         "none" => Ok(SameSite::None),
         _ => Err("AUTH_COOKIE_SAME_SITE must be one of: lax, strict, none".to_string()),
+    }
+}
+
+fn parse_docs_basic_auth(
+    username: Option<String>,
+    password: Option<String>,
+) -> Result<Option<DocsBasicAuthCredentials>, String> {
+    match (username, password) {
+        (Some(username), Some(password)) => Ok(Some(DocsBasicAuthCredentials { username, password })),
+        (None, None) => Ok(None),
+        _ => Err(
+            "DOCS_BASIC_AUTH_USERNAME and DOCS_BASIC_AUTH_PASSWORD must either both be set or both be omitted"
+                .to_string(),
+        ),
     }
 }
 
@@ -108,6 +133,21 @@ impl AuthConfig {
             cookie_same_site,
             cookie_domain,
         })
+    }
+}
+
+impl DocsConfig {
+    pub fn from_env() -> Result<Self, String> {
+        Ok(Self {
+            basic_auth: parse_docs_basic_auth(
+                parse_optional_env("DOCS_BASIC_AUTH_USERNAME"),
+                parse_optional_env("DOCS_BASIC_AUTH_PASSWORD"),
+            )?,
+        })
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.basic_auth.is_some()
     }
 }
 
@@ -337,8 +377,8 @@ mod tests {
     use rocket::http::SameSite;
 
     use super::{
-        parse_allowed_origins, parse_same_site, CorsConfig, ExchangeRateProviderConfig,
-        GoogleIntegrationConfig,
+        parse_allowed_origins, parse_docs_basic_auth, parse_same_site, CorsConfig,
+        ExchangeRateProviderConfig, GoogleIntegrationConfig,
     };
 
     #[test]
@@ -401,6 +441,35 @@ mod tests {
         assert!(matches!(parse_same_site("lax"), Ok(SameSite::Lax)));
         assert!(matches!(parse_same_site("strict"), Ok(SameSite::Strict)));
         assert!(matches!(parse_same_site("none"), Ok(SameSite::None)));
+    }
+
+    #[test]
+    fn docs_basic_auth_is_disabled_when_both_values_are_missing() {
+        let docs_auth = parse_docs_basic_auth(None, None).expect("docs auth should parse");
+
+        assert!(docs_auth.is_none());
+    }
+
+    #[test]
+    fn docs_basic_auth_requires_both_values() {
+        let error = parse_docs_basic_auth(Some("docs".to_string()), None)
+            .expect_err("docs auth should reject partial config");
+
+        assert_eq!(
+            error,
+            "DOCS_BASIC_AUTH_USERNAME and DOCS_BASIC_AUTH_PASSWORD must either both be set or both be omitted"
+        );
+    }
+
+    #[test]
+    fn docs_basic_auth_parses_when_both_values_are_present() {
+        let docs_auth =
+            parse_docs_basic_auth(Some("docs".to_string()), Some("super-secret".to_string()))
+                .expect("docs auth should parse")
+                .expect("docs auth should be enabled");
+
+        assert_eq!(docs_auth.username, "docs");
+        assert_eq!(docs_auth.password, "super-secret");
     }
 
     #[test]

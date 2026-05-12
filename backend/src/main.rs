@@ -2,8 +2,8 @@ use std::env;
 
 use minift_backend::{
     config::{
-        AppState, AuthConfig, CorsConfig, EmailState, ExchangeRateProviderConfig, SeedConfig,
-        WorkerConfig,
+        AppState, AuthConfig, CorsConfig, DocsConfig, EmailState, ExchangeRateProviderConfig,
+        SeedConfig, WorkerConfig,
     },
     cors, db, docs, logging, routes, services,
 };
@@ -17,6 +17,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/minift".to_string());
     let pool = db::connect_and_migrate(&database_url).await?;
+    let docs_config = DocsConfig::from_env().map_err(std::io::Error::other)?;
 
     let state = AppState {
         pool,
@@ -45,6 +46,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
                 "auth_cookie_same_site",
                 format!("{:?}", state.auth.cookie_same_site),
             ),
+            logging::field("docs_enabled", docs_config.enabled()),
         ],
     );
 
@@ -52,18 +54,14 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         .await
         .map_err(|error| std::io::Error::other(error.message.clone()))?;
 
-    let api_doc = docs::build_openapi(&state);
-    let route_count = routes::all().len();
+    let docs_basic_auth = docs_config.basic_auth.clone();
+    let route_count = routes::all().len() + if docs_basic_auth.is_some() { 2 } else { 0 };
 
-    let rocket = rocket::build()
+    let mut rocket = rocket::build()
         .manage(state.clone())
         .attach(cors::Cors)
         .attach(logging::HttpLogger)
         .mount("/", routes::all())
-        .mount(
-            "/",
-            SwaggerUi::new("/docs/<_..>").url("/api-docs/openapi.json", api_doc),
-        )
         .attach(AdHoc::on_liftoff("Recurring Worker", |rocket| {
             Box::pin(async move {
                 if let Some(state) = rocket.state::<AppState>().cloned() {
@@ -96,6 +94,23 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
                 }
             })
         }));
+
+    if let Some(docs_basic_auth) = docs_basic_auth {
+        let docs_state =
+            docs::ApiDocsState::from_openapi(docs::build_openapi(&state), docs_basic_auth)
+                .map_err(std::io::Error::other)?;
+
+        rocket = rocket
+            .manage(docs_state.clone())
+            .mount(
+                "/",
+                rocket::routes![minift_backend::handlers::docs::openapi_json],
+            )
+            .mount(
+                "/",
+                SwaggerUi::new("/docs/<_..>").config(docs_state.swagger_ui_config()),
+            );
+    }
 
     logging::info(
         "app.startup.ready",

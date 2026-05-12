@@ -1,3 +1,4 @@
+use serde_json::Value;
 use utoipa::{
     openapi::{
         info::License,
@@ -7,8 +8,50 @@ use utoipa::{
     },
     OpenApi,
 };
+use utoipa_swagger_ui::{BasicAuth, Config};
 
-use crate::config::AppState;
+use crate::config::{AppState, DocsBasicAuthCredentials};
+
+#[derive(Clone)]
+pub struct ApiDocsState {
+    openapi: Value,
+    swagger_ui_config: Config<'static>,
+    basic_auth: DocsBasicAuthCredentials,
+}
+
+impl ApiDocsState {
+    pub fn new(openapi: Value, basic_auth: DocsBasicAuthCredentials) -> Self {
+        let swagger_ui_config = Config::from("/api-docs/openapi.json").basic_auth(BasicAuth {
+            username: basic_auth.username.clone(),
+            password: basic_auth.password.clone(),
+        });
+
+        Self {
+            openapi,
+            swagger_ui_config,
+            basic_auth,
+        }
+    }
+
+    pub fn from_openapi(
+        openapi: utoipa::openapi::OpenApi,
+        basic_auth: DocsBasicAuthCredentials,
+    ) -> Result<Self, serde_json::Error> {
+        Ok(Self::new(serde_json::to_value(openapi)?, basic_auth))
+    }
+
+    pub fn openapi(&self) -> &Value {
+        &self.openapi
+    }
+
+    pub fn swagger_ui_config(&self) -> Config<'static> {
+        self.swagger_ui_config.clone()
+    }
+
+    pub fn is_authorized(&self, username: &str, password: &str) -> bool {
+        self.basic_auth.username == username && self.basic_auth.password == password
+    }
+}
 
 #[derive(OpenApi)]
 #[openapi(
@@ -111,6 +154,7 @@ Cookie-backed personal finance API for MiniFT.
 - Error responses use the shape `{{ "error": "..." }}`.
 
 ### Documentation endpoints
+- Documentation routes are mounted only when `DOCS_BASIC_AUTH_USERNAME` and `DOCS_BASIC_AUTH_PASSWORD` are configured.
 - Swagger UI: `/docs`
 - OpenAPI JSON: `/api-docs/openapi.json`
             "#,
