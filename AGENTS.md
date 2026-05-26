@@ -42,6 +42,53 @@ Avoid CSS-only responsive duplication for heavy UI. If mobile and desktop layout
 
 When filter inputs drive network queries, prefer debounced or deferred updates over firing a new request on every keystroke unless the page explicitly needs live-as-you-type behavior.
 
+## Engineering Bar
+
+Treat MiniFT as production software. Before changing code, inspect the relevant existing modules and follow local patterns. Prefer small focused modules, typed data contracts, explicit error handling, practical tests, readable names, and straightforward control flow.
+
+Avoid large god files, spaghetti logic, duplicated business rules, broad rewrites unrelated to the task, clever abstractions without clear value, and any change that weakens auth, validation, cookie security, CORS, accessibility, or production configuration.
+
+Every non-trivial change should consider maintainability, testability, security, failure states, loading and empty states, accessibility for frontend work, and CI verification. Documentation should be practical and close to the code. Prefer clear structure over excessive comments.
+
+## Definition of Done
+
+A task is not complete until the agent has understood the relevant existing code, made the smallest clean change that solves the problem, kept backend/frontend/database responsibilities separated, added or updated tests when behavior changes, run relevant verification commands when feasible, and explained what changed plus any remaining risk.
+
+## Codex Skills
+
+Project skills live in `skills/`.
+
+- Use `skills/backend-rust-rocket/SKILL.md` for backend work touching Rust, Rocket, SQLx, PostgreSQL, auth cookies, migrations, API routes, or backend tests.
+- Use `skills/frontend-next/SKILL.md` for frontend work touching TypeScript, React, Next.js App Router, Tailwind, protected routes, app shell, dashboard UI, client API flows, responsive behavior, or accessibility.
+
+## Backend Skill: Rust + Rocket
+
+Use this section whenever working on `backend/`, Rust, Rocket, SQLx, PostgreSQL, auth cookies, migrations, API routes, or backend tests.
+
+Keep handlers focused on parsing requests and returning responses. Put business logic in services, keep models as clear data structures, keep database access explicit, and put persistent schema changes in migrations. Do not place unrelated backend responsibilities in one file.
+
+Preserve the cookie-based auth model. Be especially careful with refresh token rotation, persisted refresh sessions, `HttpOnly` cookies, cookie security flags, CORS, session invalidation, and `/api/auth/*` behavior. Never weaken auth or CORS defaults for convenience.
+
+When changing persistent data shape, add a forward-only SQL migration in `backend/migrations/`. Prefer SQLx typed queries and explicit models over ad hoc data handling.
+
+For backend verification, prefer `cd backend && cargo fmt --check`, `cd backend && cargo check`, and `cd backend && cargo test`. Add focused unit tests near Rust modules for internal logic and integration tests under `backend/tests/` for Postgres-backed flows.
+
+## Frontend Skill: TypeScript + Next.js
+
+Use this section whenever working on `frontend/`, TypeScript, React, Next.js App Router, Tailwind, protected routes, client API helpers, dashboard UI, or responsive behavior.
+
+Before substantial UI changes, read `frontend/DESIGN.md`. Reuse existing primitives such as `BrandLink`, `SiteFooter`, `MonthPicker`, `SummaryCard`, `FinanceSnapshot`, and `components/ui.tsx` before creating new components.
+
+Keep pages focused on data fetching, mutations, and route-specific composition. Put reusable UI in `frontend/components/`, and put shared formatting, state-free helpers, API utilities, and hooks in `frontend/lib/`. Split complex UI into focused components instead of growing page files into god files.
+
+Respect the static export model: protected app routes are guarded after the client session check. Preserve cookie-based auth assumptions and make API calls compatible with backend `HttpOnly` auth cookies.
+
+Desktop web uses the top-right nav in `AppShell`; compact web swaps that nav for a `Menu` button panel below `lg`; native mobile keeps the bottom navigation bar and secondary-route sheet. If mobile and desktop layouts are materially different, render one branch at a time with `useMediaQuery` instead of mounting heavy duplicate layouts.
+
+Every app route should account for relevant loading, error, empty, and success states. Use typed props, accessible controls, stable responsive dimensions, and text that fits cleanly on mobile and desktop.
+
+For frontend verification, prefer `cd frontend && npm run lint` and `cd frontend && npm run build`. For visual or responsive changes, verify desktop and mobile widths.
+
 ## Testing Guidelines
 
 Backend automated tests live both near the Rust modules and under `backend/tests/`. Treat `cd backend && cargo fmt --check`, `cd backend && cargo test`, `cd backend && cargo check`, `cd frontend && npm run build`, `cd frontend && npm run lint`, and a local `docker-compose up --build` smoke test as the default verification bar. When adding backend tests, prefer Rust unit tests near the module for internal logic and integration tests under `backend/tests/` for Postgres-backed flows. GitHub Actions in `.github/workflows/ci.yml` mirrors this baseline with isolated backend and frontend jobs.
