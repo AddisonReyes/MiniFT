@@ -18,8 +18,11 @@ import {
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const session = useSessionQuery();
@@ -63,9 +66,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setPasswordConfirmation("");
       setPasswordClientError(null);
-      setPasswordSuccessMessage(
-        "Password updated. This browser session has been refreshed.",
-      );
+      setPasswordSuccessMessage(t("settingsPage.security.updatedMessage"));
     },
   });
 
@@ -88,7 +89,7 @@ export default function SettingsPage() {
     setPasswordClientError(null);
 
     if (newPassword !== passwordConfirmation) {
-      setPasswordClientError("Passwords do not match");
+      setPasswordClientError(t("settingsPage.security.passwordMismatch"));
       return;
     }
 
@@ -101,32 +102,49 @@ export default function SettingsPage() {
 
   return (
     <PageFrame
-      title="Settings"
-      description="Review profile details, update your default currency, manage password confirmations, and control your current session."
+      title={t("settings.title")}
+      description={t("settings.description")}
     >
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+
+        {/* Language section */}
+        <Card className="space-y-5 lg:col-span-2">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
+              {t("settings.language.sectionTitle")}
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">{t("settings.language.sectionTitle")}</h2>
+            <p className="mt-2 text-sm text-mist">{t("settings.language.sectionDescription")}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <LocaleSwitcher />
+            <span className="text-sm text-mist">
+              {t("settings.language.english")} / {t("settings.language.spanish")}
+            </span>
+          </div>
+        </Card>
         <Card className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              Profile
+              {t("settingsPage.profile.eyebrow")}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Account details</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.profile.title")}</h2>
             <p className="mt-2 text-sm text-mist">
-              This information comes from your current authenticated session.
+              {t("settingsPage.profile.description")}
             </p>
           </div>
 
           <div className="grid gap-3">
             <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
               <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                Email
+                {t("settingsPage.profile.email")}
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <div className="break-all font-medium text-white">
-                  {user?.email || "Not available"}
+                  {user?.email || t("common.notAvailable")}
                 </div>
                 <Badge tone={user?.email_verified_at ? "success" : "amber"}>
-                  {user?.email_verified_at ? "Verified" : "Pending"}
+                  {user?.email_verified_at ? t("common.verified") : t("common.pending")}
                 </Badge>
               </div>
             </div>
@@ -134,7 +152,7 @@ export default function SettingsPage() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  Default currency
+                  {t("settingsPage.profile.defaultCurrency")}
                 </div>
                 <div className="mt-2 font-medium text-white">
                   {user?.currency || "USD"}
@@ -143,21 +161,21 @@ export default function SettingsPage() {
 
               <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  Joined
+                  {t("settingsPage.profile.joined")}
                 </div>
                 <div className="mt-2 font-medium text-white">
-                  {user?.created_at ? formatDateTime(user.created_at) : "N/A"}
+                  {user?.created_at ? formatDateTime(user.created_at) : t("common.notAvailable")}
                 </div>
               </div>
 
               <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  Verified
+                  {t("settingsPage.profile.verifiedAt")}
                 </div>
                 <div className="mt-2 font-medium text-white">
                   {user?.email_verified_at
                     ? formatDateTime(user.email_verified_at)
-                    : "Pending"}
+                    : t("common.pending")}
                 </div>
               </div>
             </div>
@@ -167,18 +185,17 @@ export default function SettingsPage() {
         <Card className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              Preferences
+              {t("settingsPage.preferences.eyebrow")}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Default currency</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.preferences.title")}</h2>
             <p className="mt-2 text-sm text-mist">
-              This becomes the suggested currency for new accounts and the base
-              currency for converted totals across the app.
+              {t("settingsPage.preferences.description")}
             </p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label htmlFor="default-currency">Currency</label>
+              <label htmlFor="default-currency">{t("settingsPage.preferences.currencyLabel")}</label>
               <Select
                 id="default-currency"
                 value={currency}
@@ -194,14 +211,14 @@ export default function SettingsPage() {
 
             <FormError
               error={updateCurrencyMutation.error}
-              fallbackMessage="Unable to update default currency"
+              fallbackMessage={t("settingsPage.preferences.errorFallback")}
             />
 
             <div className="flex justify-end">
               <Button type="submit" disabled={updateCurrencyMutation.isPending}>
                 {updateCurrencyMutation.isPending
-                  ? "Saving..."
-                  : "Save default currency"}
+                  ? t("settingsPage.preferences.saving")
+                  : t("settingsPage.preferences.save")}
               </Button>
             </div>
           </form>
@@ -210,29 +227,27 @@ export default function SettingsPage() {
         <Card className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              Integrations
+              {t("settingsPage.integrations.eyebrow")}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Gmail imports</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.integrations.title")}</h2>
             <p className="mt-2 text-sm text-mist">
-              Connect Gmail to import supported bank alert emails without
-              sharing banking credentials.
+              {t("settingsPage.integrations.description")}
             </p>
           </div>
 
           <Link href="/settings/integrations">
-            <Button variant="secondary">Open integrations</Button>
+            <Button variant="secondary">{t("settingsPage.integrations.open")}</Button>
           </Link>
         </Card>
 
         <Card className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              Security
+              {t("settingsPage.security.eyebrow")}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Change password</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.security.title")}</h2>
             <p className="mt-2 text-sm text-mist">
-              We send a confirmation code to your email before replacing the
-              password for this account.
+              {t("settingsPage.security.description")}
             </p>
           </div>
 
@@ -247,10 +262,10 @@ export default function SettingsPage() {
               disabled={requestPasswordChangeMutation.isPending}
             >
               {requestPasswordChangeMutation.isPending
-                ? "Sending code..."
+                ? t("settingsPage.security.sendingCode")
                 : passwordCodeSent
-                  ? "Send a new code"
-                  : "Send confirmation code"}
+                  ? t("settingsPage.security.resendCode")
+                  : t("settingsPage.security.sendCode")}
             </Button>
           </div>
 
@@ -262,16 +277,16 @@ export default function SettingsPage() {
 
           <FormError
             error={requestPasswordChangeMutation.error}
-            fallbackMessage="Unable to send the password change code"
+            fallbackMessage={t("settingsPage.security.sendErrorFallback")}
           />
 
           {passwordCodeSent ? (
             <form className="space-y-5" onSubmit={handlePasswordChangeSubmit}>
               <div className="space-y-2">
-                <label htmlFor="settings-password-code">Email code</label>
+                <label htmlFor="settings-password-code">{t("settingsPage.security.codeLabel")}</label>
                 <Input
                   id="settings-password-code"
-                  placeholder="6-digit code"
+                  placeholder={t("settingsPage.security.codePlaceholder")}
                   value={passwordCode}
                   onChange={(event) => setPasswordCode(event.target.value)}
                   autoComplete="one-time-code"
@@ -280,11 +295,11 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="settings-new-password">New password</label>
+                <label htmlFor="settings-new-password">{t("settingsPage.security.newPasswordLabel")}</label>
                 <Input
                   id="settings-new-password"
                   type="password"
-                  placeholder="Minimum 8 characters"
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   autoComplete="new-password"
@@ -294,12 +309,12 @@ export default function SettingsPage() {
 
               <div className="space-y-2">
                 <label htmlFor="settings-password-confirmation">
-                  Confirm new password
+                  {t("settingsPage.security.confirmPasswordLabel")}
                 </label>
                 <Input
                   id="settings-password-confirmation"
                   type="password"
-                  placeholder="Repeat the new password"
+                  placeholder={t("auth.forgotPassword.confirmPasswordPlaceholder")}
                   value={passwordConfirmation}
                   onChange={(event) =>
                     setPasswordConfirmation(event.target.value)
@@ -317,7 +332,7 @@ export default function SettingsPage() {
 
               <FormError
                 error={confirmPasswordChangeMutation.error}
-                fallbackMessage="Unable to update the password"
+                fallbackMessage={t("settingsPage.security.confirmErrorFallback")}
               />
 
               <div className="flex justify-end">
@@ -326,8 +341,8 @@ export default function SettingsPage() {
                   disabled={confirmPasswordChangeMutation.isPending}
                 >
                   {confirmPasswordChangeMutation.isPending
-                    ? "Updating..."
-                    : "Save new password"}
+                    ? t("settingsPage.security.saving")
+                    : t("settingsPage.security.save")}
                 </Button>
               </div>
             </form>
@@ -337,11 +352,11 @@ export default function SettingsPage() {
         <Card className="flex flex-col justify-between gap-6 border-hazard/20 bg-hazard/5">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-hazard">
-              Session
+              {t("settingsPage.session.eyebrow")}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Sign out</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.session.title")}</h2>
             <p className="mt-2 text-sm text-mist">
-              End this session and return to the login page.
+              {t("settingsPage.session.description")}
             </p>
           </div>
 
@@ -350,7 +365,7 @@ export default function SettingsPage() {
             variant="danger"
             onClick={() => logoutMutation.mutate()}
           >
-            {logoutMutation.isPending ? "Signing out..." : "Sign out"}
+            {logoutMutation.isPending ? t("settingsPage.session.signingOut") : t("settingsPage.session.signOut")}
           </Button>
         </Card>
       </div>

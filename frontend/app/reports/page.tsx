@@ -19,8 +19,10 @@ import type {
   MonthlySummary,
   TransactionType,
 } from "@/lib/types";
+import { useTranslation } from "react-i18next";
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
   const session = useSessionQuery();
   const [month, setMonth] = useState(currentMonthInput());
   const [type, setType] =
@@ -46,8 +48,8 @@ export default function ReportsPage() {
 
   return (
     <PageFrame
-      title="Reports"
-      description="Review monthly performance and category concentration without leaving the main app."
+      title={t("reports.title")}
+      description={t("reports.description")}
       actions={
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <MonthPicker
@@ -58,8 +60,8 @@ export default function ReportsPage() {
           <SegmentedControl
             className="sm:min-w-[220px]"
             options={[
-              { label: "Expenses", value: "expense" },
-              { label: "Income", value: "income" },
+              { label: t("reports.expenses"), value: "expense" },
+              { label: t("reports.income"), value: "income" },
             ]}
             value={type}
             onChange={(value) =>
@@ -71,30 +73,30 @@ export default function ReportsPage() {
     >
       <section className="metric-grid">
         <SummaryCard
-          label="Income"
+          label={t("reports.income")}
           value={formatCurrency(summaryQuery.data?.income_total || 0, currency)}
-          meta="Monthly total"
+          meta={t("reports.month")}
         />
         <SummaryCard
-          label="Expenses"
+          label={t("reports.expenses")}
           value={formatCurrency(
             summaryQuery.data?.expense_total || 0,
             currency,
           )}
-          meta="Monthly total"
+          meta={t("reports.month")}
         />
         <SummaryCard
-          label="Net"
+          label={t("reports.net")}
           value={formatCurrency(summaryQuery.data?.net_total || 0, currency)}
-          meta="Income minus expenses"
+          meta={`${t("reports.income")} - ${t("reports.expenses")}`}
         />
       </section>
 
       <Card className="mt-6 space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold">Category breakdown</h2>
+          <h2 className="text-2xl font-semibold">{t("reports.categoryBreakdown")}</h2>
           <p className="mt-2 text-sm text-mist">
-            Share of {type} for {month}.
+            {t("reports.byCategory")} · {month}
           </p>
         </div>
 
@@ -124,9 +126,9 @@ export default function ReportsPage() {
             ))
           ) : (
             <div className="empty-state">
-              <div className="font-medium text-white">No {type} data yet</div>
+              <div className="font-medium text-white">{t("reports.noDataTitle")}</div>
               <p className="mt-1 text-sm text-mist">
-                Add transactions for this month to see category concentration.
+                {t("reports.noDataBody")}
               </p>
             </div>
           )}

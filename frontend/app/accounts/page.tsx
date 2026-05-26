@@ -38,6 +38,8 @@ import { ApiError, api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import { formatCurrency, toNumber } from "@/lib/format";
 import type { Account, AccountType, ExchangeRate } from "@/lib/types";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n/config";
 
 const ExchangeRatesModal = dynamic(
   () =>
@@ -72,6 +74,7 @@ function appendMissingRatesMeta(base: string, missingCount: number) {
 }
 
 export default function AccountsPage() {
+  const { t } = useTranslation();
   const session = useSessionQuery();
   const defaultCurrency = session.data?.currency || "USD";
   const isSessionReady = Boolean(session.data);
@@ -194,7 +197,7 @@ export default function AccountsPage() {
 
             if (!rate) {
               throw new ApiError(
-                "Every checked manual override needs a valid exchange rate.",
+                i18n.t("exchangeRates.manualOverrideRequiresRate"),
                 400,
               );
             }
@@ -266,20 +269,20 @@ export default function AccountsPage() {
 
   return (
     <PageFrame
-      title="Accounts"
-      description="Manage cash, bank accounts, credit cards, and loans while keeping balances and conversions organized."
+      title={t("accounts.title")}
+      description={t("accounts.description")}
       actions={
         <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
           <Button variant="secondary" onClick={openExchangeRates}>
-            Conversions
+            {t("accounts.exchangeRates")}
           </Button>
-          <Button onClick={openCreate}>New account</Button>
+          <Button onClick={openCreate}>{t("accounts.addAccount")}</Button>
         </div>
       }
     >
       <section className="grid gap-4 md:grid-cols-2">
-        <SummaryCard
-          label="Gross total"
+          <SummaryCard
+          label={t("accounts.balance") + " (Gross)"}
           value={formatCurrency(grossTotal, defaultCurrency)}
           meta={appendMissingRatesMeta(
             `Converted to ${defaultCurrency}`,
@@ -287,7 +290,7 @@ export default function AccountsPage() {
           )}
         />
         <SummaryCard
-          label="Net total"
+          label={t("accounts.balance") + " (Net)"}
           value={formatCurrency(netTotal, defaultCurrency)}
           meta={appendMissingRatesMeta(
             `Negative balances excluded · Base ${defaultCurrency}`,
@@ -316,14 +319,14 @@ export default function AccountsPage() {
             >
               <div className="flex flex-wrap gap-2">
                 <Badge tone="neutral">
-                  {formatAccountTypeLabel(account.type)}
+                  {formatAccountTypeLabel(account.type, t)}
                 </Badge>
                 <Badge tone="neutral">{account.currency}</Badge>
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">{account.name}</h2>
-                <p className="text-sm text-mist">Current balance</p>
+                <p className="text-sm text-mist">{t("accounts.balance")}</p>
                 <div
                   className={cn(
                     "text-3xl font-semibold",
@@ -355,18 +358,18 @@ export default function AccountsPage() {
                   variant="secondary"
                   onClick={() => openEdit(account)}
                 >
-                  Edit
+                  {t("common.edit")}
                 </Button>
                 <Button
                   className="flex-1"
                   variant="ghost"
                   onClick={() => {
-                    if (window.confirm(`Delete ${account.name}?`)) {
+                    if (window.confirm(`${t("accounts.deleteConfirm")} ${account.name}`)) {
                       deleteMutation.mutate(account.id);
                     }
                   }}
                 >
-                  Delete
+                  {t("common.delete")}
                 </Button>
               </div>
             </Card>
@@ -376,37 +379,36 @@ export default function AccountsPage() {
 
       {!accountsQuery.data?.length ? (
         <Card className="empty-state mt-6">
-          <div className="font-medium text-white">No accounts yet</div>
+          <div className="font-medium text-white">{t("accounts.noAccountsTitle")}</div>
           <p className="mt-1 text-sm text-mist">
-            Add cash, bank accounts, credit cards, or loans to separate balances
-            and track their impact on your totals.
+            {t("accounts.noAccountsBody")}
           </p>
         </Card>
       ) : null}
 
       <Modal
         open={open}
-        title={editing ? "Edit account" : "Create account"}
-        subtitle="Accounts keep balances separate while transfers move money between them."
+        title={editing ? t("accounts.editTitle") : t("accounts.addTitle")}
+        subtitle={t("accounts.description")}
         onClose={closeAccountModal}
       >
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <label htmlFor="name">Name</label>
+            <label htmlFor="name">{t("accounts.name")}</label>
             <Input
               id="name"
               value={form.name}
               onChange={(event) =>
                 setForm((current) => ({ ...current, name: event.target.value }))
               }
-              placeholder="Emergency fund"
+              placeholder={t("accounts.namePlaceholder")}
               required
             />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label htmlFor="type">Type</label>
+              <label htmlFor="type">{t("accounts.type")}</label>
               <Select
                 id="type"
                 value={form.type}
@@ -419,14 +421,14 @@ export default function AccountsPage() {
               >
                 {ACCOUNT_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </Select>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="currency">Currency</label>
+              <label htmlFor="currency">{t("accounts.currency")}</label>
               <Select
                 id="currency"
                 value={form.currency}
@@ -448,7 +450,7 @@ export default function AccountsPage() {
 
           <FormError
             error={saveMutation.error}
-            fallbackMessage="Unable to save account"
+            fallbackMessage={t("accounts.errorFallbackAdd")}
           />
 
           <ModalActions>
@@ -458,14 +460,14 @@ export default function AccountsPage() {
               variant="ghost"
               onClick={closeAccountModal}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button className="flex-1 sm:flex-none" type="submit">
               {saveMutation.isPending
-                ? "Saving..."
+                ? t("accounts.saving")
                 : editing
-                  ? "Save changes"
-                  : "Create account"}
+                  ? t("common.save")
+                  : t("accounts.add")}
             </Button>
           </ModalActions>
         </form>

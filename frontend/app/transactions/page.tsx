@@ -27,6 +27,7 @@ import type {
   TransactionType,
 } from "@/lib/types";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { useTranslation } from "react-i18next";
 
 const TransactionFormModal = dynamic(
   () =>
@@ -57,6 +58,7 @@ function getQueryErrorMessage(error: unknown, fallbackMessage: string) {
 }
 
 export default function TransactionsPage() {
+  const { t } = useTranslation();
   const session = useSessionQuery();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState(createTransactionFilters);
@@ -242,13 +244,13 @@ export default function TransactionsPage() {
 
   return (
     <PageFrame
-      title="Transactions"
-      description="Track one-off entries, internal transfers, and recurring items from the same workspace."
+      title={t("transactions.title")}
+      description={t("transactions.description")}
       actions={
         <>
           <div className="grid w-full gap-3 sm:hidden">
             <Button onClick={() => setMobileActionMenuOpen((current) => !current)}>
-              {isMobileActionMenuOpen ? "Close new activity" : "New activity"}
+              {isMobileActionMenuOpen ? t("common.close") : t("transactions.add")}
             </Button>
           </div>
 
@@ -257,16 +259,16 @@ export default function TransactionsPage() {
               variant="danger"
               onClick={() => openNewTransaction("expense")}
             >
-              New expense
+              {t("transactions.addExpense")}
             </Button>
             <Button onClick={() => openNewTransaction("income")}>
-              New income
+              {t("transactions.addIncome")}
             </Button>
             <Button variant="secondary" onClick={openNewTransfer}>
-              New transfer
+              {t("transactions.addTransfer")}
             </Button>
             <Button variant="secondary" onClick={openNewRecurring}>
-              New recurring
+              {t("transactions.addRecurring")}
             </Button>
           </div>
         </>
@@ -276,10 +278,7 @@ export default function TransactionsPage() {
         <Card className="mb-6 space-y-4 p-4 sm:hidden">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              Quick create
-            </p>
-            <p className="mt-2 text-sm text-mist">
-              Pick the type of movement you want to add.
+              {t("transactions.actions")}
             </p>
           </div>
 
@@ -289,20 +288,20 @@ export default function TransactionsPage() {
               variant="danger"
               onClick={() => openNewTransaction("expense")}
             >
-              New expense
+              {t("transactions.addExpense")}
             </Button>
             <Button className="w-full" onClick={() => openNewTransaction("income")}>
-              New income
+              {t("transactions.addIncome")}
             </Button>
             <Button className="w-full" variant="secondary" onClick={openNewTransfer}>
-              New transfer
+              {t("transactions.addTransfer")}
             </Button>
             <Button
               className="w-full"
               variant="secondary"
               onClick={openNewRecurring}
             >
-              New recurring
+              {t("transactions.addRecurring")}
             </Button>
           </div>
         </Card>
@@ -331,18 +330,18 @@ export default function TransactionsPage() {
           transactionsQuery.error
             ? getQueryErrorMessage(
                 transactionsQuery.error,
-                "Unable to load transactions for the current filters.",
+                t("transactions.list.errorTitle"),
               )
             : undefined
         }
         onEdit={openEditTransaction}
         onDelete={(transaction) => {
-          const label =
+          const type =
             transaction.display_type === "transfer"
-              ? "transfer"
-              : "transaction";
+              ? t("displayType.transfer").toLowerCase()
+              : t("displayType.expense").toLowerCase();
 
-          if (window.confirm(`Delete this ${label}?`)) {
+          if (window.confirm(t("transactions.deleteConfirm", { type }))) {
             deleteTransactionMutation.mutate(transaction);
           }
         }}
@@ -356,7 +355,7 @@ export default function TransactionsPage() {
           recurringQuery.error
             ? getQueryErrorMessage(
                 recurringQuery.error,
-                "Unable to load recurring transactions.",
+                t("transactions.recurring.errorTitle"),
               )
             : undefined
         }
@@ -364,7 +363,7 @@ export default function TransactionsPage() {
         onDelete={(recurringTransaction) => {
           if (
             window.confirm(
-              `Delete recurring rule for ${recurringTransaction.category}?`,
+              t("transactions.deleteRecurringConfirm", { category: recurringTransaction.category }),
             )
           ) {
             deleteRecurringMutation.mutate(recurringTransaction.id);

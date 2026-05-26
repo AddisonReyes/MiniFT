@@ -4,8 +4,10 @@ import type { SVGProps } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 import { BrandLink } from "@/components/brand-link";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { cn } from "@/components/ui";
 import { isNativeAppShell } from "@/lib/platform";
 
@@ -20,49 +22,21 @@ type NavigationIcon =
   | "menu"
   | "more";
 
-const navigation = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    section: "primary",
-    icon: "home" as NavigationIcon,
-  },
-  {
-    href: "/transactions",
-    label: "Transactions",
-    section: "primary",
-    icon: "activity" as NavigationIcon,
-  },
-  {
-    href: "/accounts",
-    label: "Accounts",
-    section: "primary",
-    icon: "accounts" as NavigationIcon,
-  },
-  {
-    href: "/budgets",
-    label: "Budgets",
-    section: "primary",
-    icon: "budgets" as NavigationIcon,
-  },
-  {
-    href: "/imports",
-    label: "Imports",
-    section: "secondary",
-    icon: "imports" as NavigationIcon,
-  },
-  {
-    href: "/reports",
-    label: "Reports",
-    section: "secondary",
-    icon: "reports" as NavigationIcon,
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    section: "secondary",
-    icon: "settings" as NavigationIcon,
-  },
+type NavigationItem = {
+  href: string;
+  labelKey: string;
+  section: "primary" | "secondary";
+  icon: NavigationIcon;
+};
+
+const navigationConfig: NavigationItem[] = [
+  { href: "/dashboard",    labelKey: "nav.dashboard",    section: "primary",   icon: "home"     },
+  { href: "/transactions", labelKey: "nav.transactions", section: "primary",   icon: "activity" },
+  { href: "/accounts",     labelKey: "nav.accounts",     section: "primary",   icon: "accounts" },
+  { href: "/budgets",      labelKey: "nav.budgets",      section: "primary",   icon: "budgets"  },
+  { href: "/imports",      labelKey: "nav.imports",      section: "secondary", icon: "imports"  },
+  { href: "/reports",      labelKey: "nav.reports",      section: "secondary", icon: "reports"  },
+  { href: "/settings",     labelKey: "nav.settings",     section: "secondary", icon: "settings" },
 ];
 
 function NavIcon({
@@ -176,9 +150,16 @@ export function AppShell({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
   const [isCompactWebNavOpen, setCompactWebNavOpen] = useState(false);
+
+  const navigation = navigationConfig.map((item) => ({
+    ...item,
+    label: t(item.labelKey),
+  }));
+
   const primaryNavigation = navigation.filter(
     (item) => item.section === "primary",
   );
@@ -237,9 +218,12 @@ export function AppShell({
               })}
             </nav>
 
+            {/* Locale switcher — visible on desktop next to nav */}
+            <LocaleSwitcher className="hidden lg:flex" />
+
             {showNativeMobileNavigation ? (
               <div className="inline-flex rounded-full border border-white/10 bg-ink/55 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-mist shadow-soft backdrop-blur lg:hidden">
-                {currentItem?.label ?? "Workspace"}
+                {currentItem?.label ?? t("nav.workspace")}
               </div>
             ) : (
               <button
@@ -247,15 +231,15 @@ export function AppShell({
                 aria-expanded={isCompactWebNavOpen}
                 aria-label={
                   isCompactWebNavOpen
-                    ? "Close navigation menu"
-                    : "Open navigation menu"
+                    ? t("nav.closeMenu")
+                    : t("nav.openMenu")
                 }
                 className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-ink/55 px-4 py-2 text-sm text-mist shadow-soft backdrop-blur transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white lg:hidden"
                 type="button"
                 onClick={() => setCompactWebNavOpen((current) => !current)}
               >
                 <NavIcon icon="menu" className="h-[18px] w-[18px]" />
-                <span>Menu</span>
+                <span>{t("nav.workspace")}</span>
               </button>
             )}
           </div>
@@ -263,7 +247,7 @@ export function AppShell({
           {!showNativeMobileNavigation && isCompactWebNavOpen ? (
             <>
               <button
-                aria-label="Close navigation menu"
+                aria-label={t("nav.closeMenu")}
                 className="fixed inset-0 z-30 bg-ink/20 backdrop-blur-[1px] lg:hidden"
                 type="button"
                 onClick={() => setCompactWebNavOpen(false)}
@@ -298,6 +282,11 @@ export function AppShell({
                       </Link>
                     );
                   })}
+
+                  {/* Locale switcher inside compact menu */}
+                  <div className="flex justify-center pt-1 pb-0.5">
+                    <LocaleSwitcher />
+                  </div>
                 </div>
               </div>
             </>
@@ -307,7 +296,7 @@ export function AppShell({
         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.24em] text-signal/80 sm:text-xs">
-              Workspace
+              {t("nav.workspace")}
             </p>
             <h1 className="mt-1.5 text-[1.8rem] font-semibold leading-none sm:mt-2 sm:text-4xl">
               {title}
@@ -330,7 +319,7 @@ export function AppShell({
       {showNativeMobileNavigation && isMobileNavOpen ? (
         <>
           <button
-            aria-label="Close more navigation"
+            aria-label={t("nav.closeMore")}
             className="fixed inset-0 z-30 bg-ink/25 backdrop-blur-[1px] lg:hidden"
             type="button"
             onClick={() => setMobileNavOpen(false)}
@@ -394,9 +383,7 @@ export function AppShell({
               aria-controls="mobile-navigation"
               aria-expanded={isMobileNavOpen}
               aria-label={
-                isMobileNavOpen
-                  ? "Close more navigation"
-                  : "Open more navigation"
+                isMobileNavOpen ? t("nav.closeMore") : t("nav.openMore")
               }
               className={cn(
                 "flex min-h-12 items-center justify-center rounded-[18px] px-2 py-2 transition",
@@ -408,9 +395,7 @@ export function AppShell({
               onClick={() => setMobileNavOpen((current) => !current)}
             >
               <span className="sr-only">
-                {isMobileNavOpen
-                  ? "Close more navigation"
-                  : "Open more navigation"}
+                {isMobileNavOpen ? t("nav.closeMore") : t("nav.openMore")}
               </span>
               <NavIcon icon="more" />
             </button>

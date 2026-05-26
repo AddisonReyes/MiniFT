@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui";
@@ -19,6 +20,7 @@ export function PageFrame({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const session = useSessionQuery();
@@ -32,7 +34,7 @@ export function PageFrame({
   if (session.isLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <Card className="text-center text-mist">Loading your workspace...</Card>
+        <Card className="text-center text-mist">{t("pageFrame.loading")}</Card>
       </div>
     );
   }
@@ -44,7 +46,7 @@ export function PageFrame({
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Card className="space-y-3">
-          <h2 className="text-xl font-semibold">Unable to load your session</h2>
+          <h2 className="text-xl font-semibold">{t("pageFrame.errorTitle")}</h2>
           <p>{session.error.message}</p>
         </Card>
       </div>

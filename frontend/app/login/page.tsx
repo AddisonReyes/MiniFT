@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
 import { Card, Button, Input } from "@/components/ui";
@@ -13,6 +14,7 @@ import { describeError } from "@/lib/error-message";
 import { sanitizeRedirectTarget } from "@/lib/redirect";
 
 function LoginPageContent() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = sanitizeRedirectTarget(searchParams.get("next"));
@@ -53,22 +55,21 @@ function LoginPageContent() {
             </div>
             <div className="space-y-3">
               <h1 className="text-3xl font-semibold sm:text-4xl">
-                Welcome back
+                {t("auth.login.headline")}
               </h1>
               <p className="text-sm leading-6 text-mist">
-                Sign in to continue managing accounts, budgets, and monthly cash
-                flow.
+                {t("auth.login.subtext")}
               </p>
             </div>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">{t("auth.emailLabel")}</label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
@@ -78,18 +79,18 @@ function LoginPageContent() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">{t("auth.passwordLabel")}</label>
                 <Link
                   className="text-xs text-signal hover:text-signal/80"
                   href="/forgot-password"
                 >
-                  Forgot password?
+                  {t("auth.login.forgotPassword")}
                 </Link>
               </div>
               <Input
                 id="password"
                 type="password"
-                placeholder="Minimum 8 characters"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
@@ -99,9 +100,9 @@ function LoginPageContent() {
 
             {mutation.error ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-                <div className="font-medium">Sign in failed</div>
+                <div className="font-medium">{t("auth.login.errorTitle")}</div>
                 <p className="mt-1 text-hazard/90">
-                  {describeError(mutation.error, "Unable to sign in")}
+                  {describeError(mutation.error, t("auth.login.errorFallback"))}
                 </p>
                 {shouldOfferVerificationResend ? (
                   <p className="mt-3">
@@ -109,7 +110,7 @@ function LoginPageContent() {
                       className="text-signal hover:text-signal/80"
                       href={`/verify-email?email=${encodeURIComponent(email)}`}
                     >
-                      Resend verification email
+                      {t("auth.login.resendVerification")}
                     </Link>
                   </p>
                 ) : null}
@@ -121,14 +122,14 @@ function LoginPageContent() {
               type="submit"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? "Signing in..." : "Sign in"}
+              {mutation.isPending ? t("auth.login.submitting") : t("auth.login.submit")}
             </Button>
           </form>
 
           <p className="mt-6 text-sm text-mist">
-            Need an account?{" "}
+            {t("auth.login.noAccount")}{" "}
             <Link className="text-signal hover:text-signal/80" href="/register">
-              Create one
+              {t("auth.login.createOne")}
             </Link>
           </p>
         </Card>
@@ -137,21 +138,25 @@ function LoginPageContent() {
           <div className="flex h-full flex-col justify-between gap-10">
             <div className="space-y-4">
               <p className="text-xs uppercase tracking-[0.28em] text-signal">
-                Personal finance workspace
+                {t("auth.login.panelEyebrow")}
               </p>
               <h2 className="max-w-xl text-4xl font-semibold">
-                Your monthly finances, organized in one focused view.
+                {t("auth.login.panelHeadline")}
               </h2>
               <p className="max-w-lg text-sm leading-6 text-mist">
-                Keep balances, spending, budgets, transfers, and recurring
-                activity close enough to understand your month at a glance.
+                {t("auth.login.panelBody")}
               </p>
             </div>
 
             <FinanceSnapshot />
 
             <div className="grid gap-3 text-sm text-mist sm:grid-cols-4">
-              {["Accounts", "Budgets", "Recurring", "Reports"].map((item) => (
+              {[
+                t("landing.features.accounts.title"),
+                t("landing.features.budgets.title"),
+                t("landing.features.recurring.title"),
+                t("landing.features.reports.title"),
+              ].map((item) => (
                 <div
                   key={item}
                   className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"

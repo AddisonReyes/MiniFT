@@ -8,6 +8,7 @@ import {
 } from "@/lib/transaction-display";
 import type { Transaction } from "@/lib/types";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { useTranslation } from "react-i18next";
 
 export function TransactionListSection({
   transactions,
@@ -24,18 +25,19 @@ export function TransactionListSection({
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
 }) {
+  const { t } = useTranslation();
   const showDesktopTable = useMediaQuery("(min-width: 640px)");
 
   return (
     <Card className="mt-6 space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold">Transaction list</h2>
+          <h2 className="text-xl font-semibold">{t("transactions.title")}</h2>
           <p className="mt-1 text-sm text-mist">
-            Transfers show as mirrored movements for each account involved.
+            {t("transactions.description")}
           </p>
         </div>
-        <Badge tone="neutral">{transactions.length} rows</Badge>
+        <Badge tone="neutral">{t("transactions.list.shown", { count: transactions.length })}</Badge>
       </div>
 
       {showDesktopTable ? (
@@ -43,16 +45,16 @@ export function TransactionListSection({
           <table className="w-full min-w-[860px] table-fixed text-left text-sm">
             <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
               <tr>
-                <th className="px-3 py-3 font-medium sm:px-4">Type</th>
-                <th className="px-3 py-3 font-medium sm:px-4">Category</th>
-                <th className="px-3 py-3 font-medium sm:px-4">Account</th>
-                <th className="px-3 py-3 font-medium sm:px-4">Date</th>
-                <th className="px-3 py-3 text-right font-medium sm:px-4">
-                  Amount
-                </th>
-                <th className="px-3 py-3 text-right font-medium sm:px-4">
-                  Actions
-                </th>
+                <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.filters.type")}</th>
+                 <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.list.category")}</th>
+                 <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.list.account")}</th>
+                 <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.list.date")}</th>
+                 <th className="px-3 py-3 text-right font-medium sm:px-4">
+                   {t("transactions.list.amount")}
+                 </th>
+                 <th className="px-3 py-3 text-right font-medium sm:px-4">
+                   {t("transactions.actions")}
+                 </th>
               </tr>
             </thead>
             <tbody>
@@ -60,17 +62,18 @@ export function TransactionListSection({
                 <tr>
                   <td className="px-4 py-7" colSpan={6}>
                     <div className="font-medium text-white">
-                      Loading transactions...
+                      {t("transactions.list.loading")}
                     </div>
                     <p className="mt-1 text-sm text-mist">
-                      Pulling the latest entries for your filters.
+                      {t("transactions.list.loadingBody")}
                     </p>
                   </td>
                 </tr>
               ) : errorMessage ? (
                 <tr>
-                  <td className="px-3 py-6 text-hazard sm:px-4" colSpan={6}>
-                    {errorMessage}
+                  <td className="px-3 py-6 sm:px-4" colSpan={6}>
+                    <div className="font-medium text-hazard">{t("transactions.list.errorTitle")}</div>
+                    <p className="mt-1 text-sm text-hazard/80">{errorMessage}</p>
                   </td>
                 </tr>
               ) : transactions.length ? (
@@ -79,11 +82,11 @@ export function TransactionListSection({
                     key={transaction.id}
                     className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                   >
-                    <td className="px-3 py-4 sm:px-4">
-                      <Badge tone={transactionTone(transaction.display_type)}>
-                        {transaction.display_type}
-                      </Badge>
-                    </td>
+                     <td className="px-3 py-4 sm:px-4">
+                       <Badge tone={transactionTone(transaction.display_type)}>
+                         {t(`displayType.${transaction.display_type}`, { defaultValue: transaction.display_type })}
+                       </Badge>
+                     </td>
                     <td className="px-3 py-4 align-top sm:px-4">
                       <div className="break-all font-medium text-white">
                         {transaction.category}
@@ -94,8 +97,8 @@ export function TransactionListSection({
                         </div>
                       ) : null}
                     </td>
-                    <td className="break-all px-3 py-4 text-mist sm:px-4">
-                      {transaction.account_name || "Cash"}
+                     <td className="break-all px-3 py-4 text-mist sm:px-4">
+                       {transaction.account_name || t("common.cash")}
                     </td>
                     <td className="px-3 py-4 text-mist sm:px-4">
                       {formatDate(transaction.date)}
@@ -114,19 +117,19 @@ export function TransactionListSection({
                     <td className="px-3 py-4 sm:px-4">
                       <div className="flex justify-end gap-2">
                         {transaction.display_type !== "transfer" ? (
-                          <Button
+                        <Button
                             variant="secondary"
                             onClick={() => onEdit(transaction)}
                           >
-                            Edit
+                            {t("common.edit")}
                           </Button>
                         ) : null}
-                        <Button
-                          variant="ghost"
-                          onClick={() => onDelete(transaction)}
-                        >
-                          Delete
-                        </Button>
+                         <Button
+                           variant="ghost"
+                           onClick={() => onDelete(transaction)}
+                         >
+                           {t("common.delete")}
+                         </Button>
                       </div>
                     </td>
                   </tr>
@@ -135,12 +138,11 @@ export function TransactionListSection({
                 <tr>
                   <td className="px-4 py-7" colSpan={6}>
                     <div className="font-medium text-white">
-                      No matching transactions
-                    </div>
-                    <p className="mt-1 text-sm text-mist">
-                      Adjust your filters or create a new entry to start
-                      tracking cash flow.
-                    </p>
+                       {t("transactions.list.noResults")}
+                     </div>
+                     <p className="mt-1 text-sm text-mist">
+                       {t("transactions.list.noResultsBody")}
+                     </p>
                   </td>
                 </tr>
               )}
@@ -152,10 +154,10 @@ export function TransactionListSection({
           {isLoading ? (
             <div className="empty-state">
               <div className="font-medium text-white">
-                Loading transactions...
+                {t("transactions.list.loading")}
               </div>
               <p className="mt-1 text-sm text-mist">
-                Pulling the latest entries for your filters.
+                {t("transactions.list.loadingBody")}
               </p>
             </div>
           ) : errorMessage ? (
@@ -174,8 +176,8 @@ export function TransactionListSection({
                       {transaction.category}
                     </div>
                     <div className="mt-1 text-xs text-mist">
-                      {transaction.account_name || "Cash"} ·{" "}
-                      {formatDate(transaction.date)}
+                      {transaction.account_name || t("common.cash")} ·{" "}
+                       {formatDate(transaction.date)}
                     </div>
                   </div>
                   <div
@@ -199,7 +201,7 @@ export function TransactionListSection({
 
                 <div className="mt-4 flex flex-col gap-3">
                   <Badge tone={transactionTone(transaction.display_type)}>
-                    {transaction.display_type}
+                    {t(`displayType.${transaction.display_type}`, { defaultValue: transaction.display_type })}
                   </Badge>
                   <div className="grid grid-cols-2 gap-2">
                     {transaction.display_type !== "transfer" ? (
@@ -207,7 +209,7 @@ export function TransactionListSection({
                         variant="secondary"
                         onClick={() => onEdit(transaction)}
                       >
-                        Edit
+                        {t("common.edit")}
                       </Button>
                     ) : null}
                     <Button
@@ -219,7 +221,7 @@ export function TransactionListSection({
                       variant="ghost"
                       onClick={() => onDelete(transaction)}
                     >
-                      Delete
+                      {t("common.delete")}
                     </Button>
                   </div>
                 </div>
@@ -228,11 +230,10 @@ export function TransactionListSection({
           ) : (
             <div className="empty-state">
               <div className="font-medium text-white">
-                No matching transactions
+                {t("transactions.list.noResults")}
               </div>
               <p className="mt-1 text-sm text-mist">
-                Adjust your filters or create a new entry to start tracking cash
-                flow.
+                {t("transactions.list.emptyMobileBody")}
               </p>
             </div>
           )}

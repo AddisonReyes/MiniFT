@@ -1,76 +1,79 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 import { BrandLink } from "@/components/brand-link";
 import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { NativeAppLandingGate } from "@/components/native-app-landing-gate";
 import { SiteFooter } from "@/components/site-footer";
 import { Card } from "@/components/ui";
 
-const features = [
-  {
-    title: "Accounts",
-    description:
-      "Keep cash, bank, credit, and loan balances separated without spreadsheet drift.",
-    bullets: [
-      "Multiple account types in one place",
-      "Track balances and transfers",
-      "Full transaction history per account",
-    ],
-  },
-  {
-    title: "Budgets",
-    description:
-      "Set monthly category caps and track remaining spend in context.",
-    bullets: [
-      "Set monthly caps per category",
-      "Track spend in real time",
-      "Get warned before you overshoot",
-    ],
-  },
-  {
-    title: "Recurring",
-    description:
-      "Schedule repeated income and expenses so your month stays current.",
-    bullets: [
-      "Define rules once, apply every month",
-      "Income, expenses, and transfers",
-      "Keeps your baseline always up to date",
-    ],
-  },
-  {
-    title: "Reports",
-    description:
-      "Review income, expenses, net cash flow, and category concentration.",
-    bullets: [
-      "Monthly income vs. expense breakdown",
-      "Category concentration view",
-      "Net cash flow trend over time",
-    ],
-  },
-];
-
-const steps = [
-  {
-    number: "01",
-    title: "Connect your accounts",
-    description:
-      "Add cash, bank, credit, or loan accounts. Set them up once and keep everything in one place.",
-  },
-  {
-    number: "02",
-    title: "Log your transactions",
-    description:
-      "Enter transactions manually or let recurring rules handle your fixed income and expenses automatically.",
-  },
-  {
-    number: "03",
-    title: "Read your month",
-    description:
-      "Check budgets, review reports, and see your net cash flow — all in one quiet, focused workspace.",
-  },
-];
-
 export default function LandingPage() {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      key: "accounts",
+      title: t("landing.features.accounts.title"),
+      description: t("landing.features.accounts.description"),
+      bullets: [
+        t("landing.features.accounts.bullet1"),
+        t("landing.features.accounts.bullet2"),
+        t("landing.features.accounts.bullet3"),
+      ],
+    },
+    {
+      key: "budgets",
+      title: t("landing.features.budgets.title"),
+      description: t("landing.features.budgets.description"),
+      bullets: [
+        t("landing.features.budgets.bullet1"),
+        t("landing.features.budgets.bullet2"),
+        t("landing.features.budgets.bullet3"),
+      ],
+    },
+    {
+      key: "recurring",
+      title: t("landing.features.recurring.title"),
+      description: t("landing.features.recurring.description"),
+      bullets: [
+        t("landing.features.recurring.bullet1"),
+        t("landing.features.recurring.bullet2"),
+        t("landing.features.recurring.bullet3"),
+      ],
+    },
+    {
+      key: "reports",
+      title: t("landing.features.reports.title"),
+      description: t("landing.features.reports.description"),
+      bullets: [
+        t("landing.features.reports.bullet1"),
+        t("landing.features.reports.bullet2"),
+        t("landing.features.reports.bullet3"),
+      ],
+    },
+  ];
+
+  const steps = [
+    {
+      number: "01",
+      title: t("landing.howItWorks.step1Title"),
+      description: t("landing.howItWorks.step1Body"),
+    },
+    {
+      number: "02",
+      title: t("landing.howItWorks.step2Title"),
+      description: t("landing.howItWorks.step2Body"),
+    },
+    {
+      number: "03",
+      title: t("landing.howItWorks.step3Title"),
+      description: t("landing.howItWorks.step3Body"),
+    },
+  ];
+
   return (
     <NativeAppLandingGate>
       <main className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
@@ -79,17 +82,18 @@ export default function LandingPage() {
           <BrandLink />
 
           <div className="flex items-center gap-2">
+            <LocaleSwitcher />
             <Link
               className="rounded-2xl px-4 py-2 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white"
               href="/login"
             >
-              Sign in
+              {t("landing.nav.signIn")}
             </Link>
             <Link
               className="inline-flex items-center justify-center rounded-2xl bg-signal px-4 py-2 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90"
               href="/register"
             >
-              Get started
+              {t("landing.nav.getStarted")}
             </Link>
           </div>
         </nav>
@@ -99,15 +103,13 @@ export default function LandingPage() {
           <div className="space-y-8">
             <div className="space-y-5">
               <p className="text-xs uppercase tracking-[0.28em] text-signal">
-                Focused personal finance
+                {t("landing.hero.eyebrow")}
               </p>
               <h1 className="max-w-3xl text-5xl font-semibold leading-[0.95] sm:text-6xl lg:text-7xl">
-                Your month, finally readable.
+                {t("landing.hero.headline")}
               </h1>
               <p className="max-w-2xl text-base leading-7 text-mist sm:text-lg">
-                MiniFT brings accounts, transactions, transfers, budgets,
-                recurring entries, and reports into one quiet workspace built
-                for monthly control.
+                {t("landing.hero.body")}
               </p>
             </div>
 
@@ -116,21 +118,21 @@ export default function LandingPage() {
                 className="inline-flex w-full items-center justify-center rounded-2xl bg-signal px-4 py-3 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90 sm:w-auto"
                 href="/register"
               >
-                Create your workspace
+                {t("landing.hero.ctaPrimary")}
               </Link>
               <Link
                 className="inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/10 sm:w-auto"
                 href="/login"
               >
-                Sign in
+                {t("landing.hero.ctaSecondary")}
               </Link>
             </div>
 
             <div className="grid gap-3 text-sm text-mist sm:grid-cols-3">
               {[
-                "No spreadsheet drift",
-                "Monthly budget clarity",
-                "Clean reports",
+                t("landing.hero.pill1"),
+                t("landing.hero.pill2"),
+                t("landing.hero.pill3"),
               ].map((item) => (
                 <div
                   key={item}
@@ -151,15 +153,14 @@ export default function LandingPage() {
         <section className="border-t border-white/[0.06] py-24">
           <div className="mb-14 space-y-2 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-signal">
-              How it works
+              {t("landing.howItWorks.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold">Three steps to clarity</h2>
+            <h2 className="text-3xl font-semibold">{t("landing.howItWorks.headline")}</h2>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
             {steps.map((step, i) => (
               <div key={step.number} className="relative space-y-4">
-                {/* Connector line between steps (desktop only) */}
                 {i < steps.length - 1 && (
                   <div
                     className="absolute left-[calc(100%+1rem)] top-5 hidden h-px w-[calc(2rem-2px)] bg-white/10 md:block"
@@ -182,15 +183,15 @@ export default function LandingPage() {
         <section className="border-t border-white/[0.06] py-24">
           <div className="mb-14 space-y-2 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-signal">
-              Features
+              {t("landing.features.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold">Everything you need, nothing you don&apos;t</h2>
+            <h2 className="text-3xl font-semibold">{t("landing.features.headline")}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {features.map((feature) => (
               <Card
-                key={feature.title}
+                key={feature.key}
                 className="space-y-4 transition hover:border-white/15 hover:bg-white/[0.035]"
               >
                 <div className="space-y-2">
@@ -221,19 +222,17 @@ export default function LandingPage() {
         {/* Closing CTA */}
         <section className="mb-24 rounded-[24px] border border-white/10 bg-background-elevated px-6 py-14 text-center">
           <p className="text-xs uppercase tracking-[0.28em] text-signal">
-            Get started
+            {t("landing.cta.eyebrow")}
           </p>
           <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-            Ready to read your finances clearly?
+            {t("landing.cta.headline")}
           </h2>
-          <p className="mt-3 text-base text-mist">
-            Free to use. No card required.
-          </p>
+          <p className="mt-3 text-base text-mist">{t("landing.cta.subtext")}</p>
           <Link
             className="mt-8 inline-flex items-center justify-center rounded-2xl bg-signal px-6 py-3 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90"
             href="/register"
           >
-            Create your workspace
+            {t("landing.cta.button")}
           </Link>
         </section>
 

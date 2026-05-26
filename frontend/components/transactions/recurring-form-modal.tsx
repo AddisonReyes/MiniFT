@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+
 import { FormError } from "@/components/form-error";
 import {
   Button,
@@ -41,15 +43,13 @@ export function RecurringFormModal({
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <Modal
       open={open}
-      title={
-        editingLabel
-          ? "Edit recurring transaction"
-          : "New recurring transaction"
-      }
-      subtitle="Recurring items generate real transactions when their schedule is due."
+      title={editingLabel ? t("transactions.recurringForm.editTitle") : t("transactions.recurringForm.addTitle")}
+      subtitle={t("transactions.recurring.description")}
       onClose={onClose}
     >
       <form
@@ -61,14 +61,14 @@ export function RecurringFormModal({
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="recurring_account">Account</label>
+            <label htmlFor="recurring_account">{t("transactions.recurringForm.account")}</label>
             <Select
               id="recurring_account"
               value={form.account_id}
               onChange={(event) => onChange({ account_id: event.target.value })}
               required
             >
-              <option value="">Select account</option>
+              <option value="">{t("common.selectAccount")}</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name}
@@ -78,11 +78,11 @@ export function RecurringFormModal({
           </div>
 
           <div className="space-y-2">
-            <label>Type</label>
+            <label>{t("transactions.recurringForm.type")}</label>
             <SegmentedControl
               options={[
-                { label: "Expense", value: "expense" },
-                { label: "Income", value: "income" },
+                { label: t("transactions.recurringForm.expense"), value: "expense" },
+                { label: t("transactions.recurringForm.income"), value: "income" },
               ]}
               value={form.type}
               onChange={(value) =>
@@ -96,7 +96,7 @@ export function RecurringFormModal({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="recurring_amount">Amount</label>
+            <label htmlFor="recurring_amount">{t("transactions.recurringForm.amount")}</label>
             <Input
               id="recurring_amount"
               inputMode="decimal"
@@ -108,46 +108,45 @@ export function RecurringFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="recurring_frequency">Frequency</label>
+            <label htmlFor="recurring_frequency">{t("transactions.recurringForm.frequency")}</label>
             <Select
               id="recurring_frequency"
               value={form.frequency}
               onChange={(event) =>
                 onChange({
-                  frequency: event.target
-                    .value as RecurringFormValues["frequency"],
+                  frequency: event.target.value as RecurringFormValues["frequency"],
                 })
               }
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
+              <option value="daily">{t("transactions.recurring.frequency.daily") ?? "Daily"}</option>
+              <option value="weekly">{t("transactions.recurring.frequency.weekly")}</option>
+              <option value="monthly">{t("transactions.recurring.frequency.monthly")}</option>
             </Select>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="recurring_category">Category</label>
-          <Input
-            id="recurring_category"
-            value={form.category}
-            maxLength={TRANSACTION_CATEGORY_MAX_LENGTH}
-            onChange={(event) =>
-              onChange({
-                category: event.target.value.slice(
-                  0,
-                  TRANSACTION_CATEGORY_MAX_LENGTH,
-                ),
-              })
-            }
-            placeholder="Rent"
-            required
-          />
+            <label htmlFor="recurring_category">{t("transactions.recurringForm.category")}</label>
+            <Input
+              id="recurring_category"
+              value={form.category}
+              maxLength={TRANSACTION_CATEGORY_MAX_LENGTH}
+              onChange={(event) =>
+                onChange({
+                  category: event.target.value.slice(
+                    0,
+                    TRANSACTION_CATEGORY_MAX_LENGTH,
+                  ),
+                })
+              }
+              placeholder={t("transactions.recurringForm.categoryPlaceholder")}
+              required
+            />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="next_run_date">Next Run Date</label>
+            <label htmlFor="next_run_date">{t("transactions.recurringForm.startDate")}</label>
             <Input
               id="next_run_date"
               type="date"
@@ -161,7 +160,7 @@ export function RecurringFormModal({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="recurring_note">Note</label>
+          <label htmlFor="recurring_note">{t("transactions.recurringForm.note")}</label>
           <TextArea
             id="recurring_note"
             value={form.note}
@@ -171,25 +170,22 @@ export function RecurringFormModal({
                 note: event.target.value.slice(0, TRANSACTION_NOTE_MAX_LENGTH),
               })
             }
-            placeholder="Optional context"
+            placeholder={t("transactions.recurringForm.notePlaceholder")}
           />
         </div>
 
-        <FormError
-          error={error}
-          fallbackMessage="Unable to save recurring transaction"
-        />
+        <FormError error={error} fallbackMessage={t("transactions.recurringForm.errorFallbackAdd")} />
 
         <ModalActions>
           <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button className="flex-1 sm:flex-none" type="submit">
             {isPending
-              ? "Saving..."
+              ? t("transactions.recurringForm.saving")
               : editingLabel
-                ? "Save changes"
-                : "Create recurring"}
+                ? t("transactions.recurringForm.save")
+                : t("transactions.recurringForm.add")}
           </Button>
         </ModalActions>
       </form>

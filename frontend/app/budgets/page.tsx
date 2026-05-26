@@ -16,6 +16,7 @@ import {
   monthInputToDate,
 } from "@/lib/format";
 import type { Budget } from "@/lib/types";
+import { useTranslation } from "react-i18next";
 
 const createInitialForm = (month: string) => ({
   category: "",
@@ -24,6 +25,7 @@ const createInitialForm = (month: string) => ({
 });
 
 export default function BudgetsPage() {
+  const { t } = useTranslation();
   const session = useSessionQuery();
   const queryClient = useQueryClient();
   const [month, setMonth] = useState(currentMonthInput());
@@ -94,8 +96,8 @@ export default function BudgetsPage() {
 
   return (
     <PageFrame
-      title="Budgets"
-      description="Set category caps per month and compare them against live expense totals."
+      title={t("budgets.title")}
+      description={t("budgets.description")}
       actions={
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <MonthPicker
@@ -103,7 +105,7 @@ export default function BudgetsPage() {
             value={month}
             onChange={setMonth}
           />
-          <Button onClick={handleCreate}>New budget</Button>
+          <Button onClick={handleCreate}>{t("budgets.addBudget")}</Button>
         </div>
       }
     >
@@ -128,7 +130,7 @@ export default function BudgetsPage() {
                   </h2>
                 </div>
                 <div className="text-sm text-mist sm:text-right">
-                  <div>Spent</div>
+                  <div>{t("budgets.spent")}</div>
                   <div className="mt-1 font-medium text-white">
                     {formatCurrency(budget.spent_amount, currency)}
                   </div>
@@ -137,7 +139,7 @@ export default function BudgetsPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-mist">Limit</span>
+                  <span className="text-mist">{t("budgets.limit")}</span>
                   <span className="text-white">
                     {formatCurrency(budget.limit_amount, currency)}
                   </span>
@@ -149,7 +151,7 @@ export default function BudgetsPage() {
                   />
                 </div>
                 <div className="text-sm text-mist">
-                  Remaining: {formatCurrency(budget.remaining_amount, currency)}
+                  {t("budgets.remaining")}: {formatCurrency(budget.remaining_amount, currency)}
                 </div>
               </div>
 
@@ -159,20 +161,20 @@ export default function BudgetsPage() {
                   variant="secondary"
                   onClick={() => handleEdit(budget)}
                 >
-                  Edit
+                  {t("common.edit")}
                 </Button>
                 <Button
                   className="flex-1"
                   variant="ghost"
                   onClick={() => {
                     if (
-                      window.confirm(`Delete budget for ${budget.category}?`)
+                      window.confirm(`${t("budgets.deleteConfirm")} ${budget.category}?`)
                     ) {
                       deleteMutation.mutate(budget.id);
                     }
                   }}
                 >
-                  Delete
+                  {t("common.delete")}
                 </Button>
               </div>
             </Card>
@@ -182,18 +184,17 @@ export default function BudgetsPage() {
 
       {!budgetsQuery.data?.length ? (
         <Card className="empty-state mt-6">
-          <div className="font-medium text-white">No budgets for {month}</div>
+          <div className="font-medium text-white">{t("budgets.noBudgetsTitle")}</div>
           <p className="mt-1 text-sm text-mist">
-            Create a category cap to compare planned spending against real
-            expenses.
+            {t("budgets.noBudgetsBody")}
           </p>
         </Card>
       ) : null}
 
       <Modal
         open={open}
-        title={editing ? "Edit budget" : "Create budget"}
-        subtitle="Budgets are monthly and tied to a category."
+        title={editing ? t("budgets.editTitle") : t("budgets.addTitle")}
+        subtitle={t("budgets.description")}
         onClose={() => {
           setOpen(false);
           setEditing(null);
@@ -202,7 +203,7 @@ export default function BudgetsPage() {
       >
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <label htmlFor="category">Category</label>
+            <label htmlFor="category">{t("budgets.category")}</label>
             <Input
               id="category"
               value={form.category}
@@ -212,13 +213,13 @@ export default function BudgetsPage() {
                   category: event.target.value,
                 }))
               }
-              placeholder="Groceries"
+              placeholder={t("budgets.categoryPlaceholder")}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="limit_amount">Limit Amount</label>
+            <label htmlFor="limit_amount">{t("budgets.limitAmount")}</label>
             <Input
               id="limit_amount"
               inputMode="decimal"
@@ -235,7 +236,7 @@ export default function BudgetsPage() {
           </div>
 
           <div className="space-y-2">
-            <label>Month</label>
+            <label>{t("budgets.month")}</label>
             <MonthPicker
               value={form.month}
               onChange={(value) =>
@@ -249,7 +250,7 @@ export default function BudgetsPage() {
 
           <FormError
             error={saveMutation.error}
-            fallbackMessage="Unable to save budget"
+            fallbackMessage={t("budgets.errorFallbackAdd")}
           />
 
           <ModalActions>
@@ -263,14 +264,14 @@ export default function BudgetsPage() {
                 setForm(createInitialForm(month));
               }}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button className="flex-1 sm:flex-none" type="submit">
               {saveMutation.isPending
-                ? "Saving..."
+                ? t("budgets.saving")
                 : editing
-                  ? "Save changes"
-                  : "Create budget"}
+                  ? t("common.save")
+                  : t("budgets.add")}
             </Button>
           </ModalActions>
         </form>

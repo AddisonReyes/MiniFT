@@ -8,6 +8,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -144,6 +145,8 @@ export function Modal({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
+
   if (!open) {
     return null;
   }
@@ -170,7 +173,7 @@ export function Modal({
             variant="ghost"
             onClick={onClose}
           >
-            Close
+            {t("common.close")}
           </Button>
         </div>
         {children}

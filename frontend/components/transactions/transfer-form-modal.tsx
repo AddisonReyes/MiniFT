@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+
 import { FormError } from "@/components/form-error";
 import {
   Button,
@@ -34,11 +36,13 @@ export function TransferFormModal({
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <Modal
       open={open}
-      title="New transfer"
-      subtitle="Transfers create mirrored entries so account balances stay in sync, and cross-currency moves convert automatically into the destination account currency."
+      title={t("transactions.transfer.title")}
+      subtitle={t("transactions.description")}
       onClose={onClose}
     >
       <form
@@ -50,7 +54,7 @@ export function TransferFormModal({
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="from_account">From Account</label>
+            <label htmlFor="from_account">{t("transactions.transfer.fromAccount")}</label>
             <Select
               id="from_account"
               value={form.from_account_id}
@@ -59,7 +63,7 @@ export function TransferFormModal({
               }
               required
             >
-              <option value="">Select source account</option>
+              <option value="">{t("common.selectSourceAccount")}</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name} · {account.currency}
@@ -69,7 +73,7 @@ export function TransferFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="to_account">To Account</label>
+            <label htmlFor="to_account">{t("transactions.transfer.toAccount")}</label>
             <Select
               id="to_account"
               value={form.to_account_id}
@@ -78,7 +82,7 @@ export function TransferFormModal({
               }
               required
             >
-              <option value="">Select destination account</option>
+              <option value="">{t("common.selectDestAccount")}</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name} · {account.currency}
@@ -90,7 +94,7 @@ export function TransferFormModal({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="transfer_amount">Amount</label>
+            <label htmlFor="transfer_amount">{t("transactions.transfer.amount")}</label>
             <Input
               id="transfer_amount"
               inputMode="decimal"
@@ -100,12 +104,12 @@ export function TransferFormModal({
               required
             />
             <p className="text-xs text-mist">
-              Entered in the source account currency.
+              {t("transactions.transfer.fromAccount")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="transfer_date">Date</label>
+            <label htmlFor="transfer_date">{t("transactions.transfer.date")}</label>
             <Input
               id="transfer_date"
               type="date"
@@ -117,7 +121,7 @@ export function TransferFormModal({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="transfer_note">Note</label>
+          <label htmlFor="transfer_note">{t("transactions.transfer.note")}</label>
           <TextArea
             id="transfer_note"
             value={form.note}
@@ -127,18 +131,18 @@ export function TransferFormModal({
                 note: event.target.value.slice(0, TRANSACTION_NOTE_MAX_LENGTH),
               })
             }
-            placeholder="Optional transfer note"
+            placeholder={t("transactions.transfer.notePlaceholder")}
           />
         </div>
 
-        <FormError error={error} fallbackMessage="Unable to create transfer" />
+        <FormError error={error} fallbackMessage={t("transactions.transfer.errorFallbackAdd")} />
 
         <ModalActions>
           <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button className="flex-1 sm:flex-none" type="submit">
-            {isPending ? "Creating..." : "Create transfer"}
+            {isPending ? t("transactions.transfer.adding") : t("transactions.transfer.add")}
           </Button>
         </ModalActions>
       </form>

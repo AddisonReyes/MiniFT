@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Button, Card, Input, Select, cn } from "@/components/ui";
 import type { Account } from "@/lib/types";
 import type { TransactionFiltersState } from "@/lib/transactions";
+import { useTranslation } from "react-i18next";
 
 function createActiveFilters(
   filters: TransactionFiltersState,
@@ -50,6 +51,7 @@ export function TransactionFiltersCard({
   onChange: (patch: Partial<TransactionFiltersState>) => void;
   onReset: () => void;
 }) {
+  const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
   const activeFilters = useMemo(
     () => createActiveFilters(filters, accounts),
@@ -61,9 +63,9 @@ export function TransactionFiltersCard({
     <Card className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold">Filters</h2>
+          <h2 className="text-xl font-semibold">{t("transactions.filters.title")}</h2>
           <p className="mt-1 text-sm text-mist">
-            Narrow entries by type, category, account, or date range.
+            {t("transactions.description")}
           </p>
           {hasActiveFilters ? (
             <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
@@ -86,7 +88,7 @@ export function TransactionFiltersCard({
               variant="ghost"
               onClick={onReset}
             >
-              Reset
+              {t("common.cancel")}
             </Button>
           ) : null}
           <Button
@@ -95,10 +97,10 @@ export function TransactionFiltersCard({
             onClick={() => setOpen((current) => !current)}
           >
             {isOpen
-              ? "Hide filters"
+              ? t("transactions.filters.title")
               : hasActiveFilters
-                ? `Filters (${activeFilters.length})`
-                : "Filters"}
+                ? `${t("transactions.filters.title")} (${activeFilters.length})`
+                : t("transactions.filters.title")}
           </Button>
         </div>
       </div>
@@ -110,37 +112,37 @@ export function TransactionFiltersCard({
         )}
       >
         <div className="space-y-2">
-          <label htmlFor="type">Type</label>
+          <label htmlFor="type">{t("transactions.filters.type")}</label>
           <Select
             id="type"
             value={filters.type}
             onChange={(event) => onChange({ type: event.target.value })}
           >
-            <option value="">All</option>
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-            <option value="transfer">Transfer</option>
+            <option value="">{t("transactions.filters.allTypes")}</option>
+            <option value="expense">{t("transactions.filters.expense")}</option>
+            <option value="income">{t("transactions.filters.income")}</option>
+            <option value="transfer">{t("transactions.filters.transfer")}</option>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="category">Category</label>
+          <label htmlFor="category">{t("transactions.list.category")}</label>
           <Input
             id="category"
             value={filters.category}
             onChange={(event) => onChange({ category: event.target.value })}
-            placeholder="Search category"
+            placeholder={t("transactions.filters.searchPlaceholder")}
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="account">Account</label>
+          <label htmlFor="account">{t("transactions.filters.account")}</label>
           <Select
             id="account"
             value={filters.account_id}
             onChange={(event) => onChange({ account_id: event.target.value })}
           >
-            <option value="">All accounts</option>
+            <option value="">{t("transactions.filters.allAccounts")}</option>
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name}
@@ -150,7 +152,7 @@ export function TransactionFiltersCard({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="start_date">Start Date</label>
+          <label htmlFor="start_date">{t("transactions.filters.month")}</label>
           <Input
             id="start_date"
             type="date"
@@ -160,7 +162,7 @@ export function TransactionFiltersCard({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="end_date">End Date</label>
+          <label htmlFor="end_date">{t("transactions.filters.search")}</label>
           <Input
             id="end_date"
             type="date"

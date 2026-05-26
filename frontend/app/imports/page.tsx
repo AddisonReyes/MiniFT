@@ -27,6 +27,7 @@ import type {
   EmailImportStatus,
   EmailTransactionImport,
 } from "@/lib/types";
+import { useTranslation } from "react-i18next";
 
 type ImportDraft = {
   accountId: string;
@@ -66,19 +67,20 @@ function confidenceTone(score: number): "success" | "amber" | "danger" {
   return "danger";
 }
 
-function confidenceLabel(score: number) {
+function confidenceLabel(score: number, t: (key: string) => string) {
   if (score >= 80) {
-    return "High confidence";
+    return t("importsPage.confidence.high");
   }
 
   if (score >= 50) {
-    return "Medium confidence";
+    return t("importsPage.confidence.medium");
   }
 
-  return "Low confidence";
+  return t("importsPage.confidence.low");
 }
 
 export default function ImportsPage() {
+  const { t } = useTranslation();
   const [activeStatus, setActiveStatus] =
     useState<EmailImportStatus>("pending_review");
   const [drafts, setDrafts] = useState<Record<string, ImportDraft>>({});
@@ -133,8 +135,8 @@ export default function ImportsPage() {
 
   return (
     <PageFrame
-      title="Imports"
-      description="Review Gmail-derived bank alerts, confirm the occasional edge case, and let MiniFT learn account, merchant, and category patterns from each approval."
+      title={t("imports.title")}
+      description={t("imports.description")}
       actions={
         activeStatus === "pending_review" ? (
           <>
@@ -151,8 +153,8 @@ export default function ImportsPage() {
               }
             >
               {ignoreAllMutation.isPending
-                ? "Ignoring..."
-                : `Ignore all (${pendingReviewImports.length})`}
+                ? t("importsPage.ignoring")
+                : t("importsPage.ignoreAll", { count: pendingReviewImports.length })}
             </Button>
             <Button
               className="w-full sm:w-auto"
@@ -160,8 +162,8 @@ export default function ImportsPage() {
               onClick={() => approveReadyMutation.mutate()}
             >
               {approveReadyMutation.isPending
-                ? "Approving..."
-                : `Approve all ready (${readyImports.length})`}
+                ? t("importsPage.approving")
+                : t("importsPage.approveAllReady", { count: readyImports.length })}
             </Button>
           </>
         ) : undefined
@@ -172,23 +174,20 @@ export default function ImportsPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-                Import queue
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">Review Gmail imports</h2>
-              <p className="mt-2 text-sm text-mist">
-                Ready imports already have an account match and a category
-                pulled from the email merchant. Items that still need attention
-                usually only need a quick account confirmation or small text
-                adjustment.
-              </p>
+                {t("importsPage.importQueue")}
+               </p>
+               <h2 className="mt-2 text-2xl font-semibold">{t("importsPage.reviewTitle")}</h2>
+               <p className="mt-2 text-sm text-mist">
+                 {t("importsPage.reviewDescription")}
+               </p>
             </div>
           </div>
 
           <SegmentedControl
             options={[
-              { label: "Pending Review", value: "pending_review" },
-              { label: "Imported", value: "imported" },
-              { label: "Failed", value: "failed" },
+              { label: t("importsPage.pendingReview"), value: "pending_review" },
+              { label: t("importsPage.imported"), value: "imported" },
+              { label: t("importsPage.failed"), value: "failed" },
             ]}
             value={activeStatus}
             onChange={(value) => setActiveStatus(value as EmailImportStatus)}
@@ -198,31 +197,29 @@ export default function ImportsPage() {
             <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
               <div className="rounded-[24px] border border-signal/20 bg-signal/10 p-5">
                 <div className="text-xs uppercase tracking-[0.18em] text-signal">
-                  Ready queue
-                </div>
-                <h3 className="mt-2 text-lg font-semibold text-white">
-                  {readyImports.length === 0
-                    ? "No imports are ready yet"
-                    : `${readyImports.length} import${readyImports.length === 1 ? "" : "s"} can be approved right away`}
-                </h3>
-                <p className="mt-2 text-sm text-mist">
-                  MiniFT already matched the account and prepared a category
-                  from the bank email for these imports.
-                </p>
-              </div>
+                   {t("importsPage.readyQueue")}
+                 </div>
+                 <h3 className="mt-2 text-lg font-semibold text-white">
+                   {readyImports.length === 0
+                     ? t("importsPage.noReadyImports")
+                     : t("importsPage.readyImports_other", { count: readyImports.length })}
+                 </h3>
+                 <p className="mt-2 text-sm text-mist">
+                   {t("importsPage.readyDescription")}
+                 </p>
+               </div>
 
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-                <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  Learning mode
-                </div>
-                <p className="mt-2 text-sm text-mist">
-                  Every approval teaches MiniFT the preferred account and
-                  category for similar bank alerts.
-                </p>
+               <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                 <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                   {t("importsPage.learningMode")}
+                 </div>
+                 <p className="mt-2 text-sm text-mist">
+                   {t("importsPage.learningDescription")}
+                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                      Needs attention
+                      {t("importsPage.needsAttention")}
                     </div>
                     <div className="mt-2 text-sm font-medium text-white">
                       {needsAttentionCount}
@@ -230,8 +227,8 @@ export default function ImportsPage() {
                   </div>
                   <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                      Total pending
-                    </div>
+                       {t("importsPage.totalPending")}
+                     </div>
                     <div className="mt-2 text-sm font-medium text-white">
                       {imports.length}
                     </div>
@@ -273,9 +270,9 @@ export default function ImportsPage() {
         ) : null}
 
         {importsQuery.isLoading ? (
-          <Card className="text-mist">Loading imports...</Card>
+          <Card className="text-mist">{t("importsPage.loading")}</Card>
         ) : imports.length === 0 ? (
-          <Card className="text-mist">No imports in this tab yet.</Card>
+          <Card className="text-mist">{t("importsPage.empty")}</Card>
         ) : (
           <div className="grid gap-4">
             {imports.map((importItem) => {
@@ -312,13 +309,13 @@ export default function ImportsPage() {
                         >
                           {importItem.status.replace("_", " ")}
                         </Badge>
-                        {readyPendingImport ? <Badge tone="success">Ready</Badge> : null}
-                        {importItem.auto_approved ? (
-                          <Badge tone="success">Auto-approved</Badge>
-                        ) : null}
-                        <Badge tone={confidenceTone(importItem.confidence_score)}>
-                          {confidenceLabel(importItem.confidence_score)}
-                        </Badge>
+                        {readyPendingImport ? <Badge tone="success">{t("importsPage.status.ready")}</Badge> : null}
+                         {importItem.auto_approved ? (
+                           <Badge tone="success">{t("importsPage.status.autoApproved")}</Badge>
+                         ) : null}
+                         <Badge tone={confidenceTone(importItem.confidence_score)}>
+                           {confidenceLabel(importItem.confidence_score, t)}
+                         </Badge>
                         <span className="text-xs uppercase tracking-[0.18em] text-mist">
                           {importItem.bank_name}
                         </span>
@@ -335,8 +332,8 @@ export default function ImportsPage() {
                     {parsed ? (
                       <div className="flex w-full items-center justify-between rounded-[20px] border border-white/10 bg-ink/45 px-4 py-3 md:w-auto md:min-w-[12rem] md:block md:text-right">
                         <div className="text-xs uppercase tracking-[0.18em] text-mist md:mb-2">
-                          Parsed amount
-                        </div>
+                           {t("transactions.list.amount")}
+                         </div>
                         <div className="text-lg font-semibold text-white">
                           {formatCurrency(parsed.amount, parsed.currency)}
                         </div>
@@ -353,8 +350,8 @@ export default function ImportsPage() {
                       }
                     >
                       {readyPendingImport
-                        ? "This import is fully prefilled and ready for a one-click approval."
-                        : "This import still needs a quick confirmation before MiniFT can create the transaction."}
+                         ? t("importsPage.readyHint")
+                         : t("importsPage.needsAttentionHint")}
                     </div>
                   ) : null}
 
@@ -368,11 +365,11 @@ export default function ImportsPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <label htmlFor={`category-${importItem.id}`}>
-                          Category
-                        </label>
-                        <Input
-                          id={`category-${importItem.id}`}
-                          placeholder="Leave blank to use the suggested category"
+                           {t("transactions.list.category")}
+                         </label>
+                         <Input
+                           id={`category-${importItem.id}`}
+                           placeholder={t("importsPage.categoryPlaceholder")}
                           value={draft.category}
                           onChange={(event) =>
                             updateDraft(importItem, {
@@ -383,7 +380,7 @@ export default function ImportsPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor={`account-${importItem.id}`}>Account</label>
+                        <label htmlFor={`account-${importItem.id}`}>{t("importsPage.accountLabel")}</label>
                         <Select
                           id={`account-${importItem.id}`}
                           value={selectedAccountId}
@@ -393,7 +390,7 @@ export default function ImportsPage() {
                             })
                           }
                         >
-                          <option value="">Select an account</option>
+                           <option value="">{t("common.selectAccount")}</option>
                           {accounts.map((account) => (
                             <option key={account.id} value={account.id}>
                               {account.name}
@@ -406,35 +403,35 @@ export default function ImportsPage() {
 
                   <div className="grid grid-cols-2 gap-3 text-sm text-mist xl:grid-cols-4">
                     <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                        Card / hint
-                      </div>
-                      <div className="mt-2 text-white">
-                        {parsed?.card_last4
-                          ? `•••• ${parsed.card_last4}`
-                          : parsed?.account_hint || "Unknown"}
-                      </div>
-                    </div>
+                       <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                         {t("importsPage.cardHint")}
+                       </div>
+                       <div className="mt-2 text-white">
+                         {parsed?.card_last4
+                           ? `•••• ${parsed.card_last4}`
+                           : parsed?.account_hint || t("common.unknown")}
+                       </div>
+                     </div>
+                     <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
+                       <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                         {t("importsPage.linkedAccount")}
+                       </div>
+                       <div className="mt-2 text-white">
+                         {importItem.matched_account_name || t("common.needsConfirmation")}
+                       </div>
+                     </div>
                     <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                        Linked account
-                      </div>
-                      <div className="mt-2 text-white">
-                        {importItem.matched_account_name || "Needs confirmation"}
-                      </div>
-                    </div>
-                    <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                        Suggested category
-                      </div>
-                      <div className="mt-2 text-white">
-                        {importItem.suggested_category || "Needs confirmation"}
-                      </div>
-                    </div>
-                    <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                        Confidence
-                      </div>
+                       <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                         {t("importsPage.suggestedCategory")}
+                       </div>
+                       <div className="mt-2 text-white">
+                         {importItem.suggested_category || t("common.needsConfirmation")}
+                       </div>
+                     </div>
+                     <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
+                       <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                         {t("importsPage.confidence_label")}
+                       </div>
                       <div className="mt-2 text-white">
                         {importItem.confidence_score} / 100
                       </div>
@@ -445,9 +442,9 @@ export default function ImportsPage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       {importItem.account_match_reason ? (
                         <div className="rounded-[18px] border border-white/10 bg-white/[0.03] p-4 text-sm text-mist">
-                          <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                            Account match
-                          </div>
+                           <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                             {t("importsPage.accountMatch")}
+                           </div>
                           <div className="mt-2 text-white">
                             {importItem.account_match_reason}
                           </div>
@@ -455,9 +452,9 @@ export default function ImportsPage() {
                       ) : null}
                       {importItem.category_match_reason ? (
                         <div className="rounded-[18px] border border-white/10 bg-white/[0.03] p-4 text-sm text-mist">
-                          <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                            Category suggestion
-                          </div>
+                           <div className="text-xs uppercase tracking-[0.18em] text-mist">
+                             {t("importsPage.categoryReason")}
+                           </div>
                           <div className="mt-2 text-white">
                             {importItem.category_match_reason}
                           </div>
@@ -481,23 +478,23 @@ export default function ImportsPage() {
                             variant="secondary"
                             onClick={() => toggleReadyDetails(importItem.id)}
                           >
-                            {showExpandedEditor ? "Hide details" : "Adjust details"}
-                          </Button>
-                        ) : null}
-                        <Button
-                          className="w-full sm:w-auto"
-                          variant="secondary"
-                          disabled={!selectedAccountId || isLinking}
-                          onClick={() =>
-                            linkAccountMutation.mutate({
-                              importId: importItem.id,
-                              accountId: selectedAccountId,
-                              setBankDefault: true,
-                            })
-                          }
-                        >
-                          {isLinking ? "Linking..." : "Link account"}
-                        </Button>
+                             {showExpandedEditor ? t("importsPage.hideDetails") : t("importsPage.adjustDetails")}
+                           </Button>
+                         ) : null}
+                         <Button
+                           className="w-full sm:w-auto"
+                           variant="secondary"
+                           disabled={!selectedAccountId || isLinking}
+                           onClick={() =>
+                             linkAccountMutation.mutate({
+                               importId: importItem.id,
+                               accountId: selectedAccountId,
+                               setBankDefault: true,
+                             })
+                           }
+                         >
+                           {isLinking ? t("importsPage.linking") : t("importsPage.linkAccount")}
+                         </Button>
                         <Button
                           className="w-full sm:w-auto"
                           disabled={!selectedAccountId || isApproving}
@@ -514,47 +511,46 @@ export default function ImportsPage() {
                             })
                           }
                         >
-                          {isApproving ? "Approving..." : "Approve import"}
-                        </Button>
-                        <Button
-                          className="w-full sm:w-auto"
-                          variant="ghost"
-                          disabled={isRejecting}
-                          onClick={() =>
-                            rejectMutation.mutate({
-                              importId: importItem.id,
-                              reason: "Ignored by user",
-                            })
-                          }
-                        >
-                          {isRejecting ? "Ignoring..." : "Ignore"}
-                        </Button>
-                      </>
-                    ) : activeStatus === "failed" ? (
-                      <Button
-                        className="w-full sm:w-auto"
-                        variant="ghost"
-                        disabled={isRejecting}
-                        onClick={() =>
-                          rejectMutation.mutate({
-                            importId: importItem.id,
-                            reason: "Dismissed after review",
-                          })
-                        }
-                      >
-                        {isRejecting ? "Dismissing..." : "Dismiss"}
-                      </Button>
-                    ) : (
-                      <div className="text-sm text-mist">
-                        Transaction created
-                        {importItem.matched_account_name
-                          ? ` in ${importItem.matched_account_name}`
-                          : ""}
-                        {importItem.auto_approved
-                          ? " automatically after MiniFT matched the account and category."
-                          : "."}
-                      </div>
-                    )}
+                           {isApproving ? t("importsPage.approving") : t("importsPage.approveImport")}
+                         </Button>
+                         <Button
+                           className="w-full sm:w-auto"
+                           variant="ghost"
+                           disabled={isRejecting}
+                           onClick={() =>
+                             rejectMutation.mutate({
+                               importId: importItem.id,
+                               reason: "Ignored by user",
+                             })
+                           }
+                         >
+                           {isRejecting ? t("importsPage.ignoring") : t("importsPage.ignore")}
+                         </Button>
+                       </>
+                     ) : activeStatus === "failed" ? (
+                       <Button
+                         className="w-full sm:w-auto"
+                         variant="ghost"
+                         disabled={isRejecting}
+                         onClick={() =>
+                           rejectMutation.mutate({
+                             importId: importItem.id,
+                             reason: "Dismissed after review",
+                           })
+                         }
+                       >
+                         {isRejecting ? t("importsPage.dismissing") : t("importsPage.dismiss")}
+                       </Button>
+                     ) : (
+                       <div className="text-sm text-mist">
+                         {importItem.matched_account_name
+                           ? t("importsPage.transactionCreatedIn", { account: importItem.matched_account_name })
+                           : t("importsPage.transactionCreated")}
+                         {importItem.auto_approved
+                           ? t("importsPage.transactionAutoApproved")
+                           : t("importsPage.transactionManual")}
+                       </div>
+                     )}
                   </div>
                 </Card>
               );

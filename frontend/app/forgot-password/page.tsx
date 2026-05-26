@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { Card, Button, Input } from "@/components/ui";
 import {
@@ -14,6 +15,7 @@ import {
 import { describeError } from "@/lib/error-message";
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const session = useSessionQuery();
   const [email, setEmail] = useState("");
@@ -28,18 +30,14 @@ export default function ForgotPasswordPage() {
     mutationFn: requestPasswordReset,
     onSuccess: () => {
       setCodeRequested(true);
-      setSuccessMessage(
-        "If that email exists in MiniFT, a reset code has been sent.",
-      );
+      setSuccessMessage(t("auth.forgotPassword.codeSentMessage"));
     },
   });
 
   const confirmMutation = useMutation({
     mutationFn: confirmPasswordReset,
     onSuccess: () => {
-      setSuccessMessage(
-        "Password updated. You can now sign in with the new password.",
-      );
+      setSuccessMessage(t("auth.forgotPassword.successMessage"));
       setCode("");
       setPassword("");
       setPasswordConfirmation("");
@@ -66,7 +64,7 @@ export default function ForgotPasswordPage() {
     setSuccessMessage(null);
 
     if (password !== passwordConfirmation) {
-      setClientError("Passwords do not match");
+      setClientError(t("auth.forgotPassword.passwordMismatch"));
       return;
     }
 
@@ -88,22 +86,21 @@ export default function ForgotPasswordPage() {
             </div>
             <div className="space-y-3">
               <h1 className="text-3xl font-semibold sm:text-4xl">
-                Reset your password
+                {t("auth.forgotPassword.headline")}
               </h1>
               <p className="text-sm leading-6 text-mist">
-                Ask for a one-time code, then choose a new password for your
-                account.
+                {t("auth.forgotPassword.subtext")}
               </p>
             </div>
           </div>
 
           <form className="space-y-5" onSubmit={handleRequestCode}>
             <div className="space-y-2">
-              <label htmlFor="forgot-email">Email</label>
+              <label htmlFor="forgot-email">{t("auth.emailLabel")}</label>
               <Input
                 id="forgot-email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
@@ -117,17 +114,19 @@ export default function ForgotPasswordPage() {
               variant="secondary"
               disabled={requestMutation.isPending}
             >
-              {requestMutation.isPending ? "Sending code..." : "Send reset code"}
+              {requestMutation.isPending
+                ? t("auth.forgotPassword.sendingCode")
+                : t("auth.forgotPassword.sendCode")}
             </Button>
           </form>
 
           {codeRequested ? (
             <form className="mt-6 space-y-5" onSubmit={handleResetPassword}>
               <div className="space-y-2">
-                <label htmlFor="reset-code">Email code</label>
+                <label htmlFor="reset-code">{t("auth.forgotPassword.codeLabel")}</label>
                 <Input
                   id="reset-code"
-                  placeholder="6-digit code"
+                  placeholder={t("auth.forgotPassword.codePlaceholder")}
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
                   autoComplete="one-time-code"
@@ -136,11 +135,11 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="reset-password">New password</label>
+                <label htmlFor="reset-password">{t("auth.forgotPassword.newPasswordLabel")}</label>
                 <Input
                   id="reset-password"
                   type="password"
-                  placeholder="Minimum 8 characters"
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="new-password"
@@ -150,12 +149,12 @@ export default function ForgotPasswordPage() {
 
               <div className="space-y-2">
                 <label htmlFor="reset-password-confirmation">
-                  Confirm new password
+                  {t("auth.forgotPassword.confirmPasswordLabel")}
                 </label>
                 <Input
                   id="reset-password-confirmation"
                   type="password"
-                  placeholder="Repeat the new password"
+                  placeholder={t("auth.forgotPassword.confirmPasswordPlaceholder")}
                   value={passwordConfirmation}
                   onChange={(event) => setPasswordConfirmation(event.target.value)}
                   autoComplete="new-password"
@@ -169,8 +168,8 @@ export default function ForgotPasswordPage() {
                 disabled={confirmMutation.isPending}
               >
                 {confirmMutation.isPending
-                  ? "Updating password..."
-                  : "Save new password"}
+                  ? t("auth.forgotPassword.savingPassword")
+                  : t("auth.forgotPassword.savePassword")}
               </Button>
             </form>
           ) : null}
@@ -189,26 +188,20 @@ export default function ForgotPasswordPage() {
 
           {requestMutation.error ? (
             <div className="mt-6 rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-              {describeError(
-                requestMutation.error,
-                "Unable to send the reset code",
-              )}
+              {describeError(requestMutation.error, t("auth.forgotPassword.sendErrorFallback"))}
             </div>
           ) : null}
 
           {confirmMutation.error ? (
             <div className="mt-6 rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-              {describeError(
-                confirmMutation.error,
-                "Unable to reset the password",
-              )}
+              {describeError(confirmMutation.error, t("auth.forgotPassword.confirmErrorFallback"))}
             </div>
           ) : null}
 
           <p className="mt-6 text-sm text-mist">
-            Remembered it?{" "}
+            {t("auth.forgotPassword.remembered")}{" "}
             <Link className="text-signal hover:text-signal/80" href="/login">
-              Back to login
+              {t("auth.forgotPassword.backToLogin")}
             </Link>
           </p>
         </Card>
@@ -217,34 +210,34 @@ export default function ForgotPasswordPage() {
           <div className="flex h-full flex-col justify-between gap-10">
             <div className="space-y-4">
               <p className="text-xs uppercase tracking-[0.28em] text-signal">
-                Recovery flow
+                {t("auth.forgotPassword.panelEyebrow")}
               </p>
               <h2 className="max-w-xl text-4xl font-semibold">
-                Reset codes stay inside the app instead of bouncing you through
-                multiple screens.
+                {t("auth.forgotPassword.panelHeadline")}
               </h2>
               <p className="max-w-lg text-sm leading-6 text-mist">
-                Enter the code from your inbox, choose a new password, and head
-                back to login when you are ready.
+                {t("auth.forgotPassword.panelBody")}
               </p>
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-ink/45 p-5 shadow-soft">
               <div className="mb-5">
                 <p className="text-xs uppercase tracking-[0.22em] text-mist">
-                  Recovery checklist
+                  {t("auth.forgotPassword.checklistEyebrow")}
                 </p>
-                <h3 className="mt-2 text-2xl font-semibold">Three quick steps</h3>
+                <h3 className="mt-2 text-2xl font-semibold">
+                  {t("auth.forgotPassword.checklistTitle")}
+                </h3>
               </div>
 
               <div className="space-y-3">
                 {[
-                  "Enter the account email",
-                  "Use the code sent by MiniFT",
-                  "Save the new password and sign back in",
+                  t("auth.forgotPassword.checklistStep1"),
+                  t("auth.forgotPassword.checklistStep2"),
+                  t("auth.forgotPassword.checklistStep3"),
                 ].map((item, index) => (
                   <div
-                    key={item}
+                    key={index}
                     className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4"
                   >
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-signal/15 text-sm font-semibold text-signal">
@@ -258,10 +251,10 @@ export default function ForgotPasswordPage() {
 
             <div className="grid gap-3 text-sm text-mist sm:grid-cols-2">
               {[
-                "Codes expire after a short window",
-                "Only the latest code remains active",
-                "Existing refresh sessions are revoked after reset",
-                "The same email path is reused in settings",
+                t("auth.forgotPassword.noteFact1"),
+                t("auth.forgotPassword.noteFact2"),
+                t("auth.forgotPassword.noteFact3"),
+                t("auth.forgotPassword.noteFact4"),
               ].map((item) => (
                 <div
                   key={item}

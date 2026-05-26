@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { Card, Button, Input, Select } from "@/components/ui";
 import { register, sessionQueryKey, useSessionQuery } from "@/lib/auth";
@@ -12,6 +13,7 @@ import { describeError } from "@/lib/error-message";
 import { sanitizeRedirectTarget } from "@/lib/redirect";
 
 function RegisterPageContent() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = sanitizeRedirectTarget(searchParams.get("next"));
@@ -52,23 +54,21 @@ function RegisterPageContent() {
             </div>
             <div className="space-y-3">
               <h1 className="text-3xl font-semibold sm:text-4xl">
-                Create your workspace
+                {t("auth.register.headline")}
               </h1>
               <p className="text-sm leading-6 text-mist">
-                Set up a focused finance workspace with a default Cash account
-                ready to use. We will send a verification link before the first
-                sign-in.
+                {t("auth.register.subtext")}
               </p>
             </div>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">{t("auth.emailLabel")}</label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
@@ -77,11 +77,11 @@ function RegisterPageContent() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">{t("auth.passwordLabel")}</label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Minimum 8 characters"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
@@ -90,7 +90,7 @@ function RegisterPageContent() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="currency">Default Currency</label>
+              <label htmlFor="currency">{t("auth.register.currencyLabel")}</label>
               <Select
                 id="currency"
                 value={currency}
@@ -106,9 +106,9 @@ function RegisterPageContent() {
 
             {mutation.error ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-                <div className="font-medium">Registration failed</div>
+                <div className="font-medium">{t("auth.register.errorTitle")}</div>
                 <p className="mt-1 text-hazard/90">
-                  {describeError(mutation.error, "Unable to register")}
+                  {describeError(mutation.error, t("auth.register.errorFallback"))}
                 </p>
               </div>
             ) : null}
@@ -118,14 +118,14 @@ function RegisterPageContent() {
               type="submit"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? "Creating account..." : "Create account"}
+              {mutation.isPending ? t("auth.register.submitting") : t("auth.register.submit")}
             </Button>
           </form>
 
           <p className="mt-6 text-sm text-mist">
-            Already have an account?{" "}
+            {t("auth.register.hasAccount")}{" "}
             <Link className="text-signal hover:text-signal/80" href="/login">
-              Sign in
+              {t("auth.register.signIn")}
             </Link>
           </p>
         </Card>
@@ -134,36 +134,35 @@ function RegisterPageContent() {
           <div className="flex h-full flex-col justify-between gap-10">
             <div className="space-y-4">
               <p className="text-xs uppercase tracking-[0.28em] text-signal">
-                Fast monthly control
+                {t("auth.register.panelEyebrow")}
               </p>
               <h2 className="max-w-xl text-4xl font-semibold">
-                Start with the essentials, then build your money map.
+                {t("auth.register.panelHeadline")}
               </h2>
               <p className="max-w-lg text-sm leading-6 text-mist">
-                MiniFT keeps the model simple: accounts, transfers, budgets,
-                recurring entries, and reports that stay readable.
+                {t("auth.register.panelBody")}
               </p>
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-ink/45 p-5 shadow-soft">
               <div className="mb-5">
                 <p className="text-xs uppercase tracking-[0.22em] text-mist">
-                  Workspace setup
+                  {t("auth.register.setupEyebrow")}
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold">
-                  What happens next
+                  {t("auth.register.setupTitle")}
                 </h3>
               </div>
 
               <div className="space-y-3">
                 {[
-                  "Default Cash account is created automatically",
-                  "Choose your preferred default account currency",
-                  "Verify your email to open the app session",
-                  "Add budgets and recurring rules when you are ready",
+                  t("auth.register.setupStep1"),
+                  t("auth.register.setupStep2"),
+                  t("auth.register.setupStep3"),
+                  t("auth.register.setupStep4"),
                 ].map((item, index) => (
                   <div
-                    key={item}
+                    key={index}
                     className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4"
                   >
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-signal/15 text-sm font-semibold text-signal">
@@ -177,10 +176,10 @@ function RegisterPageContent() {
 
             <div className="grid gap-3 text-sm text-mist sm:grid-cols-2">
               {[
-                "Transfer mirroring between accounts",
-                "Budget tracking per category",
-                "Recurring transactions",
-                "Monthly reporting",
+                t("auth.register.featureTransferMirroring"),
+                t("auth.register.featureBudgetTracking"),
+                t("auth.register.featureRecurring"),
+                t("auth.register.featureReporting"),
               ].map((item) => (
                 <div
                   key={item}

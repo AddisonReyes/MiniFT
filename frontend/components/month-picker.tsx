@@ -1,22 +1,11 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+
 import { Select } from "@/components/ui";
 import { currentMonthInput } from "@/lib/format";
 
-const months = [
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
+const MONTH_VALUES = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"] as const;
 
 function parseMonthValue(value: string) {
   const normalizedValue = /^\d{4}-(0[1-9]|1[0-2])$/.test(value)
@@ -52,6 +41,7 @@ export function MonthPicker({
   onChange: (value: string) => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const { year, month } = parseMonthValue(value);
   const years = createYearOptions(year);
 
@@ -59,13 +49,13 @@ export function MonthPicker({
     <div className={className}>
       <div className="grid grid-cols-[1.15fr_0.85fr] gap-3">
         <Select
-          aria-label="Month"
+          aria-label={t("budgets.month")}
           value={month}
           onChange={(event) => onChange(`${year}-${event.target.value}`)}
         >
-          {months.map((monthOption) => (
-            <option key={monthOption.value} value={monthOption.value}>
-              {monthOption.label}
+          {MONTH_VALUES.map((m) => (
+            <option key={m} value={m}>
+              {t(`months.${m}`)}
             </option>
           ))}
         </Select>

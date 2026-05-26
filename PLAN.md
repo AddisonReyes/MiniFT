@@ -1,130 +1,96 @@
-# MiniFT Landing Page — Plan de mejoras
+# MiniFT — Plan de desarrollo
 
-## Objetivo
+---
 
+## Sprint 1: Landing Page (completado)
+
+### Objetivo
 Enriquecer la landing page para que sea más profesional, comunique mejor el
 valor del producto, y permita explorar la app sin necesidad de iniciar sesión.
 
-## Alcance
-
-- Mantener paleta, tipografía y tono actuales (DESIGN.md).
-- No modificar rutas protegidas ni lógica de auth.
-- Solo tocar: `frontend/app/page.tsx` y `frontend/components/marketing/`.
-
----
-
-## Archivos a modificar
-
-| Archivo | Tipo de cambio |
-|---|---|
-| `frontend/components/marketing/finance-snapshot.tsx` | Ampliar con tabs interactivos |
-| `frontend/app/page.tsx` | Agregar secciones y enriquecer contenido |
-
----
-
-## Tareas
-
-### Tarea 1 — `FinanceSnapshot` con tabs navegables
-
-**Archivo:** `frontend/components/marketing/finance-snapshot.tsx`
-
-- Convertir a `"use client"` (necesita estado para el tab activo).
-- Agregar un componente de tabs con 4 opciones:
-  - **Overview** — contenido actual: cash flow summary + activity list.
-  - **Budgets** — 4-5 categorías con barra de progreso y monto usado/cap.
-  - **Transactions** — lista de 6 transacciones mock con decoración de filtro de mes.
-  - **Reports** — representación visual de Income vs Expenses (últimos 3 meses mock).
-- Todos los datos son hardcodeados (sin API calls).
-- El tab activo se controla con `useState`.
-- Mantener el prop `showActivity` existente para compatibilidad.
-
-**Datos mock:**
-
-```ts
-// Budgets
-{ category: "Food", used: 320, cap: 500 },
-{ category: "Transport", used: 95, cap: 200 },
-{ category: "Entertainment", used: 60, cap: 100 },
-{ category: "Health", used: 140, cap: 150 },
-
-// Transactions
-{ label: "Salary", type: "income", account: "Main account", amount: "+$4,200" },
-{ label: "Groceries", type: "expense", category: "Food", amount: "-$184" },
-{ label: "Netflix", type: "expense", category: "Entertainment", amount: "-$18" },
-{ label: "Gym", type: "expense", category: "Health", amount: "-$45" },
-{ label: "Savings move", type: "transfer", account: "Internal", amount: "$750" },
-{ label: "Freelance", type: "income", account: "Business", amount: "+$800" },
-
-// Reports (últimos 3 meses)
-{ month: "Feb", income: 4200, expenses: 1620 },
-{ month: "Mar", income: 5000, expenses: 1980 },
-{ month: "Apr", income: 4200, expenses: 1845 },
-```
-
----
-
-### Tarea 2 — Sección "How it works"
-
-**Archivo:** `frontend/app/page.tsx`
-
-- Insertar entre el hero y los feature cards.
-- Layout: 1 columna en mobile → 3 columnas en `md+`.
-- Cada paso contiene: número en pill (signal) + título + descripción de 1-2 líneas.
-- Pasos:
-  1. **Connect your accounts** — Cash, bank, credit, or loan. Set them up once.
-  2. **Log your transactions** — Manually or via recurring rules for scheduled flows.
-  3. **Read your month** — Budgets, reports, and cash flow at a glance.
-- Separador visual sutil (`border-line/40`) entre secciones.
-
----
-
-### Tarea 3 — Feature cards enriquecidas
-
-**Archivo:** `frontend/app/page.tsx`
-
-- Mantener las 4 cards existentes (Accounts, Budgets, Recurring, Reports).
-- Agregar 2-3 bullet points debajo de la descripción actual en cada card.
-- Ejemplo para "Budgets":
-  - Set monthly caps per category
-  - Track spend in real time
-  - Get warned before you overshoot
-
----
-
-### Tarea 4 — CTA de cierre
-
-**Archivo:** `frontend/app/page.tsx`
-
-- Insertar antes de `<SiteFooter />`.
-- Sección centrada con:
-  - Headline: `"Ready to read your finances clearly?"`
-  - Subtext: `"Free to use. No card required."`
-  - Botón primario: `"Create your workspace"` → `/register`
-- Background: panel elevado (`bg-background-elevated`).
-
----
-
-## Orden de implementación
-
-- [x] Escribir este PLAN.md
-- [x] Tarea 1 — Expandir `FinanceSnapshot` con tabs interactivos
-- [x] Tarea 2 — Agregar sección "How it works" en `page.tsx`
-- [x] Tarea 3 — Enriquecer feature cards en `page.tsx`
-- [x] Tarea 4 — Agregar CTA de cierre en `page.tsx`
+### Tareas
+- [x] Expandir `FinanceSnapshot` con tabs interactivos (Overview, Budgets, Transactions, Reports)
+- [x] Agregar sección "How it works" en `page.tsx`
+- [x] Enriquecer feature cards con bullet points en `page.tsx`
+- [x] Agregar CTA de cierre en `page.tsx`
+- [x] Ajustar espaciado entre secciones
 - [x] Verificación: `npm run lint` y `npm run build`
-- [ ] Revisión visual desktop y mobile
 
 ---
 
-## Verificación final
+## Sprint 2: Internacionalización (i18n) — EN / ES
 
+### Objetivo
+Implementar soporte completo de idioma inglés (principal) y español (secundario)
+en todo el frontend, con persistencia en localStorage y selector visible en el
+navbar del AppShell y en la página de Settings.
+
+### Enfoque técnico
+- Librería: `react-i18next` + `i18next`
+- Estrategia: client-side locale (compatible con `output: "export"`)
+- Persistencia: `localStorage` vía `i18next-browser-languagedetector`
+- Sin cambios de URL ni restructuración de carpetas
+
+### Archivos nuevos
+| Archivo | Descripción |
+|---|---|
+| `frontend/lib/i18n/config.ts` | Inicialización de i18next |
+| `frontend/lib/i18n/en.json` | Strings en inglés (fuente de verdad) |
+| `frontend/lib/i18n/es.json` | Strings en español |
+| `frontend/components/locale-switcher.tsx` | Toggle EN / ES reutilizable |
+
+### Archivos a modificar
+| Archivo | Cambio |
+|---|---|
+| `frontend/package.json` | Instalar `i18next`, `react-i18next`, `i18next-browser-languagedetector` |
+| `frontend/components/providers.tsx` | Agregar `I18nextProvider` |
+| `frontend/app/layout.tsx` | `lang` dinámico en `<html>` |
+| `frontend/components/app-shell.tsx` | Nav labels + "Workspace" + aria-labels traducidos; agregar LocaleSwitcher |
+| `frontend/app/page.tsx` | Todo el copy de marketing traducido |
+| `frontend/app/login/page.tsx` | Strings de auth traducidos |
+| `frontend/app/register/page.tsx` | Strings de auth traducidos |
+| `frontend/app/forgot-password/page.tsx` | Strings de auth traducidos |
+| `frontend/app/verify-email/page.tsx` | Strings traducidos |
+| `frontend/app/dashboard/page.tsx` | title + description + contenido |
+| `frontend/app/transactions/page.tsx` | title + description + contenido |
+| `frontend/app/accounts/page.tsx` | title + description + contenido |
+| `frontend/app/budgets/page.tsx` | title + description + contenido |
+| `frontend/app/reports/page.tsx` | title + description + contenido |
+| `frontend/app/settings/page.tsx` | title + description + sección de idioma |
+| `frontend/app/imports/page.tsx` | title + description + contenido |
+| `frontend/components/marketing/finance-snapshot.tsx` | Labels del demo widget |
+| `frontend/components/transactions/*.tsx` | Labels de formularios y filtros |
+| `frontend/lib/error-message.ts` | Strings de error traducidos |
+| `frontend/lib/format.ts` | Formatters locale-aware |
+
+### Orden de implementación
+- [x] Paso 1 — Instalar dependencias i18n
+- [x] Paso 2 — Crear `lib/i18n/config.ts` + `en.json` + `es.json`
+- [x] Paso 3 — Agregar `I18nextProvider` en `providers.tsx`
+- [x] Paso 4 — Crear `locale-switcher.tsx`
+- [x] Paso 5 — Integrar switcher en `AppShell` (navbar) y traducir nav labels
+- [x] Paso 6 — Traducir landing page (`app/page.tsx` + `finance-snapshot.tsx`)
+- [x] Paso 7 — Traducir páginas de auth (login, register, forgot-password, verify-email)
+- [x] Paso 8 — Traducir páginas protegidas (dashboard, transactions, accounts, budgets, reports, settings, imports)
+- [x] Paso 9 — Traducir componentes de transacciones (filtros, lista)
+- [x] Paso 10 — Adaptar `lib/error-message.ts`
+- [x] Paso 11 — `lang` dinámico vía `HtmlLangSync` en `providers.tsx`
+- [x] Paso 12 — Sección "Language" con `LocaleSwitcher` en Settings page
+- [x] Paso 13 — Verificación: `npm run lint` y `npm run build`
+
+### Verificación final
 ```bash
 cd frontend && npm run lint
 cd frontend && npm run build
 ```
 
 Checklist manual:
-- [x] Desktop: hero split layout correcto, tabs del demo funcionan.
-- [x] Mobile: tabs apiladas correctamente, secciones nuevas no rompen el layout.
-- [x] Todos los links del landing siguen apuntando a `/register` y `/login`.
-- [x] No hay llamadas a API ni imports de rutas protegidas.
+- [ ] Switcher visible en navbar desktop y en Settings
+- [ ] Cambio de idioma persiste tras recargar la página
+- [ ] `<html lang>` cambia dinámicamente al cambiar idioma
+- [ ] Landing page completamente traducida en ambos idiomas
+- [ ] Auth pages completamente traducidas
+- [ ] Páginas protegidas (title, description, contenido) traducidas
+- [ ] Modals y formularios traducidos
+- [ ] Mensajes de error traducidos
+- [ ] Formatos de fecha y moneda respetan el locale activo

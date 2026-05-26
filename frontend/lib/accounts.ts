@@ -7,27 +7,29 @@ import type {
   MoneyValue,
 } from "@/lib/types";
 
+type Translate = (key: string) => string;
+
 export type ExchangeRateLookup = Map<string, ExchangeRate>;
 
 export const ACCOUNT_TYPE_OPTIONS: Array<{
   value: AccountType;
-  label: string;
+  labelKey: string;
 }> = [
-  { value: "cash", label: "Cash" },
-  { value: "bank_account", label: "Bank account" },
-  { value: "credit_card", label: "Credit card" },
-  { value: "loan", label: "Loan" },
+  { value: "cash", labelKey: "accountTypes.cash" },
+  { value: "bank_account", labelKey: "accountTypes.bank_account" },
+  { value: "credit_card", labelKey: "accountTypes.credit_card" },
+  { value: "loan", labelKey: "accountTypes.loan" },
 ];
 
 const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  cash: "Cash",
-  bank_account: "Bank account",
-  credit_card: "Credit card",
-  loan: "Loan",
+  cash: "accountTypes.cash",
+  bank_account: "accountTypes.bank_account",
+  credit_card: "accountTypes.credit_card",
+  loan: "accountTypes.loan",
 };
 
-export function formatAccountTypeLabel(type: AccountType) {
-  return ACCOUNT_TYPE_LABELS[type];
+export function formatAccountTypeLabel(type: AccountType, t: Translate) {
+  return t(ACCOUNT_TYPE_LABELS[type]);
 }
 
 export function normalizeCurrencyCode(value: string) {

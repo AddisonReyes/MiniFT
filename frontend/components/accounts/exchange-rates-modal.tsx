@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { FormError } from "@/components/form-error";
 import { Button, Input, Modal, ModalActions, cn } from "@/components/ui";
@@ -43,6 +44,8 @@ export function ExchangeRatesModal({
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation();
+
   const exchangeRateLookup = useMemo(
     () => createExchangeRateLookup(exchangeRates),
     [exchangeRates],
@@ -60,8 +63,8 @@ export function ExchangeRatesModal({
   return (
     <Modal
       open={open}
-      title="Currency conversions"
-      subtitle={`Frankfurter fills these pairs automatically for your ${defaultCurrency} totals. Enable manual on any pair to save a custom override.`}
+      title={t("exchangeRates.title")}
+      subtitle={`Frankfurter ${t("exchangeRates.description")} (${defaultCurrency})`}
       onClose={onClose}
     >
       <form
@@ -85,7 +88,7 @@ export function ExchangeRatesModal({
                 >
                   <div className="mb-4">
                     <div className="text-xs uppercase tracking-[0.22em] text-mist/90">
-                      From
+                      {t("transactions.transfer.fromAccount")}
                     </div>
                     <h3 className="mt-2 text-lg font-semibold">{fromCurrency}</h3>
                   </div>
@@ -142,7 +145,7 @@ export function ExchangeRatesModal({
                                 }
                                 className="h-4 w-4 rounded border-white/20 bg-transparent accent-[#7AE7B9]"
                               />
-                              Manual
+                              {t("exchangeRates.manualMode")}
                             </label>
                           </div>
 
@@ -176,11 +179,11 @@ export function ExchangeRatesModal({
                           >
                             {isManual
                               ? onlineValue
-                                ? `Manual override active. Online reference: 1 ${fromCurrency} = ${onlineValue} ${toCurrency}.`
-                                : "Manual override active for this pair."
+                                ? `${t("exchangeRates.manualOverrideActive")} 1 ${fromCurrency} = ${onlineValue} ${toCurrency}.`
+                                : t("exchangeRates.manualOverrideActive")
                               : value
-                                ? `Auto rate: 1 ${fromCurrency} = ${value} ${toCurrency}. Refreshed daily and cached as fallback.`
-                                : "No online rate is available right now. Enable manual mode to set one."}
+                                ? `1 ${fromCurrency} = ${value} ${toCurrency}.`
+                                : t("exchangeRates.noOnlineRate")}
                           </p>
                         </div>
                       );
@@ -192,25 +195,24 @@ export function ExchangeRatesModal({
           </div>
         ) : (
           <div className="empty-state">
-            <div className="font-medium text-white">No currency pairs yet</div>
+            <div className="font-medium text-white">{t("accounts.noAccountsTitle")}</div>
             <p className="mt-1 text-sm text-mist">
-              Add an account with a different currency to manage conversion
-              rates here.
+              {t("accounts.noAccountsBody")}
             </p>
           </div>
         )}
 
         <FormError
           error={error}
-          fallbackMessage="Unable to save exchange rate overrides"
+          fallbackMessage={t("exchangeRates.errorFallback")}
         />
 
         <ModalActions>
           <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button className="flex-1 sm:flex-none" type="submit">
-            {isPending ? "Saving..." : "Save overrides"}
+            {isPending ? t("exchangeRates.saving") : t("exchangeRates.saveOverrides")}
           </Button>
         </ModalActions>
       </form>

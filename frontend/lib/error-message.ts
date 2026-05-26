@@ -2,12 +2,7 @@
 
 import { ApiError } from "@/lib/api";
 import { isNativeAppShell } from "@/lib/platform";
-
-const androidBackendHint =
-  "Cannot reach the backend. If you are using a local API, start it and run npm run android:reverse. If you are using a deployed API, allow http://localhost and https://localhost in CORS_ALLOWED_ORIGINS.";
-
-const genericBackendHint =
-  "Cannot reach the backend. Check that the API is running and reachable from this app.";
+import i18n from "@/lib/i18n/config";
 
 function isNetworkLikeError(error: Error) {
   return (
@@ -23,7 +18,9 @@ export function describeError(error: unknown, fallbackMessage: string) {
 
   if (error instanceof Error) {
     if (isNetworkLikeError(error)) {
-      return isNativeAppShell() ? androidBackendHint : genericBackendHint;
+      return isNativeAppShell()
+        ? i18n.t("common.backendErrorAndroid")
+        : i18n.t("common.backendError");
     }
 
     return error.message || fallbackMessage;

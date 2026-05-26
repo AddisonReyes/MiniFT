@@ -20,8 +20,10 @@ import {
 } from "@/lib/transaction-display";
 import type { Account, Budget, MonthlySummary, Transaction } from "@/lib/types";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { useTranslation } from "react-i18next";
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const session = useSessionQuery();
   const month = currentMonthInput();
   const monthDate = monthInputToDate(month);
@@ -63,27 +65,27 @@ export default function DashboardPage() {
 
   return (
     <PageFrame
-      title="Dashboard"
-      description="A compact monthly view across balances, spending, and the transactions that need attention."
+      title={t("dashboard.title")}
+      description={t("dashboard.description")}
     >
       <section className="metric-grid">
         <SummaryCard
-          label="Income"
+          label={t("dashboard.income")}
           value={formatCurrency(summary?.income_total || 0, currency)}
-          meta="Current month"
+          meta={t("dashboard.currentMonth")}
         />
         <SummaryCard
-          label="Expenses"
+          label={t("dashboard.expenses")}
           value={formatCurrency(summary?.expense_total || 0, currency)}
-          meta="Current month"
+          meta={t("dashboard.currentMonth")}
         />
         <SummaryCard
-          label="Net"
+          label={t("dashboard.net")}
           value={formatCurrency(summary?.net_total || 0, currency)}
           meta={
             summary && Number(summary.net_total) >= 0
-              ? "Positive month"
-              : "Watch spending"
+              ? t("dashboard.positiveMonth")
+              : t("dashboard.watchSpending")
           }
         />
       </section>
@@ -92,12 +94,12 @@ export default function DashboardPage() {
         <Card className="space-y-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-xl font-semibold">Recent transactions</h2>
+              <h2 className="text-xl font-semibold">{t("dashboard.recentTransactions")}</h2>
               <p className="mt-1 text-sm text-mist">
-                Latest activity across your accounts.
+                {t("dashboard.recentTransactionsSubtext")}
               </p>
             </div>
-            <Badge tone="neutral">{recentTransactions.length} shown</Badge>
+            <Badge tone="neutral">{t("dashboard.shown", { count: recentTransactions.length })}</Badge>
           </div>
 
           {showDesktopTransactions ? (
@@ -110,10 +112,10 @@ export default function DashboardPage() {
                 </colgroup>
                 <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
                   <tr>
-                    <th className="px-3 py-3 font-medium sm:px-4">Category</th>
-                    <th className="px-3 py-3 font-medium sm:px-4">Date</th>
+                    <th className="px-3 py-3 font-medium sm:px-4">{t("dashboard.category")}</th>
+                    <th className="px-3 py-3 font-medium sm:px-4">{t("dashboard.date")}</th>
                     <th className="px-3 py-3 text-right font-medium sm:px-4">
-                      Amount
+                      {t("dashboard.amount")}
                     </th>
                   </tr>
                 </thead>
@@ -154,11 +156,10 @@ export default function DashboardPage() {
                     <tr>
                       <td className="px-4 py-7" colSpan={3}>
                         <div className="font-medium text-white">
-                          No transactions yet
+                          {t("dashboard.noTransactionsTitle")}
                         </div>
                         <p className="mt-1 text-sm text-mist">
-                          Create your first income, expense, or transfer to
-                          bring the dashboard to life.
+                          {t("dashboard.noTransactionsBody")}
                         </p>
                       </td>
                     </tr>
@@ -180,7 +181,7 @@ export default function DashboardPage() {
                           {transaction.category}
                         </div>
                         <div className="mt-1 text-xs text-mist">
-                          {transaction.account_name || "Cash"} ·{" "}
+                          {transaction.account_name || t("common.cash")} ·{" "}
                           {formatDate(transaction.date)}
                         </div>
                       </div>
@@ -199,7 +200,9 @@ export default function DashboardPage() {
 
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <Badge tone={transactionTone(transaction.display_type)}>
-                        {transaction.display_type}
+                        {t(`displayType.${transaction.display_type}`, {
+                          defaultValue: transaction.display_type,
+                        })}
                       </Badge>
                       {transaction.note ? (
                         <span className="truncate text-xs text-mist">
@@ -212,11 +215,10 @@ export default function DashboardPage() {
               ) : (
                 <div className="empty-state">
                   <div className="font-medium text-white">
-                    No transactions yet
+                    {t("dashboard.noTransactionsTitle")}
                   </div>
                   <p className="mt-1 text-sm text-mist">
-                    Create your first income, expense, or transfer to bring the
-                    dashboard to life.
+                    {t("dashboard.noTransactionsBody")}
                   </p>
                 </div>
               )}
@@ -227,9 +229,9 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <Card className="space-y-5">
             <div>
-              <h2 className="text-xl font-semibold">Accounts</h2>
+              <h2 className="text-xl font-semibold">{t("dashboard.accounts")}</h2>
               <p className="mt-1 text-sm text-mist">
-                Balances update directly from transaction flow.
+                {t("dashboard.accountsSubtext")}
               </p>
             </div>
 
@@ -242,7 +244,7 @@ export default function DashboardPage() {
                   <div className="min-w-0">
                     <div className="font-medium text-white">{account.name}</div>
                     <div className="mt-1 text-xs uppercase tracking-[0.18em] text-mist">
-                      {formatAccountTypeLabel(account.type)} ·{" "}
+                      {formatAccountTypeLabel(account.type, t)} ·{" "}
                       {account.currency}
                     </div>
                   </div>
@@ -256,9 +258,9 @@ export default function DashboardPage() {
 
           <Card className="space-y-5">
             <div>
-              <h2 className="text-xl font-semibold">Budget watch</h2>
+              <h2 className="text-xl font-semibold">{t("dashboard.budgetWatch")}</h2>
               <p className="mt-1 text-sm text-mist">
-                Current-month categories with progress.
+                {t("dashboard.budgetWatchSubtext")}
               </p>
             </div>
 
@@ -294,9 +296,9 @@ export default function DashboardPage() {
                 })
               ) : (
                 <div className="empty-state">
-                  <div className="font-medium text-white">No budgets yet</div>
+                  <div className="font-medium text-white">{t("dashboard.noBudgetsTitle")}</div>
                   <p className="mt-1 text-sm text-mist">
-                    Add monthly category caps to see progress here.
+                    {t("dashboard.noBudgetsBody")}
                   </p>
                 </div>
               )}
