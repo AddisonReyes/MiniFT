@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 
 import { FormError } from "@/components/form-error";
 import { PageFrame } from "@/components/page-frame";
@@ -37,9 +39,8 @@ import {
 import { ApiError, api } from "@/lib/api";
 import { useSessionQuery } from "@/lib/auth";
 import { formatCurrency, toNumber } from "@/lib/format";
-import type { Account, AccountType, ExchangeRate } from "@/lib/types";
-import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n/config";
+import type { Account, AccountType, ExchangeRate } from "@/lib/types";
 
 const ExchangeRatesModal = dynamic(
   () =>
@@ -60,17 +61,16 @@ function createInitialForm(defaultCurrency: string) {
   };
 }
 
-function appendMissingRatesMeta(base: string, missingCount: number) {
+function appendMissingRatesMeta(
+  base: string,
+  missingCount: number,
+  t: TFunction,
+) {
   if (!missingCount) {
     return base;
   }
 
-  const suffix =
-    missingCount === 1
-      ? "1 account missing a rate"
-      : `${missingCount} accounts missing rates`;
-
-  return `${base} · ${suffix}`;
+  return `${base} · ${t("accounts.missingRate", { count: missingCount })}`;
 }
 
 export default function AccountsPage() {
@@ -281,20 +281,22 @@ export default function AccountsPage() {
       }
     >
       <section className="grid gap-4 md:grid-cols-2">
-          <SummaryCard
-          label={t("accounts.balance") + " (Gross)"}
+        <SummaryCard
+          label={t("accounts.grossTotal")}
           value={formatCurrency(grossTotal, defaultCurrency)}
           meta={appendMissingRatesMeta(
-            `Converted to ${defaultCurrency}`,
+            t("accounts.convertedTo", { currency: defaultCurrency }),
             missingCount,
+            t,
           )}
         />
         <SummaryCard
-          label={t("accounts.balance") + " (Net)"}
+          label={t("accounts.netTotal")}
           value={formatCurrency(netTotal, defaultCurrency)}
           meta={appendMissingRatesMeta(
-            `Negative balances excluded · Base ${defaultCurrency}`,
+            t("accounts.netTotalMeta", { currency: defaultCurrency }),
             missingCount,
+            t,
           )}
         />
       </section>
@@ -338,16 +340,22 @@ export default function AccountsPage() {
 
                 {account.currency === defaultCurrency ? (
                   <p className="text-sm text-mist">
-                    Included directly in {defaultCurrency} totals.
+                    {t("accounts.includedInTotals", {
+                      currency: defaultCurrency,
+                    })}
                   </p>
                 ) : convertedBalance !== null ? (
                   <p className="text-sm text-mist">
-                    {formatCurrency(convertedBalance, defaultCurrency)} in{" "}
-                    {defaultCurrency} totals.
+                    {t("accounts.convertedBalanceInTotals", {
+                      amount: formatCurrency(convertedBalance, defaultCurrency),
+                      currency: defaultCurrency,
+                    })}
                   </p>
                 ) : (
                   <p className="text-sm text-amber">
-                    Conversion to {defaultCurrency} is not set yet.
+                    {t("accounts.conversionMissing", {
+                      currency: defaultCurrency,
+                    })}
                   </p>
                 )}
               </div>
@@ -364,7 +372,7 @@ export default function AccountsPage() {
                   className="flex-1"
                   variant="ghost"
                   onClick={() => {
-                    if (window.confirm(`${t("accounts.deleteConfirm")} ${account.name}`)) {
+                    if (window.confirm(t("accounts.deleteConfirm"))) {
                       deleteMutation.mutate(account.id);
                     }
                   }}
@@ -379,7 +387,9 @@ export default function AccountsPage() {
 
       {!accountsQuery.data?.length ? (
         <Card className="empty-state mt-6">
-          <div className="font-medium text-white">{t("accounts.noAccountsTitle")}</div>
+          <div className="font-medium text-white">
+            {t("accounts.noAccountsTitle")}
+          </div>
           <p className="mt-1 text-sm text-mist">
             {t("accounts.noAccountsBody")}
           </p>

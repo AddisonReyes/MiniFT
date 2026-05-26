@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 import { BrandLink } from "@/components/brand-link";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { cn } from "@/components/ui";
 import { isNativeAppShell } from "@/lib/platform";
 
@@ -218,9 +217,6 @@ export function AppShell({
               })}
             </nav>
 
-            {/* Locale switcher — visible on desktop next to nav */}
-            <LocaleSwitcher className="hidden lg:flex" />
-
             {showNativeMobileNavigation ? (
               <div className="inline-flex rounded-full border border-white/10 bg-ink/55 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-mist shadow-soft backdrop-blur lg:hidden">
                 {currentItem?.label ?? t("nav.workspace")}
@@ -282,11 +278,6 @@ export function AppShell({
                       </Link>
                     );
                   })}
-
-                  {/* Locale switcher inside compact menu */}
-                  <div className="flex justify-center pt-1 pb-0.5">
-                    <LocaleSwitcher />
-                  </div>
                 </div>
               </div>
             </>

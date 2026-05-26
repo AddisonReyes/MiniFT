@@ -37,7 +37,9 @@ export function TransactionListSection({
             {t("transactions.description")}
           </p>
         </div>
-        <Badge tone="neutral">{t("transactions.list.shown", { count: transactions.length })}</Badge>
+        <Badge tone="neutral">
+          {t("transactions.list.shown", { count: transactions.length })}
+        </Badge>
       </div>
 
       {showDesktopTable ? (
@@ -45,16 +47,24 @@ export function TransactionListSection({
           <table className="w-full min-w-[860px] table-fixed text-left text-sm">
             <thead className="border-b border-white/10 bg-white/[0.045] text-mist">
               <tr>
-                <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.filters.type")}</th>
-                 <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.list.category")}</th>
-                 <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.list.account")}</th>
-                 <th className="px-3 py-3 font-medium sm:px-4">{t("transactions.list.date")}</th>
-                 <th className="px-3 py-3 text-right font-medium sm:px-4">
-                   {t("transactions.list.amount")}
-                 </th>
-                 <th className="px-3 py-3 text-right font-medium sm:px-4">
-                   {t("transactions.actions")}
-                 </th>
+                <th className="px-3 py-3 font-medium sm:px-4">
+                  {t("transactions.filters.type")}
+                </th>
+                <th className="px-3 py-3 font-medium sm:px-4">
+                  {t("transactions.list.category")}
+                </th>
+                <th className="px-3 py-3 font-medium sm:px-4">
+                  {t("transactions.list.account")}
+                </th>
+                <th className="px-3 py-3 font-medium sm:px-4">
+                  {t("transactions.list.date")}
+                </th>
+                <th className="px-3 py-3 text-right font-medium sm:px-4">
+                  {t("transactions.list.amount")}
+                </th>
+                <th className="px-3 py-3 text-right font-medium sm:px-4">
+                  {t("transactions.actions")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -72,8 +82,12 @@ export function TransactionListSection({
               ) : errorMessage ? (
                 <tr>
                   <td className="px-3 py-6 sm:px-4" colSpan={6}>
-                    <div className="font-medium text-hazard">{t("transactions.list.errorTitle")}</div>
-                    <p className="mt-1 text-sm text-hazard/80">{errorMessage}</p>
+                    <div className="font-medium text-hazard">
+                      {t("transactions.list.errorTitle")}
+                    </div>
+                    <p className="mt-1 text-sm text-hazard/80">
+                      {errorMessage}
+                    </p>
                   </td>
                 </tr>
               ) : transactions.length ? (
@@ -82,11 +96,13 @@ export function TransactionListSection({
                     key={transaction.id}
                     className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                   >
-                     <td className="px-3 py-4 sm:px-4">
-                       <Badge tone={transactionTone(transaction.display_type)}>
-                         {t(`displayType.${transaction.display_type}`, { defaultValue: transaction.display_type })}
-                       </Badge>
-                     </td>
+                    <td className="px-3 py-4 sm:px-4">
+                      <Badge tone={transactionTone(transaction.display_type)}>
+                        {t(`displayType.${transaction.display_type}`, {
+                          defaultValue: transaction.display_type,
+                        })}
+                      </Badge>
+                    </td>
                     <td className="px-3 py-4 align-top sm:px-4">
                       <div className="break-all font-medium text-white">
                         {transaction.category}
@@ -97,8 +113,8 @@ export function TransactionListSection({
                         </div>
                       ) : null}
                     </td>
-                     <td className="break-all px-3 py-4 text-mist sm:px-4">
-                       {transaction.account_name || t("common.cash")}
+                    <td className="break-all px-3 py-4 text-mist sm:px-4">
+                      {transaction.account_name || t("common.cash")}
                     </td>
                     <td className="px-3 py-4 text-mist sm:px-4">
                       {formatDate(transaction.date)}
@@ -117,19 +133,19 @@ export function TransactionListSection({
                     <td className="px-3 py-4 sm:px-4">
                       <div className="flex justify-end gap-2">
                         {transaction.display_type !== "transfer" ? (
-                        <Button
+                          <Button
                             variant="secondary"
                             onClick={() => onEdit(transaction)}
                           >
                             {t("common.edit")}
                           </Button>
                         ) : null}
-                         <Button
-                           variant="ghost"
-                           onClick={() => onDelete(transaction)}
-                         >
-                           {t("common.delete")}
-                         </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => onDelete(transaction)}
+                        >
+                          {t("common.delete")}
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -138,11 +154,11 @@ export function TransactionListSection({
                 <tr>
                   <td className="px-4 py-7" colSpan={6}>
                     <div className="font-medium text-white">
-                       {t("transactions.list.noResults")}
-                     </div>
-                     <p className="mt-1 text-sm text-mist">
-                       {t("transactions.list.noResultsBody")}
-                     </p>
+                      {t("transactions.list.noResults")}
+                    </div>
+                    <p className="mt-1 text-sm text-mist">
+                      {t("transactions.list.noResultsBody")}
+                    </p>
                   </td>
                 </tr>
               )}
@@ -177,7 +193,7 @@ export function TransactionListSection({
                     </div>
                     <div className="mt-1 text-xs text-mist">
                       {transaction.account_name || t("common.cash")} ·{" "}
-                       {formatDate(transaction.date)}
+                      {formatDate(transaction.date)}
                     </div>
                   </div>
                   <div
@@ -201,7 +217,9 @@ export function TransactionListSection({
 
                 <div className="mt-4 flex flex-col gap-3">
                   <Badge tone={transactionTone(transaction.display_type)}>
-                    {t(`displayType.${transaction.display_type}`, { defaultValue: transaction.display_type })}
+                    {t(`displayType.${transaction.display_type}`, {
+                      defaultValue: transaction.display_type,
+                    })}
                   </Badge>
                   <div className="grid grid-cols-2 gap-2">
                     {transaction.display_type !== "transfer" ? (

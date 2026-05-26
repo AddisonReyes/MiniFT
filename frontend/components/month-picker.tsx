@@ -61,7 +61,7 @@ export function MonthPicker({
         </Select>
 
         <Select
-          aria-label="Year"
+          aria-label={t("common.year")}
           value={year}
           onChange={(event) => onChange(`${event.target.value}-${month}`)}
         >

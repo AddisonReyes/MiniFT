@@ -336,12 +336,12 @@ export default function TransactionsPage() {
         }
         onEdit={openEditTransaction}
         onDelete={(transaction) => {
-          const type =
+          const confirmKey =
             transaction.display_type === "transfer"
-              ? t("displayType.transfer").toLowerCase()
-              : t("displayType.expense").toLowerCase();
+              ? "transactions.deleteTransferConfirm"
+              : "transactions.deleteTransactionConfirm";
 
-          if (window.confirm(t("transactions.deleteConfirm", { type }))) {
+          if (window.confirm(t(confirmKey))) {
             deleteTransactionMutation.mutate(transaction);
           }
         }}
@@ -363,7 +363,9 @@ export default function TransactionsPage() {
         onDelete={(recurringTransaction) => {
           if (
             window.confirm(
-              t("transactions.deleteRecurringConfirm", { category: recurringTransaction.category }),
+              t("transactions.deleteRecurringConfirm", {
+                category: recurringTransaction.category,
+              }),
             )
           ) {
             deleteRecurringMutation.mutate(recurringTransaction.id);

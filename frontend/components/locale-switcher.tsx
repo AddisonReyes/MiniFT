@@ -7,13 +7,16 @@ const LOCALES = [
   { code: "es", label: "ES" },
 ] as const;
 
+const LOCALE_STORAGE_KEY = "minift_locale";
+
 type LocaleCode = (typeof LOCALES)[number]["code"];
 
 export function LocaleSwitcher({ className }: { className?: string }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const current = (i18n.language?.slice(0, 2) ?? "en") as LocaleCode;
 
   function handleChange(code: LocaleCode) {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, code);
     void i18n.changeLanguage(code);
   }
 
@@ -21,7 +24,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
     <div
       className={`flex items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.03] p-0.5 ${className ?? ""}`}
       role="group"
-      aria-label="Language"
+      aria-label={t("common.language")}
     >
       {LOCALES.map(({ code, label }) => (
         <button

@@ -48,7 +48,11 @@ export function RecurringFormModal({
   return (
     <Modal
       open={open}
-      title={editingLabel ? t("transactions.recurringForm.editTitle") : t("transactions.recurringForm.addTitle")}
+      title={
+        editingLabel
+          ? t("transactions.recurringForm.editTitle")
+          : t("transactions.recurringForm.addTitle")
+      }
       subtitle={t("transactions.recurring.description")}
       onClose={onClose}
     >
@@ -61,7 +65,9 @@ export function RecurringFormModal({
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="recurring_account">{t("transactions.recurringForm.account")}</label>
+            <label htmlFor="recurring_account">
+              {t("transactions.recurringForm.account")}
+            </label>
             <Select
               id="recurring_account"
               value={form.account_id}
@@ -81,8 +87,14 @@ export function RecurringFormModal({
             <label>{t("transactions.recurringForm.type")}</label>
             <SegmentedControl
               options={[
-                { label: t("transactions.recurringForm.expense"), value: "expense" },
-                { label: t("transactions.recurringForm.income"), value: "income" },
+                {
+                  label: t("transactions.recurringForm.expense"),
+                  value: "expense",
+                },
+                {
+                  label: t("transactions.recurringForm.income"),
+                  value: "income",
+                },
               ]}
               value={form.type}
               onChange={(value) =>
@@ -96,7 +108,9 @@ export function RecurringFormModal({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="recurring_amount">{t("transactions.recurringForm.amount")}</label>
+            <label htmlFor="recurring_amount">
+              {t("transactions.recurringForm.amount")}
+            </label>
             <Input
               id="recurring_amount"
               inputMode="decimal"
@@ -108,7 +122,9 @@ export function RecurringFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="recurring_frequency">{t("transactions.recurringForm.frequency")}</label>
+            <label htmlFor="recurring_frequency">
+              {t("transactions.recurringForm.frequency")}
+            </label>
             <Select
               id="recurring_frequency"
               value={form.frequency}
@@ -118,16 +134,24 @@ export function RecurringFormModal({
                 })
               }
             >
-              <option value="daily">{t("transactions.recurring.frequency.daily") ?? "Daily"}</option>
-              <option value="weekly">{t("transactions.recurring.frequency.weekly")}</option>
-              <option value="monthly">{t("transactions.recurring.frequency.monthly")}</option>
+              <option value="daily">
+                {t("transactions.recurring.frequency.daily")}
+              </option>
+              <option value="weekly">
+                {t("transactions.recurring.frequency.weekly")}
+              </option>
+              <option value="monthly">
+                {t("transactions.recurring.frequency.monthly")}
+              </option>
             </Select>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="recurring_category">{t("transactions.recurringForm.category")}</label>
+            <label htmlFor="recurring_category">
+              {t("transactions.recurringForm.category")}
+            </label>
             <Input
               id="recurring_category"
               value={form.category}
@@ -146,7 +170,9 @@ export function RecurringFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="next_run_date">{t("transactions.recurringForm.startDate")}</label>
+            <label htmlFor="next_run_date">
+              {t("transactions.recurringForm.startDate")}
+            </label>
             <Input
               id="next_run_date"
               type="date"
@@ -160,7 +186,9 @@ export function RecurringFormModal({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="recurring_note">{t("transactions.recurringForm.note")}</label>
+          <label htmlFor="recurring_note">
+            {t("transactions.recurringForm.note")}
+          </label>
           <TextArea
             id="recurring_note"
             value={form.note}
@@ -174,10 +202,18 @@ export function RecurringFormModal({
           />
         </div>
 
-        <FormError error={error} fallbackMessage={t("transactions.recurringForm.errorFallbackAdd")} />
+        <FormError
+          error={error}
+          fallbackMessage={t("transactions.recurringForm.errorFallbackAdd")}
+        />
 
         <ModalActions>
-          <Button className="flex-1 sm:flex-none" type="button" variant="ghost" onClick={onClose}>
+          <Button
+            className="flex-1 sm:flex-none"
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+          >
             {t("common.cancel")}
           </Button>
           <Button className="flex-1 sm:flex-none" type="submit">
