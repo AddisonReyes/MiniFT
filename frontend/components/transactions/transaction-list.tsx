@@ -186,19 +186,19 @@ export function TransactionListSection({
                 key={transaction.id}
                 className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="grid gap-3 min-[380px]:grid-cols-[minmax(0,1fr)_auto] min-[380px]:items-start">
                   <div className="min-w-0">
-                    <div className="break-all font-medium text-white">
+                    <div className="mobile-safe-text font-medium text-white">
                       {transaction.category}
                     </div>
-                    <div className="mt-1 text-xs text-mist">
+                    <div className="mobile-safe-text mt-1 text-xs text-mist">
                       {transaction.account_name || t("common.cash")} ·{" "}
                       {formatDate(transaction.date)}
                     </div>
                   </div>
                   <div
                     className={cn(
-                      "shrink-0 text-right font-semibold",
+                      "mobile-safe-text font-semibold min-[380px]:text-right",
                       transactionAmountClass(transaction.display_type),
                     )}
                   >
@@ -210,17 +210,19 @@ export function TransactionListSection({
                 </div>
 
                 {transaction.note ? (
-                  <div className="mt-3 break-all text-xs text-mist">
+                  <div className="mobile-safe-text mt-3 text-xs text-mist">
                     {transaction.note}
                   </div>
                 ) : null}
 
                 <div className="mt-4 flex flex-col gap-3">
-                  <Badge tone={transactionTone(transaction.display_type)}>
-                    {t(`displayType.${transaction.display_type}`, {
-                      defaultValue: transaction.display_type,
-                    })}
-                  </Badge>
+                  <div className="min-w-0">
+                    <Badge tone={transactionTone(transaction.display_type)}>
+                      {t(`displayType.${transaction.display_type}`, {
+                        defaultValue: transaction.display_type,
+                      })}
+                    </Badge>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {transaction.display_type !== "transfer" ? (
                       <Button

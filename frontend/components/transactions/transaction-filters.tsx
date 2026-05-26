@@ -72,7 +72,7 @@ export function TransactionFiltersCard({
               {activeFilters.map((filter) => (
                 <span
                   key={filter}
-                  className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-mist"
+                  className="mobile-safe-text inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-mist"
                 >
                   {filter}
                 </span>
@@ -92,7 +92,7 @@ export function TransactionFiltersCard({
             </Button>
           ) : null}
           <Button
-            className="sm:hidden"
+            className="flex-1 sm:hidden"
             variant="secondary"
             onClick={() => setOpen((current) => !current)}
           >

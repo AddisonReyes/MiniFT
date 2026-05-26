@@ -113,7 +113,7 @@ export default function IntegrationsPage() {
                     <div className="text-xs uppercase tracking-[0.18em] text-mist">
                       {t("integrations.connectedGmail")}
                     </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
+                    <div className="mobile-safe-text mt-2 text-lg font-semibold text-white">
                       {status.google_email}
                     </div>
                   </div>
@@ -128,7 +128,7 @@ export default function IntegrationsPage() {
                     <div className="text-xs uppercase tracking-[0.18em] text-mist">
                       {t("integrations.lastSync")}
                     </div>
-                    <div className="mt-2 text-sm font-medium text-white">
+                    <div className="mobile-safe-text mt-2 text-sm font-medium text-white">
                       {status.last_synced_at
                         ? formatDateTime(status.last_synced_at)
                         : t("integrations.notYet")}
@@ -268,7 +268,7 @@ export default function IntegrationsPage() {
                   <div className="text-xs uppercase tracking-[0.18em] text-mist">
                     {t("integrations.connectionStatus")}
                   </div>
-                  <div className="mt-2 text-xl font-semibold text-white">
+                  <div className="mobile-safe-text mt-2 text-xl font-semibold text-white">
                     {t("integrations.notConnectedTitle")}
                   </div>
                   <p className="mt-2 max-w-xl text-sm text-mist">
@@ -310,7 +310,7 @@ export default function IntegrationsPage() {
             <div className="text-xs uppercase tracking-[0.18em] text-mist">
               {t("integrations.gmailReadonly")}
             </div>
-            <div className="mt-2 break-all font-medium text-white">
+            <div className="mobile-safe-text mt-2 font-medium text-white">
               {status?.scopes[0] ?? GMAIL_SCOPE}
             </div>
             <p className="mt-3 text-sm text-mist">
@@ -348,7 +348,7 @@ export default function IntegrationsPage() {
             <div className="text-xs uppercase tracking-[0.18em] text-mist">
               {t("integrations.scopeRequested")}
             </div>
-            <div className="mt-2 break-all font-medium text-white">
+            <div className="mobile-safe-text mt-2 font-medium text-white">
               {GMAIL_SCOPE}
             </div>
           </div>

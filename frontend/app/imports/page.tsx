@@ -216,7 +216,7 @@ export default function ImportsPage() {
                  <p className="mt-2 text-sm text-mist">
                    {t("importsPage.learningDescription")}
                  </p>
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid gap-3 min-[380px]:grid-cols-2">
                   <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
                     <div className="text-xs uppercase tracking-[0.18em] text-mist">
                       {t("importsPage.needsAttention")}
@@ -296,7 +296,7 @@ export default function ImportsPage() {
               return (
                 <Card key={importItem.id} className="space-y-4 sm:space-y-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
                         <Badge
                           tone={
@@ -316,25 +316,25 @@ export default function ImportsPage() {
                          <Badge tone={confidenceTone(importItem.confidence_score)}>
                            {confidenceLabel(importItem.confidence_score, t)}
                          </Badge>
-                        <span className="text-xs uppercase tracking-[0.18em] text-mist">
+                        <span className="mobile-safe-text text-xs uppercase tracking-[0.16em] text-mist sm:tracking-[0.18em]">
                           {importItem.bank_name}
                         </span>
                       </div>
-                      <h3 className="mt-3 text-xl font-semibold text-white">
+                      <h3 className="mobile-safe-text mt-3 text-xl font-semibold text-white">
                         {parsed?.merchant || importItem.email_subject}
                       </h3>
-                      <p className="mt-2 text-sm text-mist">
+                      <p className="mobile-safe-text mt-2 text-sm text-mist">
                         {formatDateTime(importItem.email_date)} from{" "}
                         {importItem.sender_email}
                       </p>
                     </div>
 
                     {parsed ? (
-                      <div className="flex w-full items-center justify-between rounded-[20px] border border-white/10 bg-ink/45 px-4 py-3 md:w-auto md:min-w-[12rem] md:block md:text-right">
+                      <div className="flex w-full min-w-0 items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-ink/45 px-4 py-3 md:w-auto md:min-w-[12rem] md:block md:text-right">
                         <div className="text-xs uppercase tracking-[0.18em] text-mist md:mb-2">
                            {t("transactions.list.amount")}
                          </div>
-                        <div className="text-lg font-semibold text-white">
+                        <div className="mobile-safe-text text-lg font-semibold text-white">
                           {formatCurrency(parsed.amount, parsed.currency)}
                         </div>
                       </div>
@@ -356,7 +356,7 @@ export default function ImportsPage() {
                   ) : null}
 
                   {importItem.raw_email_snippet ? (
-                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-mist">
+                    <div className="mobile-safe-text rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-mist">
                       {importItem.raw_email_snippet}
                     </div>
                   ) : null}
@@ -401,12 +401,12 @@ export default function ImportsPage() {
                     </div>
                   ) : null}
 
-                  <div className="grid grid-cols-2 gap-3 text-sm text-mist xl:grid-cols-4">
+                  <div className="grid gap-3 text-sm text-mist min-[380px]:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-[18px] border border-white/10 bg-ink/45 p-4">
                        <div className="text-xs uppercase tracking-[0.18em] text-mist">
                          {t("importsPage.cardHint")}
                        </div>
-                       <div className="mt-2 text-white">
+                       <div className="mobile-safe-text mt-2 text-white">
                          {parsed?.card_last4
                            ? `•••• ${parsed.card_last4}`
                            : parsed?.account_hint || t("common.unknown")}
@@ -416,7 +416,7 @@ export default function ImportsPage() {
                        <div className="text-xs uppercase tracking-[0.18em] text-mist">
                          {t("importsPage.linkedAccount")}
                        </div>
-                       <div className="mt-2 text-white">
+                       <div className="mobile-safe-text mt-2 text-white">
                          {importItem.matched_account_name || t("common.needsConfirmation")}
                        </div>
                      </div>
@@ -424,7 +424,7 @@ export default function ImportsPage() {
                        <div className="text-xs uppercase tracking-[0.18em] text-mist">
                          {t("importsPage.suggestedCategory")}
                        </div>
-                       <div className="mt-2 text-white">
+                       <div className="mobile-safe-text mt-2 text-white">
                          {importItem.suggested_category || t("common.needsConfirmation")}
                        </div>
                      </div>
@@ -432,7 +432,7 @@ export default function ImportsPage() {
                        <div className="text-xs uppercase tracking-[0.18em] text-mist">
                          {t("importsPage.confidence_label")}
                        </div>
-                      <div className="mt-2 text-white">
+                       <div className="mobile-safe-text mt-2 text-white">
                         {importItem.confidence_score} / 100
                       </div>
                     </div>
@@ -445,7 +445,7 @@ export default function ImportsPage() {
                            <div className="text-xs uppercase tracking-[0.18em] text-mist">
                              {t("importsPage.accountMatch")}
                            </div>
-                          <div className="mt-2 text-white">
+                          <div className="mobile-safe-text mt-2 text-white">
                             {importItem.account_match_reason}
                           </div>
                         </div>
@@ -542,7 +542,7 @@ export default function ImportsPage() {
                          {isRejecting ? t("importsPage.dismissing") : t("importsPage.dismiss")}
                        </Button>
                      ) : (
-                       <div className="text-sm text-mist">
+                       <div className="mobile-safe-text text-sm text-mist">
                          {importItem.matched_account_name
                            ? t("importsPage.transactionCreatedIn", { account: importItem.matched_account_name })
                            : t("importsPage.transactionCreated")}

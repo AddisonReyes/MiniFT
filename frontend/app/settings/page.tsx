@@ -69,7 +69,9 @@ function InfoTile({
       <div className="text-xs uppercase tracking-[0.18em] text-mist">
         {label}
       </div>
-      <div className="mt-2 font-medium text-white">{children}</div>
+      <div className="mobile-safe-text mt-2 font-medium text-white">
+        {children}
+      </div>
     </div>
   );
 }
@@ -249,12 +251,8 @@ export default function SettingsPage() {
               title={t("settings.language.sectionTitle")}
               description={t("settings.language.sectionDescription")}
             />
-            <div className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
-              <LocaleSwitcher />
-              <span className="text-sm text-mist">
-                {t("settings.language.english")} /{" "}
-                {t("settings.language.spanish")}
-              </span>
+            <div className="grid gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+              <LocaleSwitcher className="w-full" />
             </div>
           </Card>
         </div>
@@ -355,7 +353,9 @@ export default function SettingsPage() {
 
                 <FormError
                   error={confirmPasswordChangeMutation.error}
-                  fallbackMessage={t("settingsPage.security.confirmErrorFallback")}
+                  fallbackMessage={t(
+                    "settingsPage.security.confirmErrorFallback",
+                  )}
                 />
 
                 <div className="flex justify-end">
@@ -380,7 +380,10 @@ export default function SettingsPage() {
               description={t("settingsPage.integrations.description")}
             />
 
-            <Link href="/settings/integrations" className="block sm:inline-block">
+            <Link
+              href="/settings/integrations"
+              className="block sm:inline-block"
+            >
               <Button className="w-full sm:w-auto" variant="secondary">
                 {t("settingsPage.integrations.open")}
               </Button>

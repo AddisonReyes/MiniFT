@@ -327,11 +327,11 @@ export default function AccountsPage() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-semibold">{account.name}</h2>
+                <h2 className="mobile-safe-text text-2xl font-semibold">{account.name}</h2>
                 <p className="text-sm text-mist">{t("accounts.balance")}</p>
                 <div
                   className={cn(
-                    "text-3xl font-semibold",
+                    "mobile-safe-text text-3xl font-semibold",
                     isNegative ? "text-hazard" : "text-white",
                   )}
                 >
@@ -339,20 +339,20 @@ export default function AccountsPage() {
                 </div>
 
                 {account.currency === defaultCurrency ? (
-                  <p className="text-sm text-mist">
+                   <p className="mobile-safe-text text-sm text-mist">
                     {t("accounts.includedInTotals", {
                       currency: defaultCurrency,
                     })}
                   </p>
                 ) : convertedBalance !== null ? (
-                  <p className="text-sm text-mist">
+                  <p className="mobile-safe-text text-sm text-mist">
                     {t("accounts.convertedBalanceInTotals", {
                       amount: formatCurrency(convertedBalance, defaultCurrency),
                       currency: defaultCurrency,
                     })}
                   </p>
                 ) : (
-                  <p className="text-sm text-amber">
+                  <p className="mobile-safe-text text-sm text-amber">
                     {t("accounts.conversionMissing", {
                       currency: defaultCurrency,
                     })}

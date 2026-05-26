@@ -108,10 +108,10 @@ export default function ReportsPage() {
                 className="space-y-2 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.045]"
               >
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                  <div className="min-w-0 font-medium text-white">
+                  <div className="mobile-safe-text font-medium text-white">
                     {item.category}
                   </div>
-                  <div className="text-sm text-mist sm:text-right">
+                  <div className="mobile-safe-text text-sm text-mist sm:text-right">
                     {formatCurrency(item.total, currency)} ·{" "}
                     {item.percentage.toFixed(2)}%
                   </div>

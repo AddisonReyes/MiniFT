@@ -48,14 +48,14 @@ export function RecurringRulesSection({
           {recurringTransactions.map((recurringTransaction) => (
             <div
               key={recurringTransaction.id}
-              className="rounded-[20px] border border-white/10 bg-white/[0.03] p-5 transition hover:bg-white/[0.045]"
+              className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.045] sm:p-5"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
-                  <div className="break-all font-medium text-white">
+                  <div className="mobile-safe-text font-medium text-white">
                     {recurringTransaction.category}
                   </div>
-                  <div className="mt-1 text-sm text-mist">
+                  <div className="mobile-safe-text mt-1 text-sm text-mist">
                     {recurringTransaction.type} · {recurringTransaction.account_name}
                   </div>
                 </div>
@@ -82,7 +82,7 @@ export function RecurringRulesSection({
                   {t("transactions.recurringForm.startDate")}: {formatDate(recurringTransaction.next_run_date)}
                 </div>
                 {recurringTransaction.note ? (
-                  <div className="break-all">
+                  <div className="mobile-safe-text">
                     {t("transactions.form.note")}: {recurringTransaction.note}
                   </div>
                 ) : null}

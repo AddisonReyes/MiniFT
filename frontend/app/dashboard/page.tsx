@@ -127,11 +127,11 @@ export default function DashboardPage() {
                         className="border-b border-white/5 transition hover:bg-white/[0.025] last:border-0"
                       >
                         <td className="px-3 py-4 align-top sm:px-4">
-                          <div className="break-words font-medium text-white">
+                          <div className="mobile-safe-text font-medium text-white">
                             {transaction.category}
                           </div>
                           {transaction.note ? (
-                            <div className="mt-1 break-words text-xs text-mist">
+                            <div className="mobile-safe-text mt-1 text-xs text-mist">
                               {transaction.note}
                             </div>
                           ) : null}
@@ -177,17 +177,17 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="truncate font-medium text-white">
+                        <div className="mobile-safe-text font-medium text-white">
                           {transaction.category}
                         </div>
-                        <div className="mt-1 text-xs text-mist">
+                        <div className="mobile-safe-text mt-1 text-xs text-mist">
                           {transaction.account_name || t("common.cash")} ·{" "}
                           {formatDate(transaction.date)}
                         </div>
                       </div>
                       <div
                         className={cn(
-                          "shrink-0 text-right font-semibold",
+                          "mobile-safe-text shrink-0 text-right font-semibold",
                           transactionAmountClass(transaction.display_type),
                         )}
                       >
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                         })}
                       </Badge>
                       {transaction.note ? (
-                        <span className="truncate text-xs text-mist">
+                        <span className="mobile-safe-text text-xs text-mist">
                           {transaction.note}
                         </span>
                       ) : null}
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                       {account.currency}
                     </div>
                   </div>
-                  <div className="break-words font-semibold text-white sm:text-right">
+                  <div className="mobile-safe-text font-semibold text-white sm:text-right">
                     {formatCurrency(account.balance, account.currency)}
                   </div>
                 </div>

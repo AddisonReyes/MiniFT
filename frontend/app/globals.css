@@ -76,7 +76,7 @@ body > div {
   input,
   select,
   textarea {
-    @apply w-full rounded-2xl border border-white/10 bg-ink/45 px-4 py-3 text-sm text-white outline-none transition placeholder:text-mist/60 focus:border-signal/70 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(122,231,185,0.1)];
+    @apply min-w-0 w-full rounded-2xl border border-white/10 bg-ink/45 px-4 py-3 text-base text-white outline-none transition placeholder:text-mist/60 focus:border-signal/70 focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(122,231,185,0.1)] sm:text-sm;
   }
 
   input,
@@ -108,5 +108,9 @@ body > div {
 
   .empty-state {
     @apply rounded-[20px] border border-dashed border-white/10 bg-white/[0.025] px-4 py-7 text-sm text-mist;
+  }
+
+  .mobile-safe-text {
+    @apply min-w-0 [overflow-wrap:anywhere];
   }
 }

@@ -254,7 +254,7 @@ export default function TransactionsPage() {
             </Button>
           </div>
 
-          <div className="hidden w-full sm:grid sm:grid-cols-2 sm:gap-3 sm:w-auto lg:flex lg:flex-wrap">
+          <div className="hidden w-full sm:grid sm:w-auto sm:grid-cols-2 sm:gap-3 lg:flex lg:flex-wrap">
             <Button
               variant="danger"
               onClick={() => openNewTransaction("expense")}
@@ -282,7 +282,7 @@ export default function TransactionsPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 min-[380px]:grid-cols-2">
             <Button
               className="w-full"
               variant="danger"

@@ -125,7 +125,7 @@ export default function BudgetsPage() {
                   <div className="text-xs uppercase tracking-[0.22em] text-mist">
                     {budget.month}
                   </div>
-                  <h2 className="mt-2 text-2xl font-semibold">
+                  <h2 className="mobile-safe-text mt-2 text-2xl font-semibold">
                     {budget.category}
                   </h2>
                 </div>
@@ -140,7 +140,7 @@ export default function BudgetsPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-mist">{t("budgets.limit")}</span>
-                  <span className="text-white">
+                  <span className="mobile-safe-text text-right text-white">
                     {formatCurrency(budget.limit_amount, currency)}
                   </span>
                 </div>
@@ -150,7 +150,7 @@ export default function BudgetsPage() {
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <div className="text-sm text-mist">
+                <div className="mobile-safe-text text-sm text-mist">
                   {t("budgets.remaining")}: {formatCurrency(budget.remaining_amount, currency)}
                 </div>
               </div>

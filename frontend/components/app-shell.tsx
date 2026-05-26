@@ -174,7 +174,7 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8",
+        "mx-auto flex min-h-dvh w-full max-w-7xl flex-col overflow-x-hidden px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8",
         showNativeMobileNavigation
           ? "pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:pb-0"
           : "pb-0",
@@ -182,7 +182,7 @@ export function AppShell({
     >
       <header className="mb-5 space-y-4 sm:mb-6 sm:space-y-5">
         <div className="relative">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center justify-between gap-3">
             <BrandLink
               href="/dashboard"
               onClick={() => {
@@ -230,7 +230,7 @@ export function AppShell({
                     ? t("nav.closeMenu")
                     : t("nav.openMenu")
                 }
-                className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-ink/55 px-4 py-2 text-sm text-mist shadow-soft backdrop-blur transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white lg:hidden"
+                className="ml-auto inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-white/10 bg-ink/55 px-4 py-2 text-sm text-mist shadow-soft backdrop-blur transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white lg:hidden"
                 type="button"
                 onClick={() => setCompactWebNavOpen((current) => !current)}
               >
@@ -248,7 +248,7 @@ export function AppShell({
                 type="button"
                 onClick={() => setCompactWebNavOpen(false)}
               />
-              <div className="absolute right-0 top-[calc(100%+0.75rem)] z-40 w-full max-w-[19rem] lg:hidden">
+              <div className="absolute right-0 top-[calc(100%+0.75rem)] z-40 w-[min(100%,19rem)] lg:hidden">
                 <div
                   id="compact-web-navigation"
                   className="grid gap-2 rounded-[24px] border border-white/10 bg-ink/94 p-2 shadow-panel backdrop-blur-xl"
@@ -289,7 +289,7 @@ export function AppShell({
             <p className="text-[11px] uppercase tracking-[0.24em] text-signal/80 sm:text-xs">
               {t("nav.workspace")}
             </p>
-            <h1 className="mt-1.5 text-[1.8rem] font-semibold leading-none sm:mt-2 sm:text-4xl">
+            <h1 className="mt-1.5 break-words text-[1.75rem] font-semibold leading-none sm:mt-2 sm:text-4xl">
               {title}
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-5 text-mist sm:max-w-2xl sm:leading-6">
@@ -298,7 +298,7 @@ export function AppShell({
           </div>
 
           {actions ? (
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+            <div className="grid w-full gap-3 sm:w-auto sm:grid-flow-col sm:auto-cols-max sm:grid-cols-none sm:flex-wrap sm:justify-end">
               {actions}
             </div>
           ) : null}

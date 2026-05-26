@@ -41,7 +41,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex min-h-12 items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition active:translate-y-px focus:outline-none focus:ring-2 focus:ring-signal/40 focus:ring-offset-2 focus:ring-offset-ink",
+        "inline-flex min-h-12 min-w-0 items-center justify-center rounded-2xl px-4 py-3 text-center text-sm font-medium leading-tight transition active:translate-y-px focus:outline-none focus:ring-2 focus:ring-signal/40 focus:ring-offset-2 focus:ring-offset-ink",
         styles[variant],
         className,
       )}
@@ -123,7 +123,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em]",
+        "inline-flex max-w-full rounded-full border px-3 py-1 text-xs uppercase tracking-[0.16em] sm:tracking-[0.18em]",
         tones[tone],
       )}
     >
@@ -189,7 +189,7 @@ export function ModalActions({
   return (
     <div
       className={cn(
-        "sticky bottom-0 z-10 -mx-5 -mb-px mt-8 flex gap-3 border-t border-white/10 bg-[linear-gradient(180deg,rgba(13,18,29,0.98),rgba(10,14,24,0.995))] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl sm:static sm:mx-0 sm:mb-0 sm:mt-0 sm:justify-end sm:border-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-0",
+        "sticky bottom-0 z-10 -mx-5 -mb-px mt-8 grid grid-cols-2 gap-3 border-t border-white/10 bg-[linear-gradient(180deg,rgba(13,18,29,0.98),rgba(10,14,24,0.995))] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl sm:static sm:mx-0 sm:mb-0 sm:mt-0 sm:flex sm:justify-end sm:border-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-0",
         className,
       )}
       {...props}
