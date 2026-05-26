@@ -81,20 +81,20 @@ export default function LandingPage() {
         <nav className="flex items-center justify-between gap-4">
           <BrandLink />
 
-          <div className="flex items-center gap-2">
-            <LocaleSwitcher />
+          <div className="flex shrink-0 items-center gap-2">
             <Link
-              className="rounded-2xl px-4 py-2 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white"
+              className="whitespace-nowrap rounded-2xl px-5 py-2 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white"
               href="/login"
             >
               {t("landing.nav.signIn")}
             </Link>
             <Link
-              className="inline-flex items-center justify-center rounded-2xl bg-signal px-4 py-2 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90"
+              className="inline-flex min-w-max items-center justify-center whitespace-nowrap rounded-2xl bg-signal px-5 py-2 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90"
               href="/register"
             >
               {t("landing.nav.getStarted")}
             </Link>
+            <LocaleSwitcher />
           </div>
         </nav>
 
@@ -155,25 +155,23 @@ export default function LandingPage() {
             <p className="text-xs uppercase tracking-[0.28em] text-signal">
               {t("landing.howItWorks.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold">{t("landing.howItWorks.headline")}</h2>
+            <h2 className="text-3xl font-semibold">
+              {t("landing.howItWorks.headline")}
+            </h2>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
-            {steps.map((step, i) => (
+            {steps.map((step) => (
               <div key={step.number} className="relative space-y-4">
-                {i < steps.length - 1 && (
-                  <div
-                    className="absolute left-[calc(100%+1rem)] top-5 hidden h-px w-[calc(2rem-2px)] bg-white/10 md:block"
-                    aria-hidden
-                  />
-                )}
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-signal/30 bg-signal/10 text-sm font-semibold text-signal">
                     {step.number}
                   </div>
                   <h3 className="font-semibold">{step.title}</h3>
                 </div>
-                <p className="text-sm leading-6 text-mist">{step.description}</p>
+                <p className="text-sm leading-6 text-mist">
+                  {step.description}
+                </p>
               </div>
             ))}
           </div>
@@ -185,7 +183,9 @@ export default function LandingPage() {
             <p className="text-xs uppercase tracking-[0.28em] text-signal">
               {t("landing.features.eyebrow")}
             </p>
-            <h2 className="text-3xl font-semibold">{t("landing.features.headline")}</h2>
+            <h2 className="text-3xl font-semibold">
+              {t("landing.features.headline")}
+            </h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
