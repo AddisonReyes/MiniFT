@@ -1,12 +1,16 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 import { FormError } from "@/components/form-error";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { PageFrame } from "@/components/page-frame";
-import { Badge, Button, Card, Input, Select } from "@/components/ui";
+import { Badge, Button, Card, Input, Select, cn } from "@/components/ui";
 import {
   confirmPasswordChange,
   logout,
@@ -17,9 +21,58 @@ import {
 } from "@/lib/auth";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
-import Link from "next/link";
-import { useTranslation } from "react-i18next";
-import { LocaleSwitcher } from "@/components/locale-switcher";
+
+function SettingsSectionHeader({
+  eyebrow,
+  title,
+  description,
+  tone = "signal",
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  tone?: "signal" | "hazard";
+}) {
+  return (
+    <div>
+      <p
+        className={
+          tone === "hazard"
+            ? "text-xs uppercase tracking-[0.22em] text-hazard"
+            : "text-xs uppercase tracking-[0.22em] text-signal/80"
+        }
+      >
+        {eyebrow}
+      </p>
+      <h2 className="mt-2 text-xl font-semibold sm:text-2xl">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-mist">{description}</p>
+    </div>
+  );
+}
+
+function InfoTile({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[20px] border border-white/10 bg-white/[0.03] p-4",
+        className,
+      )}
+    >
+      <div className="text-xs uppercase tracking-[0.18em] text-mist">
+        {label}
+      </div>
+      <div className="mt-2 font-medium text-white">{children}</div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -105,154 +158,117 @@ export default function SettingsPage() {
       title={t("settings.title")}
       description={t("settings.description")}
     >
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-6">
+          <Card className="space-y-5">
+            <SettingsSectionHeader
+              eyebrow={t("settingsPage.profile.eyebrow")}
+              title={t("settingsPage.profile.title")}
+              description={t("settingsPage.profile.description")}
+            />
 
-        {/* Language section */}
-        <Card className="space-y-5 lg:col-span-2">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              {t("settings.language.sectionTitle")}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{t("settings.language.sectionTitle")}</h2>
-            <p className="mt-2 text-sm text-mist">{t("settings.language.sectionDescription")}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <LocaleSwitcher />
-            <span className="text-sm text-mist">
-              {t("settings.language.english")} / {t("settings.language.spanish")}
-            </span>
-          </div>
-        </Card>
-        <Card className="space-y-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              {t("settingsPage.profile.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.profile.title")}</h2>
-            <p className="mt-2 text-sm text-mist">
-              {t("settingsPage.profile.description")}
-            </p>
-          </div>
-
-          <div className="grid gap-3">
-            <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-              <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                {t("settingsPage.profile.email")}
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <div className="break-all font-medium text-white">
-                  {user?.email || t("common.notAvailable")}
+            <div className="grid gap-3">
+              <InfoTile label={t("settingsPage.profile.email")}>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="break-all">
+                    {user?.email || t("common.notAvailable")}
+                  </span>
+                  <Badge tone={user?.email_verified_at ? "success" : "amber"}>
+                    {user?.email_verified_at
+                      ? t("common.verified")
+                      : t("common.pending")}
+                  </Badge>
                 </div>
-                <Badge tone={user?.email_verified_at ? "success" : "amber"}>
-                  {user?.email_verified_at ? t("common.verified") : t("common.pending")}
-                </Badge>
-              </div>
-            </div>
+              </InfoTile>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  {t("settingsPage.profile.defaultCurrency")}
-                </div>
-                <div className="mt-2 font-medium text-white">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <InfoTile label={t("settingsPage.profile.defaultCurrency")}>
                   {user?.currency || "USD"}
-                </div>
-              </div>
-
-              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  {t("settingsPage.profile.joined")}
-                </div>
-                <div className="mt-2 font-medium text-white">
-                  {user?.created_at ? formatDateTime(user.created_at) : t("common.notAvailable")}
-                </div>
-              </div>
-
-              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-mist">
-                  {t("settingsPage.profile.verifiedAt")}
-                </div>
-                <div className="mt-2 font-medium text-white">
+                </InfoTile>
+                <InfoTile label={t("settingsPage.profile.joined")}>
+                  {user?.created_at
+                    ? formatDateTime(user.created_at)
+                    : t("common.notAvailable")}
+                </InfoTile>
+                <InfoTile label={t("settingsPage.profile.verifiedAt")}>
                   {user?.email_verified_at
                     ? formatDateTime(user.email_verified_at)
                     : t("common.pending")}
-                </div>
+                </InfoTile>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="space-y-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              {t("settingsPage.preferences.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.preferences.title")}</h2>
-            <p className="mt-2 text-sm text-mist">
-              {t("settingsPage.preferences.description")}
-            </p>
-          </div>
-
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label htmlFor="default-currency">{t("settingsPage.preferences.currencyLabel")}</label>
-              <Select
-                id="default-currency"
-                value={currency}
-                onChange={(event) => setDraftCurrency(event.target.value)}
-              >
-                {SUPPORTED_CURRENCIES.map((supportedCurrency) => (
-                  <option key={supportedCurrency} value={supportedCurrency}>
-                    {supportedCurrency}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <FormError
-              error={updateCurrencyMutation.error}
-              fallbackMessage={t("settingsPage.preferences.errorFallback")}
+          <Card className="space-y-5">
+            <SettingsSectionHeader
+              eyebrow={t("settingsPage.preferences.eyebrow")}
+              title={t("settingsPage.preferences.title")}
+              description={t("settingsPage.preferences.description")}
             />
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={updateCurrencyMutation.isPending}>
-                {updateCurrencyMutation.isPending
-                  ? t("settingsPage.preferences.saving")
-                  : t("settingsPage.preferences.save")}
-              </Button>
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div className="space-y-2">
+                  <label htmlFor="default-currency">
+                    {t("settingsPage.preferences.currencyLabel")}
+                  </label>
+                  <Select
+                    id="default-currency"
+                    value={currency}
+                    onChange={(event) => setDraftCurrency(event.target.value)}
+                  >
+                    {SUPPORTED_CURRENCIES.map((supportedCurrency) => (
+                      <option key={supportedCurrency} value={supportedCurrency}>
+                        {supportedCurrency}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                <Button
+                  className="w-full sm:w-auto"
+                  type="submit"
+                  disabled={updateCurrencyMutation.isPending}
+                >
+                  {updateCurrencyMutation.isPending
+                    ? t("settingsPage.preferences.saving")
+                    : t("settingsPage.preferences.save")}
+                </Button>
+              </div>
+
+              <FormError
+                error={updateCurrencyMutation.error}
+                fallbackMessage={t("settingsPage.preferences.errorFallback")}
+              />
+            </form>
+          </Card>
+
+          <Card className="space-y-5">
+            <SettingsSectionHeader
+              eyebrow={t("settings.language.sectionTitle")}
+              title={t("settings.language.sectionTitle")}
+              description={t("settings.language.sectionDescription")}
+            />
+            <div className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <LocaleSwitcher />
+              <span className="text-sm text-mist">
+                {t("settings.language.english")} /{" "}
+                {t("settings.language.spanish")}
+              </span>
             </div>
-          </form>
-        </Card>
+          </Card>
+        </div>
 
-        <Card className="space-y-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              {t("settingsPage.integrations.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.integrations.title")}</h2>
-            <p className="mt-2 text-sm text-mist">
-              {t("settingsPage.integrations.description")}
-            </p>
-          </div>
+        <div className="space-y-6">
+          <Card className="space-y-5">
+            <SettingsSectionHeader
+              eyebrow={t("settingsPage.security.eyebrow")}
+              title={t("settingsPage.security.title")}
+              description={t("settingsPage.security.description")}
+            />
 
-          <Link href="/settings/integrations">
-            <Button variant="secondary">{t("settingsPage.integrations.open")}</Button>
-          </Link>
-        </Card>
-
-        <Card className="space-y-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-signal/80">
-              {t("settingsPage.security.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.security.title")}</h2>
-            <p className="mt-2 text-sm text-mist">
-              {t("settingsPage.security.description")}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
             <Button
+              className="w-full sm:w-auto"
               variant="secondary"
               onClick={() => {
                 setPasswordSuccessMessage(null);
@@ -267,107 +283,129 @@ export default function SettingsPage() {
                   ? t("settingsPage.security.resendCode")
                   : t("settingsPage.security.sendCode")}
             </Button>
-          </div>
 
-          {passwordSuccessMessage ? (
-            <div className="rounded-2xl border border-signal/20 bg-signal/10 px-4 py-3 text-sm text-signal">
-              {passwordSuccessMessage}
-            </div>
-          ) : null}
-
-          <FormError
-            error={requestPasswordChangeMutation.error}
-            fallbackMessage={t("settingsPage.security.sendErrorFallback")}
-          />
-
-          {passwordCodeSent ? (
-            <form className="space-y-5" onSubmit={handlePasswordChangeSubmit}>
-              <div className="space-y-2">
-                <label htmlFor="settings-password-code">{t("settingsPage.security.codeLabel")}</label>
-                <Input
-                  id="settings-password-code"
-                  placeholder={t("settingsPage.security.codePlaceholder")}
-                  value={passwordCode}
-                  onChange={(event) => setPasswordCode(event.target.value)}
-                  autoComplete="one-time-code"
-                  required
-                />
+            {passwordSuccessMessage ? (
+              <div className="rounded-2xl border border-signal/20 bg-signal/10 px-4 py-3 text-sm text-signal">
+                {passwordSuccessMessage}
               </div>
+            ) : null}
 
-              <div className="space-y-2">
-                <label htmlFor="settings-new-password">{t("settingsPage.security.newPasswordLabel")}</label>
-                <Input
-                  id="settings-new-password"
-                  type="password"
-                  placeholder={t("auth.passwordPlaceholder")}
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
+            <FormError
+              error={requestPasswordChangeMutation.error}
+              fallbackMessage={t("settingsPage.security.sendErrorFallback")}
+            />
 
-              <div className="space-y-2">
-                <label htmlFor="settings-password-confirmation">
-                  {t("settingsPage.security.confirmPasswordLabel")}
-                </label>
-                <Input
-                  id="settings-password-confirmation"
-                  type="password"
-                  placeholder={t("auth.forgotPassword.confirmPasswordPlaceholder")}
-                  value={passwordConfirmation}
-                  onChange={(event) =>
-                    setPasswordConfirmation(event.target.value)
-                  }
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
+            {passwordCodeSent ? (
+              <form className="space-y-5" onSubmit={handlePasswordChangeSubmit}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2 sm:col-span-2">
+                    <label htmlFor="settings-password-code">
+                      {t("settingsPage.security.codeLabel")}
+                    </label>
+                    <Input
+                      id="settings-password-code"
+                      placeholder={t("settingsPage.security.codePlaceholder")}
+                      value={passwordCode}
+                      onChange={(event) => setPasswordCode(event.target.value)}
+                      autoComplete="one-time-code"
+                      required
+                    />
+                  </div>
 
-              {passwordClientError ? (
-                <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
-                  {passwordClientError}
+                  <div className="space-y-2">
+                    <label htmlFor="settings-new-password">
+                      {t("settingsPage.security.newPasswordLabel")}
+                    </label>
+                    <Input
+                      id="settings-new-password"
+                      type="password"
+                      placeholder={t("auth.passwordPlaceholder")}
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      autoComplete="new-password"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="settings-password-confirmation">
+                      {t("settingsPage.security.confirmPasswordLabel")}
+                    </label>
+                    <Input
+                      id="settings-password-confirmation"
+                      type="password"
+                      placeholder={t(
+                        "auth.forgotPassword.confirmPasswordPlaceholder",
+                      )}
+                      value={passwordConfirmation}
+                      onChange={(event) =>
+                        setPasswordConfirmation(event.target.value)
+                      }
+                      autoComplete="new-password"
+                      required
+                    />
+                  </div>
                 </div>
-              ) : null}
 
-              <FormError
-                error={confirmPasswordChangeMutation.error}
-                fallbackMessage={t("settingsPage.security.confirmErrorFallback")}
-              />
+                {passwordClientError ? (
+                  <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
+                    {passwordClientError}
+                  </div>
+                ) : null}
 
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={confirmPasswordChangeMutation.isPending}
-                >
-                  {confirmPasswordChangeMutation.isPending
-                    ? t("settingsPage.security.saving")
-                    : t("settingsPage.security.save")}
-                </Button>
-              </div>
-            </form>
-          ) : null}
-        </Card>
+                <FormError
+                  error={confirmPasswordChangeMutation.error}
+                  fallbackMessage={t("settingsPage.security.confirmErrorFallback")}
+                />
 
-        <Card className="flex flex-col justify-between gap-6 border-hazard/20 bg-hazard/5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-hazard">
-              {t("settingsPage.session.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{t("settingsPage.session.title")}</h2>
-            <p className="mt-2 text-sm text-mist">
-              {t("settingsPage.session.description")}
-            </p>
-          </div>
+                <div className="flex justify-end">
+                  <Button
+                    className="w-full sm:w-auto"
+                    type="submit"
+                    disabled={confirmPasswordChangeMutation.isPending}
+                  >
+                    {confirmPasswordChangeMutation.isPending
+                      ? t("settingsPage.security.saving")
+                      : t("settingsPage.security.save")}
+                  </Button>
+                </div>
+              </form>
+            ) : null}
+          </Card>
 
-          <Button
-            className="w-full"
-            variant="danger"
-            onClick={() => logoutMutation.mutate()}
-          >
-            {logoutMutation.isPending ? t("settingsPage.session.signingOut") : t("settingsPage.session.signOut")}
-          </Button>
-        </Card>
+          <Card className="space-y-5">
+            <SettingsSectionHeader
+              eyebrow={t("settingsPage.integrations.eyebrow")}
+              title={t("settingsPage.integrations.title")}
+              description={t("settingsPage.integrations.description")}
+            />
+
+            <Link href="/settings/integrations" className="block sm:inline-block">
+              <Button className="w-full sm:w-auto" variant="secondary">
+                {t("settingsPage.integrations.open")}
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className="flex flex-col justify-between gap-6 border-hazard/20 bg-hazard/5">
+            <SettingsSectionHeader
+              eyebrow={t("settingsPage.session.eyebrow")}
+              title={t("settingsPage.session.title")}
+              description={t("settingsPage.session.description")}
+              tone="hazard"
+            />
+
+            <Button
+              className="w-full sm:w-auto sm:self-start"
+              variant="danger"
+              onClick={() => logoutMutation.mutate()}
+            >
+              {logoutMutation.isPending
+                ? t("settingsPage.session.signingOut")
+                : t("settingsPage.session.signOut")}
+            </Button>
+          </Card>
+        </div>
       </div>
     </PageFrame>
   );
