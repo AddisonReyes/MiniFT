@@ -129,6 +129,8 @@
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "Password",
     "passwordPlaceholder": "Minimum 8 characters",
+    "viewPassword": "View password",
+    "hidePassword": "Hide password",
     "login": {
       "headline": "Welcome back",
       "subtext": "Sign in to continue managing accounts, budgets, and monthly cash flow.",
@@ -147,11 +149,14 @@
     "register": {
       "headline": "Create your workspace",
       "subtext": "Set up a focused finance workspace with a default Cash account ready to use. We will send a verification link before the first sign-in.",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Repeat your password",
       "currencyLabel": "Default Currency",
       "submit": "Create account",
       "submitting": "Creating account...",
       "errorTitle": "Registration failed",
       "errorFallback": "Unable to register",
+      "passwordMismatch": "Passwords do not match",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
       "panelEyebrow": "Fast monthly control",

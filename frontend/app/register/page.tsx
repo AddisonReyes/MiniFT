@@ -6,6 +6,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { PasswordInput } from "@/components/password-input";
 import { Card, Button, Input, Select } from "@/components/ui";
 import { register, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
@@ -21,7 +22,9 @@ function RegisterPageContent() {
   const session = useSessionQuery();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [clientError, setClientError] = useState("");
 
   const mutation = useMutation({
     mutationFn: register,
@@ -41,6 +44,13 @@ function RegisterPageContent() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (password !== passwordConfirmation) {
+      setClientError(t("auth.register.passwordMismatch"));
+      return;
+    }
+
+    setClientError("");
     mutation.mutate({ email, password, currency });
   }
 
@@ -78,12 +88,31 @@ function RegisterPageContent() {
 
             <div className="space-y-2">
               <label htmlFor="password">{t("auth.passwordLabel")}</label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder={t("auth.passwordPlaceholder")}
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setClientError("");
+                }}
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password-confirmation">
+                {t("auth.register.confirmPasswordLabel")}
+              </label>
+              <PasswordInput
+                id="password-confirmation"
+                placeholder={t("auth.register.confirmPasswordPlaceholder")}
+                value={passwordConfirmation}
+                onChange={(event) => {
+                  setPasswordConfirmation(event.target.value);
+                  setClientError("");
+                }}
                 autoComplete="new-password"
                 required
               />
@@ -103,6 +132,12 @@ function RegisterPageContent() {
                 ))}
               </Select>
             </div>
+
+            {clientError ? (
+              <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
+                {clientError}
+              </div>
+            ) : null}
 
             {mutation.error ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">

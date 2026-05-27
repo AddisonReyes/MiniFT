@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
+import { PasswordInput } from "@/components/password-input";
 import { Card, Button, Input } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
@@ -87,9 +88,8 @@ function LoginPageContent() {
                   {t("auth.login.forgotPassword")}
                 </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}

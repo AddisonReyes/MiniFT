@@ -129,6 +129,8 @@
     "emailPlaceholder": "tu@ejemplo.com",
     "passwordLabel": "Contraseña",
     "passwordPlaceholder": "Mínimo 8 caracteres",
+    "viewPassword": "Ver contraseña",
+    "hidePassword": "Ocultar contraseña",
     "login": {
       "headline": "Bienvenido de vuelta",
       "subtext": "Inicia sesión para continuar administrando cuentas, presupuestos y flujo de caja mensual.",
@@ -147,11 +149,14 @@
     "register": {
       "headline": "Crea tu espacio de trabajo",
       "subtext": "Configura un espacio de trabajo financiero enfocado con una cuenta de Efectivo predeterminada lista para usar. Enviaremos un enlace de verificación antes del primer inicio de sesión.",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Repite tu contraseña",
       "currencyLabel": "Moneda predeterminada",
       "submit": "Crear cuenta",
       "submitting": "Creando cuenta...",
       "errorTitle": "Error de registro",
       "errorFallback": "No se pudo registrar",
+      "passwordMismatch": "Las contraseñas no coinciden",
       "hasAccount": "¿Ya tienes cuenta?",
       "signIn": "Iniciar sesión",
       "panelEyebrow": "Control mensual rápido",
