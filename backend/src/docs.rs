@@ -8,36 +8,28 @@ use utoipa::{
     },
     OpenApi,
 };
-use utoipa_swagger_ui::{BasicAuth, Config};
+use utoipa_swagger_ui::Config;
 
-use crate::config::{AppState, DocsBasicAuthCredentials};
+use crate::config::AppState;
 
 #[derive(Clone)]
 pub struct ApiDocsState {
     openapi: Value,
     swagger_ui_config: Config<'static>,
-    basic_auth: DocsBasicAuthCredentials,
 }
 
 impl ApiDocsState {
-    pub fn new(openapi: Value, basic_auth: DocsBasicAuthCredentials) -> Self {
-        let swagger_ui_config = Config::from("/api-docs/openapi.json").basic_auth(BasicAuth {
-            username: basic_auth.username.clone(),
-            password: basic_auth.password.clone(),
-        });
+    pub fn new(openapi: Value) -> Self {
+        let swagger_ui_config = Config::from("/api-docs/openapi.json");
 
         Self {
             openapi,
             swagger_ui_config,
-            basic_auth,
         }
     }
 
-    pub fn from_openapi(
-        openapi: utoipa::openapi::OpenApi,
-        basic_auth: DocsBasicAuthCredentials,
-    ) -> Result<Self, serde_json::Error> {
-        Ok(Self::new(serde_json::to_value(openapi)?, basic_auth))
+    pub fn from_openapi(openapi: utoipa::openapi::OpenApi) -> Result<Self, serde_json::Error> {
+        Ok(Self::new(serde_json::to_value(openapi)?))
     }
 
     pub fn openapi(&self) -> &Value {
@@ -46,10 +38,6 @@ impl ApiDocsState {
 
     pub fn swagger_ui_config(&self) -> Config<'static> {
         self.swagger_ui_config.clone()
-    }
-
-    pub fn is_authorized(&self, username: &str, password: &str) -> bool {
-        self.basic_auth.username == username && self.basic_auth.password == password
     }
 }
 
@@ -130,8 +118,8 @@ pub fn build_openapi(state: &AppState) -> utoipa::openapi::OpenApi {
     doc.info.title = "MiniFT Backend API".to_string();
     doc.info.version = env!("CARGO_PKG_VERSION").to_string();
     doc.info.license = Some({
-        let mut license = License::new("PolyForm Noncommercial 1.0.0");
-        license.url = Some("https://polyformproject.org/licenses/noncommercial/1.0.0".to_string());
+        let mut license = License::new("MIT");
+        license.url = Some("https://opensource.org/license/mit".to_string());
         license
     });
     doc.info.description = Some(
@@ -154,7 +142,6 @@ Cookie-backed personal finance API for MiniFT.
 - Error responses use the shape `{{ "error": "..." }}`.
 
 ### Documentation endpoints
-- Documentation routes are mounted only when `DOCS_BASIC_AUTH_USERNAME` and `DOCS_BASIC_AUTH_PASSWORD` are configured.
 - Swagger UI: `/docs`
 - OpenAPI JSON: `/api-docs/openapi.json`
             "#,

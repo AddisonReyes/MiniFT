@@ -22,8 +22,6 @@ REFRESH_COOKIE_NAME=minift_refresh_token
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAME_SITE=lax
 AUTH_COOKIE_DOMAIN=
-DOCS_BASIC_AUTH_USERNAME=
-DOCS_BASIC_AUTH_PASSWORD=
 RECURRING_WORKER_INTERVAL_SECONDS=60
 SEED_DEV_DATA=false
 FRANKFURTER_ENABLED=true
@@ -40,7 +38,6 @@ Frankfurter is used as the default online exchange-rate provider. Leave it enabl
 `RESEND_API_KEY` is required because registration, email verification, password reset, and password change confirmations are now email-backed.
 `APP_BASE_URL` is the frontend origin used in verification links sent by email. For local web development, `http://localhost:3000` is the expected default.
 `ACCESS_COOKIE_NAME` and `REFRESH_COOKIE_NAME` are optional overrides for the auth cookie names.
-`DOCS_BASIC_AUTH_USERNAME` and `DOCS_BASIC_AUTH_PASSWORD` are optional as a pair. When both are set, Swagger UI and the OpenAPI JSON are mounted behind Basic Auth. When both are omitted, the docs routes stay disabled.
 
 `CORS_ALLOWED_ORIGINS` accepts a JSON array of allowed frontend origins. Trailing slashes are normalized, so `http://localhost:3000/` and `http://localhost:3000` are treated the same.
 For Capacitor Android testing, allow the localhost WebView origins used by the app shell. This repo pins Android to `http://localhost`, but keeping both `http://localhost` and `https://localhost` in the allowlist makes local and migrated builds more forgiving.
@@ -54,7 +51,7 @@ cargo run
 
 The backend applies SQL migrations automatically on startup.
 
-Interactive API docs are served from the same backend process only when both docs auth variables are configured:
+Interactive API docs are served publicly from the same backend process:
 
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
@@ -95,12 +92,10 @@ Unit tests live next to the modules they cover. Integration tests live under `ba
 
 ## Swagger / OpenAPI
 
-The backend can publish an OpenAPI 3.1 document and an embedded Swagger UI for internal use.
+The backend publishes an OpenAPI 3.1 document and an embedded Swagger UI.
 
 - UI route: `/docs`
 - JSON route: `/api-docs/openapi.json`
-- Both routes are mounted only when `DOCS_BASIC_AUTH_USERNAME` and `DOCS_BASIC_AUTH_PASSWORD` are both configured.
-- Both routes are protected with HTTP Basic Auth using those credentials.
 - Protected routes are documented with both Bearer auth and cookie auth.
 - `POST /api/auth/refresh` is documented as using the refresh cookie rather than a JSON request body.
 
