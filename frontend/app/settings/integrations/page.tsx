@@ -14,12 +14,14 @@ import {
   useUpdateGmailPreferences,
 } from "@/lib/gmail-integration";
 import { formatDateTime } from "@/lib/format";
+import { useSessionQuery } from "@/lib/auth";
 
 const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 
 export default function IntegrationsPage() {
   const { t } = useTranslation();
-  const statusQuery = useGmailIntegration();
+  const session = useSessionQuery();
+  const statusQuery = useGmailIntegration(Boolean(session.data));
   const connectMutation = useGoogleConnect();
   const syncMutation = useSyncImports();
   const disconnectMutation = useDisconnectGmail();

@@ -32,6 +32,7 @@ export default function BudgetsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
   const [form, setForm] = useState(createInitialForm(currentMonthInput()));
+  const isSessionReady = Boolean(session.data);
 
   const budgetsQuery = useQuery({
     queryKey: ["budgets", month],
@@ -39,6 +40,7 @@ export default function BudgetsPage() {
       api.get<Budget[]>(
         `/budgets?month=${encodeURIComponent(monthInputToDate(month))}`,
       ),
+    enabled: isSessionReady,
   });
 
   const saveMutation = useMutation({

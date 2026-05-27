@@ -28,7 +28,7 @@ impl<'r> FromRequest<'r> for AuthUser {
                 &[
                     field("reason", reason),
                     field("method", request.method().as_str()),
-                    field("uri", request.uri().to_string()),
+                    field("path", request.uri().path().to_string()),
                     field("client_ip", request.client_ip().map(|ip| ip.to_string())),
                 ],
             );

@@ -38,7 +38,7 @@ ENV ROCKET_ADDRESS=0.0.0.0
 ENV ROCKET_PORT=8000
 ENV DATABASE_URL=""
 ENV JWT_SECRET=""
-ENV CORS_ALLOWED_ORIGINS="[\"*\"]"
+ENV CORS_ALLOWED_ORIGINS="[\"http://localhost:3000\",\"http://localhost\",\"https://localhost\"]"
 
 EXPOSE 8000
 

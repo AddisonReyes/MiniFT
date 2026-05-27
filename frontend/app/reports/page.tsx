@@ -29,6 +29,7 @@ export default function ReportsPage() {
     useState<Exclude<TransactionType, "transfer">>("expense");
   const monthDate = monthInputToDate(month);
   const currency = session.data?.currency || "USD";
+  const isSessionReady = Boolean(session.data);
 
   const summaryQuery = useQuery({
     queryKey: ["reports", "summary", monthDate],
@@ -36,6 +37,7 @@ export default function ReportsPage() {
       api.get<MonthlySummary>(
         `/transactions/summary/month?month=${encodeURIComponent(monthDate)}`,
       ),
+    enabled: isSessionReady,
   });
 
   const categoryQuery = useQuery({
@@ -44,6 +46,7 @@ export default function ReportsPage() {
       api.get<CategorySummary>(
         `/transactions/summary/categories?month=${encodeURIComponent(monthDate)}&type=${encodeURIComponent(type)}`,
       ),
+    enabled: isSessionReady,
   });
 
   return (

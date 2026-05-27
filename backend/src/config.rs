@@ -78,13 +78,40 @@ fn parse_same_site(value: &str) -> Result<SameSite, String> {
     }
 }
 
+fn validate_jwt_secret(secret: &str) -> Result<(), String> {
+    if secret.trim() != secret || secret.is_empty() {
+        return Err(
+            "JWT_SECRET must be a non-empty value without surrounding whitespace".to_string(),
+        );
+    }
+
+    if matches!(secret, "change-me" | "changeme" | "secret" | "password") {
+        return Err("JWT_SECRET must not use a default or weak placeholder value".to_string());
+    }
+
+    if secret.len() < 32 {
+        return Err("JWT_SECRET must be at least 32 characters long".to_string());
+    }
+
+    Ok(())
+}
+
 impl AuthConfig {
     pub fn from_env() -> Result<Self, String> {
         let jwt_secret =
             env::var("JWT_SECRET").map_err(|_| "JWT_SECRET must be set".to_string())?;
+        validate_jwt_secret(&jwt_secret)?;
         let cookie_same_site = parse_same_site(
             &env::var("AUTH_COOKIE_SAME_SITE").unwrap_or_else(|_| "lax".to_string()),
         )?;
+        let cookie_secure = parse_bool_env("AUTH_COOKIE_SECURE", false);
+
+        if matches!(cookie_same_site, SameSite::None) && !cookie_secure {
+            return Err(
+                "AUTH_COOKIE_SECURE must be true when AUTH_COOKIE_SAME_SITE=none".to_string(),
+            );
+        }
+
         let cookie_domain = env::var("AUTH_COOKIE_DOMAIN")
             .ok()
             .map(|value| value.trim().to_string())
@@ -104,7 +131,7 @@ impl AuthConfig {
                 .unwrap_or_else(|_| "minift_access_token".to_string()),
             refresh_cookie_name: env::var("REFRESH_COOKIE_NAME")
                 .unwrap_or_else(|_| "minift_refresh_token".to_string()),
-            cookie_secure: parse_bool_env("AUTH_COOKIE_SECURE", false),
+            cookie_secure,
             cookie_same_site,
             cookie_domain,
         })
@@ -117,26 +144,27 @@ pub struct CorsConfig {
 }
 
 impl CorsConfig {
-    pub fn from_env() -> Self {
+    pub fn from_env() -> Result<Self, String> {
         let raw_origins = env::var("CORS_ALLOWED_ORIGINS").unwrap_or_else(|_| {
             "[\"http://localhost:3000\",\"http://localhost\",\"https://localhost\"]".to_string()
         });
+        let allowed_origins = parse_allowed_origins(&raw_origins);
 
-        Self {
-            allowed_origins: parse_allowed_origins(&raw_origins),
+        if allowed_origins
+            .iter()
+            .any(|allowed_origin| allowed_origin == "*")
+        {
+            return Err(
+                "CORS_ALLOWED_ORIGINS must list explicit origins when credentials are enabled"
+                    .to_string(),
+            );
         }
+
+        Ok(Self { allowed_origins })
     }
 
     pub fn allowed_origin_header(&self, request_origin: &str) -> Option<String> {
         let normalized_origin = normalize_origin(request_origin)?;
-
-        if self
-            .allowed_origins
-            .iter()
-            .any(|allowed_origin| allowed_origin == "*")
-        {
-            return Some(normalized_origin);
-        }
 
         self.allowed_origins
             .iter()
@@ -337,8 +365,8 @@ mod tests {
     use rocket::http::SameSite;
 
     use super::{
-        parse_allowed_origins, parse_same_site, CorsConfig, ExchangeRateProviderConfig,
-        GoogleIntegrationConfig,
+        parse_allowed_origins, parse_same_site, validate_jwt_secret, CorsConfig,
+        ExchangeRateProviderConfig, GoogleIntegrationConfig,
     };
 
     #[test]
@@ -378,6 +406,26 @@ mod tests {
             config.allowed_origin_header("http://localhost:3000/"),
             Some("http://localhost:3000".to_string())
         );
+    }
+
+    #[test]
+    fn cors_config_rejects_wildcard_origins() {
+        let config = CorsConfig {
+            allowed_origins: vec!["*".to_string()],
+        };
+
+        assert_eq!(config.allowed_origin_header("https://evil.example"), None);
+    }
+
+    #[test]
+    fn rejects_weak_jwt_secrets() {
+        assert!(validate_jwt_secret("change-me").is_err());
+        assert!(validate_jwt_secret("short-secret").is_err());
+    }
+
+    #[test]
+    fn accepts_strong_jwt_secrets() {
+        assert!(validate_jwt_secret("0123456789abcdef0123456789abcdef").is_ok());
     }
 
     #[test]

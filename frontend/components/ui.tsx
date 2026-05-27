@@ -4,10 +4,12 @@ import type {
   ButtonHTMLAttributes,
   HTMLAttributes,
   InputHTMLAttributes,
+  KeyboardEvent,
   ReactNode,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
+import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
@@ -146,6 +148,30 @@ export function Modal({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const titleId = useId();
+  const subtitleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+
+    return () => {
+      previousFocusRef.current?.focus();
+    };
+  }, [open]);
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      onClose();
+    }
+  }
 
   if (!open) {
     return null;
@@ -155,17 +181,28 @@ export function Modal({
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-ink/88 p-0 backdrop-blur-md sm:items-center sm:p-4"
       onClick={onClose}
+      onKeyDown={handleKeyDown}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={subtitle ? subtitleId : undefined}
+        tabIndex={-1}
         className="max-h-[92dvh] w-full overflow-y-auto rounded-t-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,32,0.985),rgba(11,16,24,0.992))] p-5 pb-0 shadow-panel backdrop-blur-xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:rounded-[32px] sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-white/15 sm:hidden" />
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold sm:text-2xl">{title}</h2>
+            <h2 id={titleId} className="text-xl font-semibold sm:text-2xl">
+              {title}
+            </h2>
             {subtitle ? (
-              <p className="mt-2 text-sm text-mist">{subtitle}</p>
+              <p id={subtitleId} className="mt-2 text-sm text-mist">
+                {subtitle}
+              </p>
             ) : null}
           </div>
           <Button

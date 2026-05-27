@@ -84,9 +84,10 @@ impl Fairing for HttpLogger {
         let duration_ms = started_at.elapsed().as_millis() as u64;
         let status_code = response.status().code;
         let route = request.route().map(|route| route.uri.to_string());
+        let path = request.uri().path().to_string();
         let fields = [
             field("method", request.method().as_str()),
-            field("uri", request.uri().to_string()),
+            field("path", path),
             field("route", route),
             field("status", status_code),
             field("duration_ms", duration_ms),

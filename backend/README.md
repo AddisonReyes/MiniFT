@@ -9,7 +9,7 @@ Set these before running locally outside Docker:
 ```bash
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/minift
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/minift
-JWT_SECRET=change-me
+JWT_SECRET=replace-with-at-least-32-random-characters
 RESEND_API_KEY=re_xxxxxxxxx
 RESEND_FROM_EMAIL=MiniFT <onboarding@resend.dev>
 APP_BASE_URL=http://localhost:3000
@@ -34,12 +34,12 @@ ROCKET_PORT=8000
 
 `TEST_DATABASE_URL` is optional but recommended for integration tests. If it is omitted, the test helpers fall back to `DATABASE_URL`.
 Frankfurter is used as the default online exchange-rate provider. Leave it enabled unless you want accounts to rely only on manual overrides.
-`JWT_SECRET` is required and the backend will refuse to boot without it.
+`JWT_SECRET` is required, must be at least 32 characters, and must not use a placeholder value.
 `RESEND_API_KEY` is required because registration, email verification, password reset, and password change confirmations are now email-backed.
 `APP_BASE_URL` is the frontend origin used in verification links sent by email. For local web development, `http://localhost:3000` is the expected default.
 `ACCESS_COOKIE_NAME` and `REFRESH_COOKIE_NAME` are optional overrides for the auth cookie names.
 
-`CORS_ALLOWED_ORIGINS` accepts a JSON array of allowed frontend origins. Trailing slashes are normalized, so `http://localhost:3000/` and `http://localhost:3000` are treated the same.
+`CORS_ALLOWED_ORIGINS` accepts a JSON array of explicit allowed frontend origins. Wildcard origins are rejected because the API uses credentialed cookie auth. Trailing slashes are normalized, so `http://localhost:3000/` and `http://localhost:3000` are treated the same.
 For Capacitor Android testing, allow the localhost WebView origins used by the app shell. This repo pins Android to `http://localhost`, but keeping both `http://localhost` and `https://localhost` in the allowlist makes local and migrated builds more forgiving.
 For cross-origin production deployments such as Cloudflare Pages calling Railway, set `AUTH_COOKIE_SECURE=true` and `AUTH_COOKIE_SAME_SITE=none` so the browser will send auth cookies with API requests. Set `AUTH_COOKIE_DOMAIN` only when you intentionally need to scope cookies to a specific production domain.
 

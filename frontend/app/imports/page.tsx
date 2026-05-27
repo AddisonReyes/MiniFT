@@ -13,6 +13,7 @@ import {
   SegmentedControl,
 } from "@/components/ui";
 import { api } from "@/lib/api";
+import { useSessionQuery } from "@/lib/auth";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import {
   useApproveImport,
@@ -81,13 +82,15 @@ function confidenceLabel(score: number, t: (key: string) => string) {
 
 export default function ImportsPage() {
   const { t } = useTranslation();
+  const session = useSessionQuery();
+  const isSessionReady = Boolean(session.data);
   const [activeStatus, setActiveStatus] =
     useState<EmailImportStatus>("pending_review");
   const [drafts, setDrafts] = useState<Record<string, ImportDraft>>({});
   const [expandedReadyImports, setExpandedReadyImports] = useState<
     Record<string, boolean>
   >({});
-  const importsQuery = useImportedTransactions(activeStatus);
+  const importsQuery = useImportedTransactions(activeStatus, isSessionReady);
   const approveMutation = useApproveImport();
   const approveReadyMutation = useApproveReadyImports();
   const ignoreAllMutation = useIgnoreAllImports();
@@ -97,6 +100,7 @@ export default function ImportsPage() {
     queryKey: ["accounts"],
     queryFn: () => api.get<Account[]>("/accounts"),
     placeholderData: (previousData) => previousData,
+    enabled: isSessionReady,
   });
   const accounts = accountsQuery.data ?? [];
   const imports = importsQuery.data ?? [];

@@ -22,12 +22,13 @@ function buildImportsPath(status?: EmailImportStatus) {
   return `/imports?status=${encodeURIComponent(status)}`;
 }
 
-export function useImportedTransactions(status?: EmailImportStatus) {
+export function useImportedTransactions(status?: EmailImportStatus, enabled = true) {
   return useQuery({
     queryKey: importsQueryKey(status),
     queryFn: () =>
       api.get<EmailTransactionImport[]>(buildImportsPath(status)),
     placeholderData: (previousData) => previousData,
+    enabled,
   });
 }
 

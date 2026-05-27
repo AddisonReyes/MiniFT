@@ -61,7 +61,7 @@ impl Fairing for Cors {
                 &[
                     field("origin", origin),
                     field("method", request.method().as_str()),
-                    field("uri", request.uri().to_string()),
+                    field("path", request.uri().path().to_string()),
                 ],
             );
             return;

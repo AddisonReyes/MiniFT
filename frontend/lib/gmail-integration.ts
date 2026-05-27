@@ -11,12 +11,13 @@ import type {
 
 export const gmailIntegrationQueryKey = ["integrations", "gmail"];
 
-export function useGmailIntegration() {
+export function useGmailIntegration(enabled = true) {
   return useQuery({
     queryKey: gmailIntegrationQueryKey,
     queryFn: () => api.get<GmailIntegrationStatus>("/integrations/gmail"),
     refetchInterval: (query) =>
       query.state.data?.sync_in_progress ? 3_000 : false,
+    enabled,
   });
 }
 
