@@ -521,7 +521,106 @@
   },
   "footer": {
     "copyright": "Copyright © {{year}} MiniFT. All rights reserved.",
-    "madeBy": "Made by"
+    "madeBy": "Made by",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "sourceCode": "Source code",
+    "apiDocs": "API documentation"
+  },
+  "legal": {
+    "effectiveDate": "Effective date: May 27, 2026",
+    "privacy": {
+      "eyebrow": "Legal",
+      "title": "Privacy Policy",
+      "intro": "This Privacy Policy explains how MiniFT collects, uses, and protects information when you use the personal finance tracker.",
+      "sections": {
+        "collection": {
+          "title": "Information we collect",
+          "body1": "MiniFT collects the information you provide to create and use your account, including your email address, authentication data, user preferences, accounts, transactions, transfers, budgets, recurring rules, exchange-rate settings, and other financial records you choose to enter.",
+          "body2": "If you connect Gmail, MiniFT may process read-only Gmail data needed to identify bank alert emails and turn them into transaction imports for your review. The app also processes technical information such as session cookies, request metadata, and diagnostic logs needed to operate and secure the service."
+        },
+        "use": {
+          "title": "How we use information",
+          "body1": "We use information to provide the MiniFT workspace, authenticate users, maintain sessions, send verification and password emails, process optional Gmail imports, display reports, apply user preferences, troubleshoot issues, and protect the service from abuse.",
+          "body2": "MiniFT is a personal finance tool. We do not sell your personal information, and we do not use your financial records for advertising profiling."
+        },
+        "sharing": {
+          "title": "Service providers and integrations",
+          "body1": "MiniFT may rely on infrastructure, database, hosting, logging, and email providers to operate the service. Email delivery may be handled by Resend. If you enable Google or Gmail features, Google handles the authorization flow and provides the data needed for that integration.",
+          "body2": "These providers are used only to support the service. Their own terms and privacy policies may also apply when you interact with them."
+        },
+        "controls": {
+          "title": "Your choices and controls",
+          "body1": "You can update or delete financial records inside the app, disconnect Gmail from the integrations page, and stop using the service at any time.",
+          "body2": "To request help with account access, data deletion, or privacy questions, contact Addison Reyes at addison.amin@gmail.com."
+        },
+        "security": {
+          "title": "Security and retention",
+          "body1": "MiniFT uses practical safeguards such as HttpOnly authentication cookies, hashed secrets, and access controls designed to protect user data. No online service can guarantee perfect security.",
+          "body2": "We keep information as long as needed to provide the service, comply with legal obligations, resolve disputes, improve reliability, and enforce these policies."
+        }
+      }
+    },
+    "terms": {
+      "eyebrow": "Legal",
+      "title": "Terms of Service",
+      "intro": "These Terms of Service describe the rules for using MiniFT. By using the app, you agree to these terms.",
+      "sections": {
+        "service": {
+          "title": "The service",
+          "body1": "MiniFT is a personal finance tracking tool for accounts, transactions, budgets, reports, recurring entries, and optional integrations. It is provided to help you organize information you enter or approve.",
+          "body2": "MiniFT does not provide financial, legal, accounting, investment, or tax advice. You are responsible for decisions you make based on your data."
+        },
+        "accounts": {
+          "title": "Accounts and responsibility",
+          "body1": "You are responsible for keeping your login credentials secure and for the accuracy of the information you enter, import, approve, edit, or delete in MiniFT.",
+          "body2": "You must not use the service to store unlawful content, access another person's account, interfere with the service, or attempt to bypass security controls."
+        },
+        "use": {
+          "title": "Acceptable use",
+          "body1": "Use MiniFT only for lawful personal or permitted purposes. Do not abuse integrations, send automated traffic that harms the service, reverse engineer hosted infrastructure, or use the service in a way that violates applicable law.",
+          "body2": "We may suspend or limit access if we reasonably believe an account is being misused, is creating security risk, or is violating these terms."
+        },
+        "availability": {
+          "title": "Availability and warranty",
+          "body1": "MiniFT may change, pause, or discontinue features over time. We try to keep the service reliable, but availability is not guaranteed.",
+          "body2": "The software and service are provided as is, without warranties to the fullest extent allowed by law. The open-source project is licensed separately under the MIT License."
+        },
+        "law": {
+          "title": "Governing law and contact",
+          "body1": "These terms are governed by the laws of the Dominican Republic, without regard to conflict-of-law rules, unless mandatory consumer protection laws require otherwise.",
+          "body2": "Questions about these terms can be sent to Addison Reyes at addison.amin@gmail.com."
+        }
+      }
+    },
+    "cookies": {
+      "eyebrow": "Legal",
+      "title": "Cookie Policy",
+      "intro": "This Cookie Policy explains how MiniFT uses cookies and similar browser storage to operate the app.",
+      "sections": {
+        "what": {
+          "title": "What cookies are",
+          "body1": "Cookies are small pieces of data stored by your browser. Similar technologies, such as local storage, may also be used to remember preferences on your device.",
+          "body2": "MiniFT uses these technologies primarily to keep the app secure, maintain sessions, and remember basic preferences."
+        },
+        "essential": {
+          "title": "Essential authentication cookies",
+          "body1": "MiniFT uses essential HttpOnly cookies for access and refresh sessions. These cookies help keep you signed in and protect authentication tokens from client-side scripts.",
+          "body2": "These cookies are required for authenticated areas of the app. Cookie names may vary by deployment because the backend allows operators to configure them."
+        },
+        "thirdParty": {
+          "title": "Analytics and third-party cookies",
+          "body1": "MiniFT does not currently use advertising cookies or tracking cookies for behavioral ads.",
+          "body2": "If you use Google or Gmail integration features, Google may use its own cookies or account session as part of the authorization flow. Google controls those cookies under its own policies."
+        },
+        "controls": {
+          "title": "Your controls",
+          "body1": "You can delete or block cookies through your browser settings. Blocking essential cookies may prevent sign-in, session refresh, or protected pages from working correctly.",
+          "body2": "Questions about cookies can be sent to Addison Reyes at addison.amin@gmail.com."
+        }
+      }
+    }
   },
   "pageFrame": {
     "loading": "Loading your workspace…",

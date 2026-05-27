@@ -521,7 +521,106 @@
   },
   "footer": {
     "copyright": "Copyright © {{year}} MiniFT. Todos los derechos reservados.",
-    "madeBy": "Hecho por"
+    "madeBy": "Hecho por",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos de Servicio",
+    "cookies": "Política de Cookies",
+    "sourceCode": "Código fuente",
+    "apiDocs": "Documentación API"
+  },
+  "legal": {
+    "effectiveDate": "Fecha de vigencia: 27 de mayo de 2026",
+    "privacy": {
+      "eyebrow": "Legal",
+      "title": "Política de Privacidad",
+      "intro": "Esta Política de Privacidad explica cómo MiniFT recopila, usa y protege información cuando usas el rastreador de finanzas personales.",
+      "sections": {
+        "collection": {
+          "title": "Información que recopilamos",
+          "body1": "MiniFT recopila la información que proporcionas para crear y usar tu cuenta, incluyendo tu correo electrónico, datos de autenticación, preferencias, cuentas, transacciones, transferencias, presupuestos, reglas recurrentes, configuración de tasas de cambio y otros registros financieros que decidas ingresar.",
+          "body2": "Si conectas Gmail, MiniFT puede procesar datos de Gmail de solo lectura necesarios para identificar correos de alertas bancarias y convertirlos en importaciones de transacciones para tu revisión. La app también procesa información técnica como cookies de sesión, metadatos de solicitudes y registros de diagnóstico necesarios para operar y proteger el servicio."
+        },
+        "use": {
+          "title": "Cómo usamos la información",
+          "body1": "Usamos la información para proporcionar el espacio de trabajo de MiniFT, autenticar usuarios, mantener sesiones, enviar correos de verificación y contraseña, procesar importaciones opcionales de Gmail, mostrar reportes, aplicar preferencias, resolver problemas y proteger el servicio contra abuso.",
+          "body2": "MiniFT es una herramienta de finanzas personales. No vendemos tu información personal y no usamos tus registros financieros para perfiles publicitarios."
+        },
+        "sharing": {
+          "title": "Proveedores e integraciones",
+          "body1": "MiniFT puede depender de proveedores de infraestructura, base de datos, hosting, registros y correo electrónico para operar el servicio. El envío de correos puede ser manejado por Resend. Si habilitas funciones de Google o Gmail, Google maneja el flujo de autorización y proporciona los datos necesarios para esa integración.",
+          "body2": "Estos proveedores se usan solo para apoyar el servicio. Sus propios términos y políticas de privacidad también pueden aplicar cuando interactúas con ellos."
+        },
+        "controls": {
+          "title": "Tus opciones y controles",
+          "body1": "Puedes actualizar o eliminar registros financieros dentro de la app, desconectar Gmail desde la página de integraciones y dejar de usar el servicio en cualquier momento.",
+          "body2": "Para solicitar ayuda con acceso a tu cuenta, eliminación de datos o preguntas de privacidad, contacta a Addison Reyes en addison.amin@gmail.com."
+        },
+        "security": {
+          "title": "Seguridad y retención",
+          "body1": "MiniFT usa medidas prácticas como cookies de autenticación HttpOnly, secretos cifrados o con hash y controles de acceso diseñados para proteger datos de usuarios. Ningún servicio en línea puede garantizar seguridad perfecta.",
+          "body2": "Conservamos información mientras sea necesario para proporcionar el servicio, cumplir obligaciones legales, resolver disputas, mejorar confiabilidad y aplicar estas políticas."
+        }
+      }
+    },
+    "terms": {
+      "eyebrow": "Legal",
+      "title": "Términos de Servicio",
+      "intro": "Estos Términos de Servicio describen las reglas para usar MiniFT. Al usar la app, aceptas estos términos.",
+      "sections": {
+        "service": {
+          "title": "El servicio",
+          "body1": "MiniFT es una herramienta de seguimiento de finanzas personales para cuentas, transacciones, presupuestos, reportes, entradas recurrentes e integraciones opcionales. Se proporciona para ayudarte a organizar información que ingresas o apruebas.",
+          "body2": "MiniFT no proporciona asesoría financiera, legal, contable, de inversión ni fiscal. Eres responsable de las decisiones que tomes basadas en tus datos."
+        },
+        "accounts": {
+          "title": "Cuentas y responsabilidad",
+          "body1": "Eres responsable de mantener seguras tus credenciales de inicio de sesión y de la exactitud de la información que ingresas, importas, apruebas, editas o eliminas en MiniFT.",
+          "body2": "No debes usar el servicio para almacenar contenido ilegal, acceder a la cuenta de otra persona, interferir con el servicio o intentar evadir controles de seguridad."
+        },
+        "use": {
+          "title": "Uso aceptable",
+          "body1": "Usa MiniFT solo para fines personales lícitos o permitidos. No abuses de integraciones, envíes tráfico automatizado que afecte el servicio, hagas ingeniería inversa de la infraestructura alojada ni uses el servicio de forma que viole la ley aplicable.",
+          "body2": "Podemos suspender o limitar el acceso si creemos razonablemente que una cuenta está siendo usada indebidamente, crea riesgo de seguridad o viola estos términos."
+        },
+        "availability": {
+          "title": "Disponibilidad y garantía",
+          "body1": "MiniFT puede cambiar, pausar o descontinuar funcionalidades con el tiempo. Intentamos mantener el servicio confiable, pero la disponibilidad no está garantizada.",
+          "body2": "El software y el servicio se proporcionan tal como están, sin garantías en la máxima medida permitida por la ley. El proyecto open-source se licencia por separado bajo la Licencia MIT."
+        },
+        "law": {
+          "title": "Ley aplicable y contacto",
+          "body1": "Estos términos se rigen por las leyes de la República Dominicana, sin considerar reglas de conflicto de leyes, salvo que leyes obligatorias de protección al consumidor exijan otra cosa.",
+          "body2": "Preguntas sobre estos términos pueden enviarse a Addison Reyes en addison.amin@gmail.com."
+        }
+      }
+    },
+    "cookies": {
+      "eyebrow": "Legal",
+      "title": "Política de Cookies",
+      "intro": "Esta Política de Cookies explica cómo MiniFT usa cookies y almacenamiento similar del navegador para operar la app.",
+      "sections": {
+        "what": {
+          "title": "Qué son las cookies",
+          "body1": "Las cookies son pequeños datos almacenados por tu navegador. Tecnologías similares, como almacenamiento local, también pueden usarse para recordar preferencias en tu dispositivo.",
+          "body2": "MiniFT usa estas tecnologías principalmente para mantener la app segura, conservar sesiones y recordar preferencias básicas."
+        },
+        "essential": {
+          "title": "Cookies esenciales de autenticación",
+          "body1": "MiniFT usa cookies HttpOnly esenciales para sesiones de acceso y actualización. Estas cookies ayudan a mantener tu sesión iniciada y protegen tokens de autenticación contra scripts del cliente.",
+          "body2": "Estas cookies son necesarias para las áreas autenticadas de la app. Los nombres de cookies pueden variar por despliegue porque el backend permite configurarlos."
+        },
+        "thirdParty": {
+          "title": "Analíticas y cookies de terceros",
+          "body1": "MiniFT actualmente no usa cookies publicitarias ni cookies de seguimiento para anuncios conductuales.",
+          "body2": "Si usas funciones de integración con Google o Gmail, Google puede usar sus propias cookies o sesión de cuenta como parte del flujo de autorización. Google controla esas cookies bajo sus propias políticas."
+        },
+        "controls": {
+          "title": "Tus controles",
+          "body1": "Puedes eliminar o bloquear cookies desde la configuración de tu navegador. Bloquear cookies esenciales puede impedir que el inicio de sesión, la actualización de sesión o las páginas protegidas funcionen correctamente.",
+          "body2": "Preguntas sobre cookies pueden enviarse a Addison Reyes en addison.amin@gmail.com."
+        }
+      }
+    }
   },
   "pageFrame": {
     "loading": "Cargando tu espacio de trabajo…",
