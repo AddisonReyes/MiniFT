@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { I18nextProvider, useTranslation } from "react-i18next";
 
+import {
+  applyBackgroundTheme,
+  BACKGROUND_THEME_CHANGE_EVENT,
+  getStoredBackgroundTheme,
+} from "@/lib/background-theme";
 import i18n from "@/lib/i18n/config";
 
 const LOCALE_STORAGE_KEY = "minift_locale";
@@ -22,6 +27,27 @@ function HtmlLangSync() {
     const lang = i18nInstance.language?.slice(0, 2) ?? "en";
     document.documentElement.lang = lang;
   }, [i18nInstance.language]);
+
+  return null;
+}
+
+function BackgroundThemeSync() {
+  useEffect(() => {
+    applyBackgroundTheme(getStoredBackgroundTheme());
+
+    function handleThemeChange() {
+      applyBackgroundTheme(getStoredBackgroundTheme(), { animate: true });
+    }
+
+    window.addEventListener(BACKGROUND_THEME_CHANGE_EVENT, handleThemeChange);
+
+    return () => {
+      window.removeEventListener(
+        BACKGROUND_THEME_CHANGE_EVENT,
+        handleThemeChange,
+      );
+    };
+  }, []);
 
   return null;
 }
@@ -80,6 +106,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <I18nextProvider i18n={i18n}>
       <ClientBootEffects onLocaleReady={handleLocaleReady} />
       <HtmlLangSync />
+      <BackgroundThemeSync />
       <QueryClientProvider client={queryClient}>
         {isLocaleReady ? children : <main className="min-h-screen bg-ink" />}
       </QueryClientProvider>

@@ -792,6 +792,26 @@
       "saving": "Saving…",
       "errorFallback": "Unable to update default currency"
     },
+    "appearance": {
+      "eyebrow": "Appearance",
+      "title": "Background style",
+      "description": "Choose the visual atmosphere used across MiniFT. The setting is saved on this device.",
+      "backgroundLabel": "Background",
+      "themes": {
+        "ledger": {
+          "name": "Ledger",
+          "description": "A finance-workspace background with structured ledger lines and a quiet glass sheet."
+        },
+        "cashflow": {
+          "name": "Cashflow",
+          "description": "A more organic background with subtle topographic flow lines and muted financial accents."
+        },
+        "glass": {
+          "name": "Glass",
+          "description": "A calmer premium glass desk with soft surfaces, minimal patterning, and gentle depth."
+        }
+      }
+    },
     "integrations": {
       "eyebrow": "Integrations",
       "title": "Gmail imports",

@@ -10,7 +10,15 @@ import { useTranslation } from "react-i18next";
 import { FormError } from "@/components/form-error";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { PageFrame } from "@/components/page-frame";
-import { Badge, Button, Card, Input, Select, cn } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  Input,
+  SegmentedControl,
+  Select,
+  cn,
+} from "@/components/ui";
 import {
   confirmPasswordChange,
   logout,
@@ -19,6 +27,13 @@ import {
   updateDefaultCurrency,
   useSessionQuery,
 } from "@/lib/auth";
+import {
+  type BackgroundThemeId,
+  BACKGROUND_THEMES,
+  DEFAULT_BACKGROUND_THEME,
+  getStoredBackgroundTheme,
+  storeBackgroundTheme,
+} from "@/lib/background-theme";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 
@@ -83,6 +98,9 @@ export default function SettingsPage() {
   const session = useSessionQuery();
   const user = session.data;
   const [draftCurrency, setDraftCurrency] = useState<string | null>(null);
+  const [backgroundTheme, setBackgroundTheme] = useState<BackgroundThemeId>(
+    () => getStoredBackgroundTheme() ?? DEFAULT_BACKGROUND_THEME,
+  );
   const currency = draftCurrency ?? user?.currency ?? "USD";
   const [passwordCodeSent, setPasswordCodeSent] = useState(false);
   const [passwordCode, setPasswordCode] = useState("");
@@ -153,6 +171,16 @@ export default function SettingsPage() {
       password: newPassword,
       password_confirmation: passwordConfirmation,
     });
+  }
+
+  function handleBackgroundThemeChange(value: string) {
+    if (!BACKGROUND_THEMES.includes(value as BackgroundThemeId)) {
+      return;
+    }
+
+    const nextTheme = value as BackgroundThemeId;
+    setBackgroundTheme(nextTheme);
+    storeBackgroundTheme(nextTheme);
   }
 
   return (
@@ -247,6 +275,51 @@ export default function SettingsPage() {
 
           <Card className="space-y-5">
             <SettingsSectionHeader
+              eyebrow={t("settingsPage.appearance.eyebrow")}
+              title={t("settingsPage.appearance.title")}
+              description={t("settingsPage.appearance.description")}
+            />
+            <div className="space-y-4 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="space-y-2">
+                <label htmlFor="background-theme">
+                  {t("settingsPage.appearance.backgroundLabel")}
+                </label>
+                <SegmentedControl
+                  className="hidden sm:grid"
+                  options={BACKGROUND_THEMES.map((theme) => ({
+                    value: theme,
+                    label: t(`settingsPage.appearance.themes.${theme}.name`),
+                  }))}
+                  value={backgroundTheme}
+                  onChange={handleBackgroundThemeChange}
+                />
+                <Select
+                  id="background-theme"
+                  className="sm:hidden"
+                  value={backgroundTheme}
+                  onChange={(event) =>
+                    handleBackgroundThemeChange(event.target.value)
+                  }
+                >
+                  {BACKGROUND_THEMES.map((theme) => (
+                    <option key={theme} value={theme}>
+                      {t(`settingsPage.appearance.themes.${theme}.name`)}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <p className="text-sm leading-6 text-mist">
+                {t(
+                  `settingsPage.appearance.themes.${backgroundTheme}.description`,
+                )}
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card className="space-y-5">
+            <SettingsSectionHeader
               eyebrow={t("settings.language.sectionTitle")}
               title={t("settings.language.sectionTitle")}
               description={t("settings.language.sectionDescription")}
@@ -255,9 +328,7 @@ export default function SettingsPage() {
               <LocaleSwitcher className="w-full" />
             </div>
           </Card>
-        </div>
 
-        <div className="space-y-6">
           <Card className="space-y-5">
             <SettingsSectionHeader
               eyebrow={t("settingsPage.security.eyebrow")}

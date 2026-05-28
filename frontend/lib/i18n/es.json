@@ -792,6 +792,26 @@
       "saving": "Guardando…",
       "errorFallback": "No se pudo actualizar la moneda predeterminada"
     },
+    "appearance": {
+      "eyebrow": "Apariencia",
+      "title": "Estilo de fondo",
+      "description": "Elige la atmósfera visual usada en MiniFT. La configuración se guarda en este dispositivo.",
+      "backgroundLabel": "Fondo",
+      "themes": {
+        "ledger": {
+          "name": "Ledger",
+          "description": "Un fondo de espacio financiero con líneas tipo libreta y una superficie glass tranquila."
+        },
+        "cashflow": {
+          "name": "Cashflow",
+          "description": "Un fondo más orgánico con líneas topográficas sutiles y acentos financieros apagados."
+        },
+        "glass": {
+          "name": "Glass",
+          "description": "Un escritorio premium más calmado, con superficies suaves, patrón mínimo y profundidad ligera."
+        }
+      }
+    },
     "integrations": {
       "eyebrow": "Integraciones",
       "title": "Importaciones de Gmail",
