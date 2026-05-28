@@ -75,7 +75,7 @@ function LandingNav({ links }: { links: LandingLink[] }) {
             {links.map((link) => (
               <a
                 key={link.href}
-                className="rounded-2xl px-3 py-2 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white focus:outline-none focus:ring-2 focus:ring-signal/40"
+                className="inline-flex min-h-10 items-center justify-center rounded-2xl px-3 text-sm leading-none text-mist transition hover:bg-white/[0.055] hover:text-white focus:outline-none focus:ring-2 focus:ring-signal/40"
                 href={link.href}
               >
                 {link.label}
@@ -85,22 +85,22 @@ function LandingNav({ links }: { links: LandingLink[] }) {
 
           <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
-              className="hidden whitespace-nowrap rounded-2xl px-4 py-2 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white focus:outline-none focus:ring-2 focus:ring-signal/40 sm:inline-flex"
+              className="hidden min-h-10 items-center justify-center whitespace-nowrap rounded-2xl px-4 text-sm leading-none text-mist transition hover:bg-white/[0.055] hover:text-white focus:outline-none focus:ring-2 focus:ring-signal/40 sm:inline-flex"
               href="/login"
             >
               {t("landing.nav.signIn")}
             </Link>
             <Link
-              className="inline-flex min-w-0 items-center justify-center whitespace-nowrap rounded-2xl bg-signal px-3 py-2 text-sm font-medium text-ink shadow-soft transition hover:bg-signal/90 focus:outline-none focus:ring-2 focus:ring-signal/40 focus:ring-offset-2 focus:ring-offset-ink sm:px-4"
+              className="inline-flex min-h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-2xl bg-signal px-3 text-sm font-medium leading-none text-ink shadow-soft transition hover:bg-signal/90 focus:outline-none focus:ring-2 focus:ring-signal/40 focus:ring-offset-2 focus:ring-offset-ink sm:px-4"
               href="/register"
             >
               {t("landing.nav.getStarted")}
             </Link>
             <div className="hidden sm:block">
-              <LocaleSwitcher />
+              <LocaleSwitcher className="min-h-10 py-0 leading-none" />
             </div>
             <button
-              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-3 text-sm text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-signal/40 lg:hidden"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-3 text-sm leading-none text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-signal/40 lg:hidden"
               type="button"
               aria-expanded={isMenuOpen}
               aria-controls="landing-mobile-menu"
@@ -123,7 +123,7 @@ function LandingNav({ links }: { links: LandingLink[] }) {
               {links.map((link) => (
                 <a
                   key={link.href}
-                  className="rounded-2xl px-3 py-3 text-sm text-mist transition hover:bg-white/[0.055] hover:text-white focus:outline-none focus:ring-2 focus:ring-signal/40"
+                  className="inline-flex min-h-10 items-center rounded-2xl px-3 text-sm leading-none text-mist transition hover:bg-white/[0.055] hover:text-white focus:outline-none focus:ring-2 focus:ring-signal/40"
                   href={link.href}
                   onClick={closeMenu}
                 >
@@ -132,13 +132,13 @@ function LandingNav({ links }: { links: LandingLink[] }) {
               ))}
               <div className="grid grid-cols-2 gap-2 pt-1 sm:hidden">
                 <Link
-                  className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-3 text-sm font-medium text-white"
+                  className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-3 text-sm font-medium leading-none text-white"
                   href="/login"
                   onClick={closeMenu}
                 >
                   {t("landing.nav.signIn")}
                 </Link>
-                <LocaleSwitcher />
+                <LocaleSwitcher className="min-h-10 py-0 leading-none" />
               </div>
             </div>
           </div>

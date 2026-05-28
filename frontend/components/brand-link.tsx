@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const brandLinkClassName =
-  "inline-flex shrink-0 rounded-full border border-white/10 bg-ink/60 px-3 py-1.5 text-xs uppercase tracking-[0.28em] text-signal shadow-soft backdrop-blur transition hover:border-signal/40 hover:bg-signal/10 hover:text-white";
+  "inline-flex min-h-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-ink/60 px-3.5 text-sm uppercase leading-none tracking-[0.28em] text-signal shadow-soft backdrop-blur transition hover:border-signal/40 hover:bg-signal/10 hover:text-white";
 
 export function BrandLink({
   href = "/",
