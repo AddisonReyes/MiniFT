@@ -20,32 +20,67 @@
   },
   "landing": {
     "nav": {
+      "ariaLabel": "Navegación de la página principal",
+      "home": "Inicio",
+      "value": "Por qué MiniFT",
+      "howItWorks": "Cómo funciona",
+      "features": "Funciones",
+      "faq": "FAQ",
+      "menu": "Menú",
+      "close": "Cerrar",
       "signIn": "Iniciar sesión",
       "getStarted": "Comenzar"
     },
     "hero": {
       "eyebrow": "Finanzas personales enfocadas",
-      "headline": "Tu mes, finalmente legible.",
-      "body": "MiniFT reúne cuentas, transacciones, transferencias, presupuestos, entradas recurrentes y reportes en un espacio de trabajo tranquilo creado para el control mensual.",
+      "headline": "Entiende tu mes financiero sin el ruido de las hojas de cálculo.",
+      "body": "MiniFT te da un espacio tranquilo para cuentas, transacciones, presupuestos, actividad recurrente, importaciones y reportes, para que cada mes sea más fácil de leer y controlar.",
       "ctaPrimary": "Crear tu espacio de trabajo",
       "ctaSecondary": "Iniciar sesión",
       "pill1": "Sin hojas de cálculo",
       "pill2": "Claridad mensual",
       "pill3": "Reportes claros"
     },
+    "trust": {
+      "noBankCredentials": "No requiere credenciales bancarias",
+      "gmailReadonly": "Importaciones opcionales de Gmail en solo lectura",
+      "monthlyClarity": "Creado para claridad mensual"
+    },
+    "value": {
+      "eyebrow": "Por qué MiniFT",
+      "headline": "Un espacio financiero que se mantiene legible.",
+      "description": "MiniFT está creado para personas que quieren control sin convertir sus finanzas personales en un segundo trabajo.",
+      "month": {
+        "title": "Entiende el mes",
+        "description": "Ve ingresos, gastos, flujo neto y presión de presupuesto en un solo lugar en vez de buscar entre notas y hojas separadas.",
+        "metric": "Control mensual"
+      },
+      "spreadsheets": {
+        "title": "Reemplaza hojas desordenadas",
+        "description": "Mantén cuentas, transferencias, entradas recurrentes y categorías estructuradas para que los números no se vuelvan obsoletos en pocas semanas.",
+        "metric": "Estructura clara"
+      },
+      "review": {
+        "title": "Aprueba antes de contar",
+        "description": "Las importaciones opcionales se revisan primero. Tú decides qué se convierte en una transacción real en tu espacio.",
+        "metric": "Control del usuario"
+      }
+    },
     "howItWorks": {
       "eyebrow": "Cómo funciona",
-      "headline": "Tres pasos hacia la claridad",
-      "step1Title": "Conecta tus cuentas",
-      "step1Body": "Agrega cuentas de efectivo, banco, crédito o préstamo. Configúralas una vez y mantén todo en un solo lugar.",
-      "step2Title": "Registra tus transacciones",
-      "step2Body": "Ingresa transacciones manualmente o deja que las reglas recurrentes manejen tus ingresos y gastos fijos automáticamente.",
+      "headline": "Tres pasos hacia un mes más claro",
+      "description": "Comienza manualmente, agrega automatización cuando ayude y mantén tu mes legible desde el panel.",
+      "step1Title": "Configura tus cuentas",
+      "step1Body": "Agrega cuentas de efectivo, banco, crédito o préstamo. Configúralas una vez y mantén saldos separados en un solo lugar.",
+      "step2Title": "Agrega o importa actividad",
+      "step2Body": "Ingresa transacciones manualmente, usa reglas recurrentes o revisa importaciones opcionales de Gmail antes de convertirlas en registros.",
       "step3Title": "Lee tu mes",
-      "step3Body": "Consulta presupuestos, revisa reportes y ve tu flujo de caja neto, todo en un espacio de trabajo tranquilo y enfocado."
+      "step3Body": "Consulta presupuestos, revisa reportes y ve tu flujo de caja neto en un espacio de trabajo tranquilo y enfocado."
     },
     "features": {
       "eyebrow": "Funcionalidades",
-      "headline": "Todo lo que necesitas, nada más",
+      "headline": "Rastrea, planifica, automatiza y entiende",
+      "description": "Las herramientas principales se mantienen enfocadas en finanzas personales diarias sin llenar la pantalla de ruido.",
       "accounts": {
         "title": "Cuentas",
         "description": "Mantén separados los saldos de efectivo, banco, crédito y préstamo sin hojas de cálculo.",
@@ -80,6 +115,35 @@
       "headline": "¿Listo para leer tus finanzas con claridad?",
       "subtext": "Gratis para usar. Sin tarjeta requerida.",
       "button": "Crear tu espacio de trabajo"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "headline": "Preguntas antes de comenzar",
+      "description": "Algunas respuestas prácticas sobre privacidad, importaciones y cómo MiniFT encaja en tu rutina.",
+      "free": {
+        "question": "¿MiniFT es gratis?",
+        "answer": "MiniFT actualmente es gratis mientras el producto se construye y mejora. Si más adelante se agregan planes de pago, el valor y los límites se explicarán claramente."
+      },
+      "bank": {
+        "question": "¿MiniFT accede a mi banco?",
+        "answer": "No. MiniFT no solicita credenciales de banca en línea y no se conecta directamente al portal de tu banco."
+      },
+      "manual": {
+        "question": "¿Puedo usar MiniFT manualmente?",
+        "answer": "Sí. El seguimiento manual es un flujo principal. Puedes agregar cuentas, transacciones, transferencias, presupuestos y entradas recurrentes sin conectar ninguna integración."
+      },
+      "gmail": {
+        "question": "¿Qué lee la integración de Gmail?",
+        "answer": "Si la habilitas, el acceso a Gmail es de solo lectura y está pensado para detectar correos compatibles de alertas bancarias para crear importaciones que puedes revisar."
+      },
+      "data": {
+        "question": "¿Puedo eliminar o exportar mis datos?",
+        "answer": "Hoy puedes administrar registros dentro de la app. La eliminación completa de cuenta y la exportación de datos del usuario están planificadas en el roadmap de preparación para producción."
+      },
+      "mobile": {
+        "question": "¿MiniFT funciona bien en móvil?",
+        "answer": "Sí. La app está diseñada para funcionar en web móvil y escritorio."
+      }
     }
   },
   "demo": {
@@ -525,6 +589,12 @@
     "errorTitle": "No se pudieron cargar las importaciones"
   },
   "footer": {
+    "home": "Inicio",
+    "product": "Producto",
+    "trust": "Confianza",
+    "developers": "Developers",
+    "description": "Un espacio enfocado de finanzas personales para cuentas, presupuestos, importaciones y claridad mensual.",
+    "tagline": "Creado para un seguimiento financiero mensual tranquilo.",
     "copyright": "Copyright © {{year}} MiniFT. Todos los derechos reservados.",
     "madeBy": "Hecho por",
     "privacy": "Política de Privacidad",

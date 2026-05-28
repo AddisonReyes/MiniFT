@@ -20,32 +20,67 @@
   },
   "landing": {
     "nav": {
+      "ariaLabel": "Landing page navigation",
+      "home": "Home",
+      "value": "Why MiniFT",
+      "howItWorks": "How it works",
+      "features": "Features",
+      "faq": "FAQ",
+      "menu": "Menu",
+      "close": "Close",
       "signIn": "Sign in",
       "getStarted": "Get started"
     },
     "hero": {
       "eyebrow": "Focused personal finance",
-      "headline": "Your month, finally readable.",
-      "body": "MiniFT brings accounts, transactions, transfers, budgets, recurring entries, and reports into one quiet workspace built for monthly control.",
+      "headline": "Understand your money month without the spreadsheet noise.",
+      "body": "MiniFT gives you one calm workspace for accounts, transactions, budgets, recurring activity, imports, and reports, so every month is easier to read and easier to control.",
       "ctaPrimary": "Create your workspace",
       "ctaSecondary": "Sign in",
       "pill1": "No spreadsheet drift",
       "pill2": "Monthly budget clarity",
       "pill3": "Clean reports"
     },
+    "trust": {
+      "noBankCredentials": "No banking credentials required",
+      "gmailReadonly": "Optional read-only Gmail imports",
+      "monthlyClarity": "Built for monthly clarity"
+    },
+    "value": {
+      "eyebrow": "Why MiniFT",
+      "headline": "A finance workspace that stays readable.",
+      "description": "MiniFT is built for people who want control without turning personal finance into a second job.",
+      "month": {
+        "title": "Understand the month",
+        "description": "See income, expenses, net cash flow, and budget pressure in one place instead of hunting through separate notes and spreadsheets.",
+        "metric": "Monthly control"
+      },
+      "spreadsheets": {
+        "title": "Replace spreadsheet drift",
+        "description": "Keep accounts, transfers, recurring entries, and categories structured so the numbers do not become stale after a few weeks.",
+        "metric": "Clean structure"
+      },
+      "review": {
+        "title": "Approve before it counts",
+        "description": "Optional imports are review-first. You stay in control of what becomes a real transaction in your workspace.",
+        "metric": "User controlled"
+      }
+    },
     "howItWorks": {
       "eyebrow": "How it works",
-      "headline": "Three steps to clarity",
-      "step1Title": "Connect your accounts",
-      "step1Body": "Add cash, bank, credit, or loan accounts. Set them up once and keep everything in one place.",
-      "step2Title": "Log your transactions",
-      "step2Body": "Enter transactions manually or let recurring rules handle your fixed income and expenses automatically.",
+      "headline": "Three steps to a clearer month",
+      "description": "Start manually, add automation when it helps, and keep your month readable from the dashboard.",
+      "step1Title": "Set up your accounts",
+      "step1Body": "Add cash, bank, credit, or loan accounts. Set them up once and keep balances separated in one place.",
+      "step2Title": "Add or import activity",
+      "step2Body": "Enter transactions manually, use recurring rules, or review optional Gmail imports before they become records.",
       "step3Title": "Read your month",
-      "step3Body": "Check budgets, review reports, and see your net cash flow — all in one quiet, focused workspace."
+      "step3Body": "Check budgets, review reports, and see your net cash flow in one quiet, focused workspace."
     },
     "features": {
       "eyebrow": "Features",
-      "headline": "Everything you need, nothing you don't",
+      "headline": "Track, plan, automate, and understand",
+      "description": "The core tools stay focused on everyday personal finance instead of overwhelming you with dashboard clutter.",
       "accounts": {
         "title": "Accounts",
         "description": "Keep cash, bank, credit, and loan balances separated without spreadsheet drift.",
@@ -80,6 +115,35 @@
       "headline": "Ready to read your finances clearly?",
       "subtext": "Free to use. No card required.",
       "button": "Create your workspace"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "headline": "Questions before you start",
+      "description": "A few practical answers about privacy, imports, and how MiniFT fits into your routine.",
+      "free": {
+        "question": "Is MiniFT free?",
+        "answer": "MiniFT is currently free to use while the product is being built and refined. If paid plans are added later, the core value and limits will be explained clearly."
+      },
+      "bank": {
+        "question": "Does MiniFT access my bank?",
+        "answer": "No. MiniFT does not ask for online banking credentials and does not connect directly to your bank account portal."
+      },
+      "manual": {
+        "question": "Can I use MiniFT manually?",
+        "answer": "Yes. Manual tracking is a first-class workflow. You can add accounts, transactions, transfers, budgets, and recurring entries without connecting any integration."
+      },
+      "gmail": {
+        "question": "What does the Gmail integration read?",
+        "answer": "If enabled, Gmail access is read-only and intended to detect supported bank alert emails so MiniFT can create transaction imports for your review."
+      },
+      "data": {
+        "question": "Can I delete or export my data?",
+        "answer": "You can manage records inside the app today. Full account deletion and user data export are planned as part of the production readiness roadmap."
+      },
+      "mobile": {
+        "question": "Is MiniFT mobile friendly?",
+        "answer": "Yes. The app is designed to work on desktop and mobile web."
+      }
     }
   },
   "demo": {
@@ -525,6 +589,12 @@
     "errorTitle": "Could not load imports"
   },
   "footer": {
+    "home": "Home",
+    "product": "Product",
+    "trust": "Trust",
+    "developers": "Developers",
+    "description": "A focused personal finance workspace for accounts, budgets, imports, and monthly clarity.",
+    "tagline": "Built for calm monthly finance tracking.",
     "copyright": "Copyright © {{year}} MiniFT. All rights reserved.",
     "madeBy": "Made by",
     "privacy": "Privacy Policy",

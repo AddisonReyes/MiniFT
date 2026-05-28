@@ -37,16 +37,16 @@ function OverviewTab() {
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-3">
         {summaryItems.map((item) => (
           <div
             key={item.label}
-            className="rounded-[18px] border border-white/10 bg-white/[0.035] p-4"
+            className="min-w-0 rounded-[18px] border border-white/10 bg-white/[0.035] p-3 sm:p-4"
           >
-            <p className="text-xs uppercase tracking-[0.18em] text-mist">
+            <p className="text-xs uppercase tracking-[0.14em] text-mist [overflow-wrap:anywhere] sm:tracking-[0.18em]">
               {item.label}
             </p>
-            <div className={`mt-2 font-semibold ${item.className}`}>
+            <div className={`mt-2 font-semibold [overflow-wrap:anywhere] ${item.className}`}>
               {item.value}
             </div>
           </div>
@@ -54,8 +54,8 @@ function OverviewTab() {
       </div>
 
       <div className="mt-5 space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-mist">{t("demo.budgetHealth")}</span>
+        <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
+          <span className="min-w-0 text-mist [overflow-wrap:anywhere]">{t("demo.budgetHealth")}</span>
           <span className="text-white">{t("demo.budgetUsed", { pct: 68 })}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-white/10">
@@ -67,10 +67,10 @@ function OverviewTab() {
         {activityItems.map((item) => (
           <div
             key={item.label}
-            className="flex items-center justify-between gap-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
+            className="flex min-w-0 items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3 sm:gap-4 sm:px-4"
           >
             <div className="min-w-0">
-              <div className="font-medium text-white">{item.label}</div>
+              <div className="truncate font-medium text-white">{item.label}</div>
               <div className="mt-0.5 truncate text-xs text-mist">{item.meta}</div>
             </div>
             <div className={`shrink-0 font-semibold ${item.amountClass}`}>
@@ -99,9 +99,9 @@ function BudgetsTab() {
         const pct = Math.round((item.used / item.cap) * 100);
         const isOver = pct >= 90;
         return (
-          <div key={item.category} className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white">{item.category}</span>
+            <div key={item.category} className="min-w-0 space-y-1.5">
+            <div className="flex min-w-0 items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 truncate text-white">{item.category}</span>
               <span className={isOver ? "text-hazard" : "text-mist"}>
                 ${item.used} / ${item.cap}
               </span>
@@ -166,8 +166,8 @@ function TransactionsTab() {
 
   return (
     <div className="space-y-2">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.18em] text-mist">
+      <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-xs uppercase tracking-[0.14em] text-mist sm:tracking-[0.18em]">
           {t("demo.transactions.month")}
         </p>
         <div className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-mist">
@@ -177,10 +177,10 @@ function TransactionsTab() {
       {transactionItems.map((item) => (
         <div
           key={item.label + item.amount}
-          className="flex items-center justify-between gap-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3"
+          className="flex min-w-0 items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3 sm:gap-4 sm:px-4"
         >
           <div className="min-w-0">
-            <div className="font-medium text-white">{item.label}</div>
+            <div className="truncate font-medium text-white">{item.label}</div>
             <div className="mt-0.5 truncate text-xs text-mist">{item.meta}</div>
           </div>
           <div className={`shrink-0 font-semibold ${item.amountClass}`}>
@@ -205,20 +205,20 @@ function ReportsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 text-xs text-mist">
-        <span className="flex items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs text-mist sm:gap-4">
+        <span className="flex min-w-0 items-center gap-1.5">
           <span className="inline-block h-2 w-2 rounded-full bg-signal" />
           {t("demo.reports.legend.income")}
         </span>
-        <span className="flex items-center gap-1.5">
+        <span className="flex min-w-0 items-center gap-1.5">
           <span className="inline-block h-2 w-2 rounded-full bg-hazard" />
           {t("demo.reports.legend.expenses")}
         </span>
       </div>
 
-      <div className="flex items-end gap-4">
+      <div className="flex min-w-0 items-end gap-2 sm:gap-4">
         {reportItems.map((item) => (
-          <div key={item.month} className="flex flex-1 flex-col items-center gap-2">
+          <div key={item.month} className="flex min-w-0 flex-1 flex-col items-center gap-2">
             <div className="flex w-full items-end gap-1" style={{ height: 120 }}>
               <div
                 className="flex-1 rounded-t-[6px] bg-signal/70"
@@ -234,10 +234,10 @@ function ReportsTab() {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-4">
+      <div className="grid min-w-0 grid-cols-3 gap-2 border-t border-white/10 pt-4">
         {reportItems.map((item) => (
-          <div key={item.month} className="space-y-1 text-center">
-            <p className="text-xs uppercase tracking-[0.14em] text-mist">{item.month}</p>
+          <div key={item.month} className="min-w-0 space-y-1 text-center">
+            <p className="truncate text-xs uppercase tracking-[0.14em] text-mist">{item.month}</p>
             <p className="text-sm font-semibold text-signal">
               +${(item.income - item.expenses).toLocaleString()}
             </p>
@@ -267,32 +267,32 @@ export function FinanceSnapshot({
   void showActivity; // prop kept for backwards compatibility
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-ink/45 p-5 shadow-soft">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-mist">
+    <div className="min-w-0 max-w-full overflow-hidden rounded-[22px] border border-white/10 bg-ink/45 p-3 shadow-soft sm:rounded-[24px] sm:p-5">
+      <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.16em] text-mist [overflow-wrap:anywhere] sm:tracking-[0.22em]">
             {t("demo.eyebrow")}
           </p>
-          <h2 className="mt-2 text-2xl font-semibold">{t("demo.title")}</h2>
+          <h2 className="mt-2 truncate text-xl font-semibold sm:text-2xl">{t("demo.title")}</h2>
         </div>
-        <div className="rounded-full border border-signal/20 bg-signal/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-signal">
+        <div className="shrink-0 rounded-full border border-signal/20 bg-signal/10 px-2.5 py-1 text-xs uppercase tracking-[0.14em] text-signal sm:px-3 sm:tracking-[0.18em]">
           {t("demo.badge")}
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="mt-5 flex gap-1 rounded-[18px] border border-white/10 bg-white/[0.03] p-1">
+      <div className="mt-5 grid min-w-0 grid-cols-2 gap-1 rounded-[18px] border border-white/10 bg-white/[0.03] p-1 sm:grid-cols-4">
         {TAB_KEYS.map((id) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex-1 rounded-[14px] px-2 py-1.5 text-xs font-medium transition ${
+            className={`min-w-0 rounded-[14px] px-2 py-2 text-xs font-medium leading-tight transition ${
               activeTab === id
                 ? "bg-white/10 text-white"
                 : "text-mist hover:text-white"
             }`}
           >
-            {t(`demo.tabs.${id}`)}
+            <span className="block truncate">{t(`demo.tabs.${id}`)}</span>
           </button>
         ))}
       </div>

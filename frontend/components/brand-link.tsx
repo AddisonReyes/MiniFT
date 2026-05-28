@@ -18,8 +18,7 @@ export function BrandLink({
       className={[brandLinkClassName, className].filter(Boolean).join(" ")}
       onClick={onClick}
     >
-      <span className="sm:hidden">MiniFT</span>
-      <span className="hidden sm:inline">Mini Finance Tracker</span>
+      MiniFT
     </Link>
   );
 }
