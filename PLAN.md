@@ -1,410 +1,442 @@
-# MiniFT - Roadmap de producto terminado
+# MiniFT - Product Completion Roadmap
 
-Este documento organiza las mejoras necesarias para convertir MiniFT en un producto mas terminado, profesional, confiable y capaz de atraer y retener usuarios.
+This document organizes the work needed to turn MiniFT into a more complete, professional, trustworthy product that can attract and retain users.
 
----
-
-## Sprint 1: Activacion y primer uso
-
-### Objetivo
-
-Lograr que un usuario nuevo llegue a su primer momento de valor en menos de 3 minutos.
-
-### Resultado esperado
-
-Un usuario debe poder registrarse, entender que hacer, agregar o importar datos basicos y ver un dashboard util sin sentirse perdido.
-
-### Tareas
-
-- [ ] Crear onboarding post-registro.
-- [ ] Mostrar checklist inicial dentro del dashboard.
-- [ ] Confirmar o crear cuenta principal durante onboarding.
-- [ ] Permitir elegir moneda principal durante onboarding.
-- [ ] Guiar al usuario para agregar su primera transaccion.
-- [ ] Guiar al usuario para crear su primer presupuesto.
-- [ ] Ofrecer conectar Gmail como paso opcional.
-- [ ] Agregar opcion "Probar demo" desde landing.
-- [ ] Crear workspace demo accesible sin friccion.
-- [ ] Agregar opcion "Crear datos de ejemplo" para usuarios nuevos.
-- [ ] Mejorar empty states en dashboard, accounts, transactions, budgets, reports e imports.
-- [ ] Agregar CTAs contextuales segun estado del usuario.
-- [ ] Si no hay cuentas, mostrar CTA para crear cuenta.
-- [ ] Si no hay transacciones, mostrar CTA para agregar o importar transaccion.
-- [ ] Si hay gastos pero no presupuestos, mostrar CTA para crear presupuesto.
-- [ ] Medir tiempo hasta primera transaccion.
-
-### Criterios de exito
-
-- [ ] Un usuario nuevo entiende el siguiente paso sin documentacion externa.
-- [ ] El dashboard no se siente vacio despues del onboarding.
-- [ ] El usuario puede llegar a su primera transaccion en menos de 3 minutos.
+Time estimates assume a very small team: one developer working with an AI assistant. Each estimate includes implementation, review, testing, bug fixes, and small polish passes. Larger unknowns, third-party approvals, production incidents, or mobile store requirements can extend these timelines.
 
 ---
 
-## Sprint 2: Confianza, seguridad y profesionalismo publico
+## Sprint 1: Activation and First Use
 
-### Objetivo
+**Estimated duration:** 2-3 weeks
 
-Hacer que MiniFT se perciba como un producto seguro, claro y confiable.
+### Goal
 
-### Resultado esperado
+Help a new user reach their first moment of value in under 3 minutes.
 
-El usuario debe entender que datos procesa MiniFT, que permisos solicita, como protege la sesion y como puede borrar o exportar sus datos.
+### Expected Outcome
 
-### Tareas
+A new user can register, understand what to do next, add or import basic data, and see a useful dashboard without feeling lost.
 
-- [ ] Crear pagina publica `/security`.
-- [ ] Explicar uso de cookies `HttpOnly`.
-- [ ] Explicar que MiniFT no solicita credenciales bancarias.
-- [ ] Explicar que Gmail usa permiso read-only.
-- [ ] Explicar que correos intenta procesar MiniFT.
-- [ ] Explicar como se protegen tokens de integracion.
-- [ ] Agregar seccion sobre eliminacion de cuenta y datos.
-- [ ] Agregar pagina o seccion FAQ en landing.
-- [ ] Agregar pregunta "MiniFT accede a mi banco?".
-- [ ] Agregar pregunta "Que permisos usa Gmail?".
-- [ ] Agregar pregunta "Puedo borrar mis datos?".
-- [ ] Agregar pregunta "MiniFT es gratis?".
-- [ ] Crear pagina `/pricing`, aunque sea simple.
-- [ ] Crear pagina `/changelog`.
-- [ ] Crear pagina o link `/roadmap`.
-- [ ] Agregar screenshots reales del producto en landing.
-- [ ] Revisar copy de landing para enfocarlo en resultados, no solo features.
-- [ ] Revisar textos legales actuales de privacy, terms y cookies.
+### Tasks
 
-### Criterios de exito
+- [ ] Create post-registration onboarding.
+- [ ] Show an initial checklist inside the dashboard.
+- [ ] Confirm or create the primary account during onboarding.
+- [ ] Let users choose their primary currency during onboarding.
+- [ ] Guide users to add their first transaction.
+- [ ] Guide users to create their first budget.
+- [ ] Offer Gmail connection as an optional onboarding step.
+- [ ] Add a "Try demo" option from the landing page.
+- [ ] Create a low-friction demo workspace.
+- [ ] Add a "Create sample data" option for new users.
+- [ ] Improve empty states in dashboard, accounts, transactions, budgets, reports, and imports.
+- [ ] Add contextual CTAs based on the user's current state.
+- [ ] If there are no accounts, show a CTA to create an account.
+- [ ] If there are no transactions, show a CTA to add or import a transaction.
+- [ ] If there are expenses but no budgets, show a CTA to create a budget.
+- [ ] Measure time-to-first-transaction.
 
-- [ ] Un usuario entiende claramente que datos comparte.
-- [ ] La landing transmite confianza antes del registro.
-- [ ] Gmail se percibe como una integracion segura, no invasiva.
+### Success Criteria
 
----
-
-## Sprint 3: Retencion e insights
-
-### Objetivo
-
-Dar razones reales para que el usuario vuelva cada semana.
-
-### Resultado esperado
-
-MiniFT debe entregar informacion util automaticamente, no solo mostrar datos cargados manualmente.
-
-### Tareas
-
-- [ ] Crear resumen semanal.
-- [ ] Crear resumen mensual.
-- [ ] Detectar categorias con aumento de gasto.
-- [ ] Comparar gasto actual contra mes anterior.
-- [ ] Mostrar progreso de presupuestos de forma mas accionable.
-- [ ] Agregar alertas al alcanzar 70%, 90% y 100% de un presupuesto.
-- [ ] Crear notificaciones in-app.
-- [ ] Mostrar importaciones pendientes en dashboard.
-- [ ] Crear financial health simple del mes.
-- [ ] Detectar gastos recurrentes relevantes.
-- [ ] Detectar cambios en gastos recurrentes.
-- [ ] Agregar objetivos de ahorro.
-- [ ] Crear reporte mensual exportable.
-- [ ] Permitir exportar resumen como PDF o imagen.
-- [ ] Agregar recordatorio si el usuario no registra movimientos por varios dias.
-
-### Criterios de exito
-
-- [ ] El dashboard responde "como va mi mes".
-- [ ] El usuario recibe senales accionables.
-- [ ] Hay motivos claros para volver semanalmente.
+- [ ] A new user understands the next step without external documentation.
+- [ ] The dashboard does not feel empty after onboarding.
+- [ ] A user can reach their first transaction in under 3 minutes.
 
 ---
 
-## Sprint 4: Automatizacion e importacion
+## Sprint 2: Trust, Security, and Public Professionalism
 
-### Objetivo
+**Estimated duration:** 1-2 weeks
 
-Reducir friccion de entrada de datos y convertir la automatizacion en una ventaja competitiva.
+### Goal
 
-### Resultado esperado
+Make MiniFT feel safe, clear, and trustworthy before users share personal finance data.
 
-MiniFT debe ayudar a capturar transacciones mas rapido, con revision segura y control del usuario.
+### Expected Outcome
 
-### Tareas
+Users understand what data MiniFT processes, what permissions it requests, how sessions are protected, and how they can delete or export their data.
 
-- [ ] Mejorar pagina de integraciones.
-- [ ] Mostrar bancos o correos soportados.
-- [ ] Mostrar ultima sincronizacion de Gmail.
-- [ ] Mostrar errores recientes de sincronizacion con explicacion accionable.
-- [ ] Mostrar numero de reglas aprendidas.
-- [ ] Crear reglas editables para importaciones.
-- [ ] Permitir mapear merchant a categoria.
-- [ ] Permitir mapear merchant a cuenta.
-- [ ] Mejorar flujo de revision rapida de importaciones.
-- [ ] Permitir aprobar o rechazar importaciones en lote.
-- [ ] Agregar deteccion de duplicados.
-- [ ] Crear importacion CSV.
-- [ ] Crear template CSV descargable.
-- [ ] Agregar validacion previa de CSV.
-- [ ] Mostrar preview antes de importar CSV.
-- [ ] Agregar historial de imports.
-- [ ] Agregar filtros en imports por estado, cuenta, merchant y fecha.
-- [ ] Evaluar soporte futuro para recibos o fotos.
+### Tasks
 
-### Criterios de exito
+- [ ] Create a public `/security` page.
+- [ ] Explain the use of `HttpOnly` cookies.
+- [ ] Explain that MiniFT does not ask for banking credentials.
+- [ ] Explain that Gmail uses read-only permission.
+- [ ] Explain what email messages MiniFT attempts to process.
+- [ ] Explain how integration tokens are protected.
+- [ ] Add a section about account and data deletion.
+- [ ] Add a FAQ page or FAQ section on the landing page.
+- [ ] Add "Does MiniFT access my bank?".
+- [ ] Add "What Gmail permissions does MiniFT use?".
+- [ ] Add "Can I delete my data?".
+- [ ] Add "Is MiniFT free?".
+- [ ] Create a simple `/pricing` page.
+- [ ] Create a `/changelog` page.
+- [ ] Create a `/roadmap` page or link.
+- [ ] Add real product screenshots to the landing page.
+- [ ] Refine landing copy to focus on outcomes, not only features.
+- [ ] Review current privacy, terms, and cookies copy.
 
-- [ ] El usuario puede cargar datos sin hacerlo todo manualmente.
-- [ ] Las importaciones son confiables y revisables.
-- [ ] La automatizacion no sacrifica control del usuario.
+### Success Criteria
 
----
-
-## Sprint 5: Metricas de producto
-
-### Objetivo
-
-Medir comportamiento real para mejorar conversion, activacion y retencion.
-
-### Resultado esperado
-
-MiniFT debe tener datos suficientes para saber donde abandonan los usuarios y que features generan valor.
-
-### Tareas
-
-- [ ] Elegir herramienta de analytics privacy-friendly.
-- [ ] Evaluar PostHog.
-- [ ] Evaluar Plausible.
-- [ ] Evaluar Umami.
-- [ ] Definir politica de tracking respetuosa de privacidad.
-- [ ] Medir registro iniciado.
-- [ ] Medir registro completado.
-- [ ] Medir email verificado.
-- [ ] Medir login exitoso.
-- [ ] Medir primera cuenta creada.
-- [ ] Medir primera transaccion creada.
-- [ ] Medir primer presupuesto creado.
-- [ ] Medir Gmail conectado.
-- [ ] Medir primera importacion aprobada.
-- [ ] Medir retorno D1, D7 y D30.
-- [ ] Medir uso de reportes.
-- [ ] Medir errores criticos frontend y backend.
-- [ ] Crear dashboard interno de metricas.
-- [ ] Documentar eventos en un archivo de producto.
-
-### Criterios de exito
-
-- [ ] Se puede calcular activation rate.
-- [ ] Se puede calcular time-to-first-transaction.
-- [ ] Se puede medir retencion basica.
-- [ ] Las decisiones de producto no dependen solo de intuicion.
+- [ ] A user clearly understands what data they share.
+- [ ] The landing page builds trust before registration.
+- [ ] Gmail feels like a safe, non-invasive integration.
 
 ---
 
-## Sprint 6: Calidad de producto
+## Sprint 3: Retention and Insights
 
-### Objetivo
+**Estimated duration:** 3-4 weeks
 
-Pulir la experiencia para que MiniFT se sienta estable, consistente y listo para usuarios reales.
+### Goal
 
-### Resultado esperado
+Give users real reasons to come back every week.
 
-El producto debe manejar errores, cargas, acciones destructivas y estados vacios de forma profesional.
+### Expected Outcome
 
-### Tareas
+MiniFT automatically surfaces useful financial information instead of only displaying manually entered data.
 
-- [ ] Crear sistema global de toasts.
-- [ ] Unificar mensajes de exito.
-- [ ] Unificar mensajes de error.
-- [ ] Mejorar skeleton/loading states.
-- [ ] Revisar todos los formularios criticos.
-- [ ] Agregar confirmaciones para acciones destructivas.
-- [ ] Agregar exportacion CSV de transacciones.
-- [ ] Agregar exportacion CSV de cuentas y resumen.
-- [ ] Agregar eliminacion de cuenta.
-- [ ] Agregar exportacion completa de datos del usuario.
-- [ ] Agregar preferencias de formato de fecha.
-- [ ] Agregar preferencias de primer dia de la semana.
-- [ ] Revisar accesibilidad basica.
-- [ ] Revisar navegacion por teclado.
-- [ ] Revisar contraste y labels de formularios.
-- [ ] Agregar Sentry o alternativa para errores runtime.
-- [ ] Agregar rate limiting en endpoints sensibles de auth.
-- [ ] Documentar estrategia de backups de produccion.
-- [ ] Crear status/health page simple.
+### Tasks
 
-### Criterios de exito
+- [ ] Create a weekly summary.
+- [ ] Create a monthly summary.
+- [ ] Detect categories with increased spending.
+- [ ] Compare current spending against the previous month.
+- [ ] Make budget progress more actionable.
+- [ ] Add alerts when budgets reach 70%, 90%, and 100%.
+- [ ] Create in-app notifications.
+- [ ] Show pending imports on the dashboard.
+- [ ] Create a simple monthly financial health status.
+- [ ] Detect relevant recurring expenses.
+- [ ] Detect changes in recurring expenses.
+- [ ] Add savings goals.
+- [ ] Create an exportable monthly report.
+- [ ] Allow exporting a summary as PDF or image.
+- [ ] Add a reminder if the user has not recorded activity for several days.
 
-- [ ] Los errores son entendibles para usuarios.
-- [ ] Las acciones importantes dan feedback claro.
-- [ ] El producto se siente consistente y robusto.
+### Success Criteria
+
+- [ ] The dashboard answers "How is my month going?".
+- [ ] Users receive actionable signals.
+- [ ] There are clear reasons to return weekly.
 
 ---
 
-## Sprint 7: Mobile y PWA
+## Sprint 4: Automation and Importing
 
-### Objetivo
+**Estimated duration:** 3-5 weeks
 
-Mejorar la experiencia movil y facilitar el uso frecuente.
+### Goal
 
-### Resultado esperado
+Reduce data-entry friction and turn automation into a product advantage.
 
-MiniFT debe funcionar bien como app instalable y como herramienta rapida para registrar o revisar movimientos.
+### Expected Outcome
 
-### Tareas
+MiniFT helps users capture transactions faster while keeping review and control in the user's hands.
 
-- [ ] Crear `manifest.webmanifest`.
-- [ ] Agregar iconos PWA completos.
-- [ ] Agregar metadata mobile.
-- [ ] Revisar installability en Chrome y Android.
-- [ ] Crear prompt o CTA discreto para instalar app.
-- [ ] Mejorar shell offline basico.
-- [ ] Agregar fallback cuando API no esta disponible.
-- [ ] Optimizar formularios para mobile.
-- [ ] Agregar accion rapida para nuevo gasto.
-- [ ] Evaluar boton flotante "+" en mobile.
-- [ ] Mejorar revision de imports en mobile.
-- [ ] Revisar navegacion mobile en rutas secundarias.
-- [ ] Validar layout en anchos pequenos.
-- [ ] Revisar experiencia Capacitor Android.
-- [ ] Documentar proceso de build mobile.
+### Tasks
 
-### Criterios de exito
+- [ ] Improve the integrations page.
+- [ ] Show supported banks or email formats.
+- [ ] Show the latest Gmail sync time.
+- [ ] Show recent sync errors with actionable explanations.
+- [ ] Show the number of learned import rules.
+- [ ] Create editable import rules.
+- [ ] Allow mapping merchant to category.
+- [ ] Allow mapping merchant to account.
+- [ ] Improve the quick import review flow.
+- [ ] Allow approving or rejecting imports in bulk.
+- [ ] Add duplicate detection.
+- [ ] Create CSV import.
+- [ ] Create a downloadable CSV template.
+- [ ] Add CSV pre-validation.
+- [ ] Show a preview before importing CSV data.
+- [ ] Add import history.
+- [ ] Add import filters by status, account, merchant, and date.
+- [ ] Evaluate future support for receipts or photos.
 
-- [ ] MiniFT se puede instalar como PWA.
-- [ ] Registrar un gasto en mobile es rapido.
-- [ ] Revisar importaciones en mobile es comodo.
+### Success Criteria
 
----
-
-## Sprint 8: Monetizacion
-
-### Objetivo
-
-Preparar MiniFT para convertirse en un producto sostenible.
-
-### Resultado esperado
-
-Debe existir una estrategia clara de planes, limites y features premium, aunque el cobro se implemente despues.
-
-### Tareas
-
-- [ ] Definir plan Free.
-- [ ] Definir plan Pro.
-- [ ] Definir limites del plan Free.
-- [ ] Definir features premium.
-- [ ] Evaluar si Gmail automation sera premium.
-- [ ] Evaluar si reportes avanzados seran premium.
-- [ ] Evaluar si multi-moneda avanzada sera premium.
-- [ ] Crear pagina `/pricing`.
-- [ ] Agregar modelo de subscription en backend.
-- [ ] Evaluar Stripe.
-- [ ] Crear placeholders de billing en settings.
-- [ ] Crear estados de cuenta: free, trial, pro, cancelled.
-- [ ] Definir periodo trial si aplica.
-- [ ] Crear mensajes de upgrade no invasivos.
-- [ ] Evitar bloquear features basicas demasiado pronto.
-
-### Criterios de exito
-
-- [ ] Hay una propuesta clara para usuarios gratis y pagos.
-- [ ] La monetizacion no rompe la confianza.
-- [ ] El producto puede crecer hacia ingresos reales.
+- [ ] Users can load data without doing everything manually.
+- [ ] Imports are trustworthy and reviewable.
+- [ ] Automation does not remove user control.
 
 ---
 
-## Sprint 9: Soporte, feedback y comunidad
+## Sprint 5: Product Metrics
 
-### Objetivo
+**Estimated duration:** 1-2 weeks
 
-Crear canales para aprender de usuarios reales y mostrar que el producto esta vivo.
+### Goal
 
-### Resultado esperado
+Measure real behavior to improve conversion, activation, and retention.
 
-Los usuarios deben poder reportar problemas, sugerir mejoras y entender hacia donde va MiniFT.
+### Expected Outcome
 
-### Tareas
+MiniFT has enough product data to understand where users drop off and which features create value.
 
-- [ ] Agregar feedback widget o formulario.
-- [ ] Crear email publico de soporte.
-- [ ] Agregar link de soporte en settings.
-- [ ] Agregar link de soporte en footer.
-- [ ] Crear pagina publica de roadmap.
-- [ ] Crear changelog visible.
-- [ ] Agregar encuesta breve post-onboarding.
-- [ ] Preguntar que objetivo financiero tiene el usuario.
-- [ ] Preguntar como piensa cargar transacciones.
-- [ ] Documentar preguntas frecuentes de soporte.
-- [ ] Crear proceso para revisar feedback semanalmente.
-- [ ] Evaluar Discord, GitHub Discussions o formulario simple.
+### Tasks
 
-### Criterios de exito
+- [ ] Choose a privacy-friendly analytics tool.
+- [ ] Evaluate PostHog.
+- [ ] Evaluate Plausible.
+- [ ] Evaluate Umami.
+- [ ] Define a privacy-respecting tracking policy.
+- [ ] Track registration started.
+- [ ] Track registration completed.
+- [ ] Track email verified.
+- [ ] Track successful login.
+- [ ] Track first account created.
+- [ ] Track first transaction created.
+- [ ] Track first budget created.
+- [ ] Track Gmail connected.
+- [ ] Track first import approved.
+- [ ] Track D1, D7, and D30 retention.
+- [ ] Track reports usage.
+- [ ] Track critical frontend and backend errors.
+- [ ] Create an internal metrics dashboard.
+- [ ] Document product events in a dedicated file.
 
-- [ ] Los usuarios pueden pedir ayuda facilmente.
-- [ ] El feedback llega a un lugar accionable.
-- [ ] El producto comunica evolucion constante.
+### Success Criteria
 
----
-
-## Sprint 10: Produccion y operacion
-
-### Objetivo
-
-Asegurar que MiniFT pueda operar de forma confiable fuera del entorno local.
-
-### Resultado esperado
-
-El despliegue debe ser seguro, observable y mantenible.
-
-### Tareas
-
-- [ ] Revisar variables de entorno de produccion.
-- [ ] Confirmar `AUTH_COOKIE_SECURE=true` en produccion.
-- [ ] Confirmar `AUTH_COOKIE_SAME_SITE=none` cuando aplique cross-origin.
-- [ ] Confirmar CORS explicito.
-- [ ] Evitar wildcard CORS en produccion.
-- [ ] Revisar exposicion publica de Swagger/OpenAPI.
-- [ ] Decidir si Swagger queda publico, protegido o desactivado en produccion.
-- [ ] Agregar flag `DOCS_ENABLED`.
-- [ ] Agregar logs estructurados suficientes.
-- [ ] Agregar monitoreo de uptime.
-- [ ] Agregar alertas de backend caido.
-- [ ] Agregar alertas de fallos de Gmail sync.
-- [ ] Documentar backups de PostgreSQL.
-- [ ] Documentar restore de PostgreSQL.
-- [ ] Revisar migraciones antes de produccion.
-- [ ] Revisar limites de rate limiting.
-- [ ] Revisar secretos en Railway y Cloudflare.
-- [ ] Revisar politicas de privacidad para Gmail y Google verification.
-- [ ] Preparar checklist de release.
-
-### Criterios de exito
-
-- [ ] El sistema es seguro para usuarios reales.
-- [ ] Hay visibilidad cuando algo falla.
-- [ ] La documentacion publica de API tiene una decision consciente.
+- [ ] Activation rate can be calculated.
+- [ ] Time-to-first-transaction can be calculated.
+- [ ] Basic retention can be measured.
+- [ ] Product decisions do not depend only on intuition.
 
 ---
 
-## Orden recomendado
+## Sprint 6: Product Quality
 
-1. Activacion y primer uso.
-2. Confianza y seguridad publica.
-3. Retencion e insights.
-4. Automatizacion e importacion.
-5. Metricas de producto.
-6. Calidad de producto.
+**Estimated duration:** 2-3 weeks
+
+### Goal
+
+Polish the experience so MiniFT feels stable, consistent, and ready for real users.
+
+### Expected Outcome
+
+The product handles errors, loading states, destructive actions, and empty states professionally.
+
+### Tasks
+
+- [ ] Create a global toast system.
+- [ ] Standardize success messages.
+- [ ] Standardize error messages.
+- [ ] Improve skeleton/loading states.
+- [ ] Review all critical forms.
+- [ ] Add confirmations for destructive actions.
+- [ ] Add CSV export for transactions.
+- [ ] Add CSV export for accounts and summaries.
+- [ ] Add account deletion.
+- [ ] Add full user data export.
+- [ ] Add date format preferences.
+- [ ] Add first-day-of-week preferences.
+- [ ] Review basic accessibility.
+- [ ] Review keyboard navigation.
+- [ ] Review contrast and form labels.
+- [ ] Add Sentry or another runtime error tracking tool.
+- [ ] Add rate limiting to sensitive auth endpoints.
+- [ ] Document the production backup strategy.
+- [ ] Create a simple status/health page.
+
+### Success Criteria
+
+- [ ] Errors are understandable to users.
+- [ ] Important actions provide clear feedback.
+- [ ] The product feels consistent and robust.
+
+---
+
+## Sprint 7: Mobile and PWA
+
+**Estimated duration:** 2-3 weeks
+
+### Goal
+
+Improve the mobile experience and make frequent usage easier.
+
+### Expected Outcome
+
+MiniFT works well as an installable app and as a quick tool for recording or reviewing activity.
+
+### Tasks
+
+- [ ] Create `manifest.webmanifest`.
+- [ ] Add complete PWA icons.
+- [ ] Add mobile metadata.
+- [ ] Review installability in Chrome and Android.
+- [ ] Create a subtle install CTA or prompt.
+- [ ] Improve the basic offline shell.
+- [ ] Add fallback UI when the API is unavailable.
+- [ ] Optimize forms for mobile.
+- [ ] Add a quick action for a new expense.
+- [ ] Evaluate a floating "+" button on mobile.
+- [ ] Improve import review on mobile.
+- [ ] Review mobile navigation on secondary routes.
+- [ ] Validate layouts on small widths.
+- [ ] Review the Capacitor Android experience.
+- [ ] Document the mobile build process.
+
+### Success Criteria
+
+- [ ] MiniFT can be installed as a PWA.
+- [ ] Recording an expense on mobile is fast.
+- [ ] Reviewing imports on mobile is comfortable.
+
+---
+
+## Sprint 8: Monetization
+
+**Estimated duration:** 2-4 weeks
+
+### Goal
+
+Prepare MiniFT to become a sustainable product.
+
+### Expected Outcome
+
+There is a clear strategy for plans, limits, and premium features, even if billing is implemented later.
+
+### Tasks
+
+- [ ] Define the Free plan.
+- [ ] Define the Pro plan.
+- [ ] Define Free plan limits.
+- [ ] Define premium features.
+- [ ] Evaluate whether Gmail automation should be premium.
+- [ ] Evaluate whether advanced reports should be premium.
+- [ ] Evaluate whether advanced multi-currency features should be premium.
+- [ ] Create a `/pricing` page.
+- [ ] Add a subscription model in the backend.
+- [ ] Evaluate Stripe.
+- [ ] Create billing placeholders in settings.
+- [ ] Create account states: free, trial, pro, cancelled.
+- [ ] Define a trial period if needed.
+- [ ] Create non-invasive upgrade messages.
+- [ ] Avoid blocking core features too early.
+
+### Success Criteria
+
+- [ ] There is a clear offer for free and paid users.
+- [ ] Monetization does not damage trust.
+- [ ] The product can grow toward real revenue.
+
+---
+
+## Sprint 9: Support, Feedback, and Community
+
+**Estimated duration:** 1-2 weeks
+
+### Goal
+
+Create channels to learn from real users and show that the product is alive.
+
+### Expected Outcome
+
+Users can report issues, suggest improvements, and understand where MiniFT is going.
+
+### Tasks
+
+- [ ] Add a feedback widget or form.
+- [ ] Create a public support email.
+- [ ] Add a support link in settings.
+- [ ] Add a support link in the footer.
+- [ ] Create a public roadmap page.
+- [ ] Create a visible changelog.
+- [ ] Add a short post-onboarding survey.
+- [ ] Ask what financial goal the user has.
+- [ ] Ask how the user plans to enter transactions.
+- [ ] Document common support questions.
+- [ ] Create a weekly feedback review process.
+- [ ] Evaluate Discord, GitHub Discussions, or a simple form.
+
+### Success Criteria
+
+- [ ] Users can ask for help easily.
+- [ ] Feedback reaches an actionable place.
+- [ ] The product communicates steady progress.
+
+---
+
+## Sprint 10: Production and Operations
+
+**Estimated duration:** 2-3 weeks
+
+### Goal
+
+Make sure MiniFT can operate reliably outside the local environment.
+
+### Expected Outcome
+
+Deployment is secure, observable, and maintainable.
+
+### Tasks
+
+- [ ] Review production environment variables.
+- [ ] Confirm `AUTH_COOKIE_SECURE=true` in production.
+- [ ] Confirm `AUTH_COOKIE_SAME_SITE=none` when cross-origin auth applies.
+- [ ] Confirm explicit CORS origins.
+- [ ] Avoid wildcard CORS in production.
+- [ ] Review public Swagger/OpenAPI exposure.
+- [ ] Decide whether Swagger remains public, protected, or disabled in production.
+- [ ] Add a `DOCS_ENABLED` flag.
+- [ ] Add enough structured logging.
+- [ ] Add uptime monitoring.
+- [ ] Add alerts for backend downtime.
+- [ ] Add alerts for Gmail sync failures.
+- [ ] Document PostgreSQL backups.
+- [ ] Document PostgreSQL restore.
+- [ ] Review migrations before production releases.
+- [ ] Review rate limiting boundaries.
+- [ ] Review Railway and Cloudflare secrets.
+- [ ] Review privacy requirements for Gmail and Google verification.
+- [ ] Prepare a release checklist.
+
+### Success Criteria
+
+- [ ] The system is safe for real users.
+- [ ] Failures are visible when they happen.
+- [ ] Public API documentation has an intentional policy.
+
+---
+
+## Recommended Order
+
+1. Activation and first use.
+2. Trust and public security.
+3. Retention and insights.
+4. Automation and importing.
+5. Product metrics.
+6. Product quality.
 7. Mobile/PWA.
-8. Monetizacion.
-9. Soporte/feedback.
-10. Produccion/operacion.
+8. Monetization.
+9. Support/feedback.
+10. Production/operations.
 
 ---
 
-## Metricas norte
+## Approximate Timeline
+
+Assuming steady part-time work, this roadmap is roughly **19-31 weeks** of work.
+
+If working nearly full-time with focused scope control, it could be closer to **12-18 weeks**.
+
+If learning, design iteration, production deployment, user feedback, and third-party approvals are included, plan for **5-8 months**.
+
+---
+
+## North Star Metrics
 
 - Activation rate.
 - Time-to-first-transaction.
 - D1 retention.
 - D7 retention.
 - D30 retention.
-- Porcentaje de usuarios que crean presupuesto.
-- Porcentaje de usuarios que conectan Gmail.
-- Porcentaje de importaciones aprobadas.
-- Numero de transacciones por usuario activo.
-- Usuarios activos semanales.
+- Percentage of users who create a budget.
+- Percentage of users who connect Gmail.
+- Percentage of imports approved.
+- Number of transactions per active user.
+- Weekly active users.
