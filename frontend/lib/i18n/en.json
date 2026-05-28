@@ -799,16 +799,16 @@
       "backgroundLabel": "Background",
       "themes": {
         "ledger": {
-          "name": "Ledger",
-          "description": "A finance-workspace background with structured ledger lines and a quiet glass sheet."
+          "name": "Structured",
+          "description": "A precise finance-workspace background with subtle ledger lines and a clean accounting rhythm."
         },
         "cashflow": {
-          "name": "Cashflow",
-          "description": "A more organic background with subtle topographic flow lines and muted financial accents."
+          "name": "Flow",
+          "description": "A quiet directional background with soft cashflow bands and muted financial accents."
         },
         "glass": {
-          "name": "Glass",
-          "description": "A calmer premium glass desk with soft surfaces, minimal patterning, and gentle depth."
+          "name": "Minimal",
+          "description": "A calm premium surface with almost no pattern, soft highlights, and generous negative space."
         }
       }
     },

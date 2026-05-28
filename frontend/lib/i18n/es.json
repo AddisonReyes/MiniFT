@@ -799,16 +799,16 @@
       "backgroundLabel": "Fondo",
       "themes": {
         "ledger": {
-          "name": "Ledger",
-          "description": "Un fondo de espacio financiero con líneas tipo libreta y una superficie glass tranquila."
+          "name": "Structured",
+          "description": "Un fondo preciso de espacio financiero con líneas contables sutiles y un ritmo limpio."
         },
         "cashflow": {
-          "name": "Cashflow",
-          "description": "Un fondo más orgánico con líneas topográficas sutiles y acentos financieros apagados."
+          "name": "Flow",
+          "description": "Un fondo direccional tranquilo con bandas suaves de cashflow y acentos financieros apagados."
         },
         "glass": {
-          "name": "Glass",
-          "description": "Un escritorio premium más calmado, con superficies suaves, patrón mínimo y profundidad ligera."
+          "name": "Minimal",
+          "description": "Una superficie premium calmada, casi sin patrón, con luces suaves y mucho espacio negativo."
         }
       }
     },
