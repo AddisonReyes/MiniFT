@@ -1043,6 +1043,7 @@ async fn process_single_email(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn insert_import_record(
     pool: &PgPool,
     user_id: Uuid,
@@ -1085,6 +1086,7 @@ async fn insert_import_record(
     Ok(id)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn insert_import_record_in_transaction(
     transaction: &mut Transaction<'_, Postgres>,
     user_id: Uuid,
@@ -1104,7 +1106,7 @@ async fn insert_import_record_in_transaction(
     category_match_reason: Option<String>,
 ) -> Result<Uuid, ApiError> {
     let parsed_json = parsed_transaction
-        .map(|value| serde_json::to_value(value))
+        .map(serde_json::to_value)
         .transpose()
         .map_err(|_| ApiError::internal("Unable to serialize parsed import"))?;
     let snippet = parsed_email

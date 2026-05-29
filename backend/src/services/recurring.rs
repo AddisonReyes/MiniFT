@@ -123,6 +123,7 @@ async fn get_recurring(
     .ok_or_else(|| ApiError::not_found("Recurring transaction not found"))
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn build_recurring_write_input(
     pool: &PgPool,
     user_id: Uuid,

@@ -157,12 +157,11 @@ fn build_http_client(config: &ExchangeRateProviderConfig) -> Option<Client> {
     Client::builder()
         .timeout(Duration::from_secs(config.request_timeout_seconds))
         .build()
-        .map_err(|error| {
+        .inspect_err(|error| {
             logging::error(
                 "exchange_rates.provider.client_build_failed",
                 &[field("error", error.to_string())],
             );
-            error
         })
         .ok()
 }

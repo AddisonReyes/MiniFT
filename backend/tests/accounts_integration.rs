@@ -1,3 +1,5 @@
+#![allow(clippy::inconsistent_digit_grouping)]
+
 mod common;
 
 use common::{register_test_user, TestDatabase};

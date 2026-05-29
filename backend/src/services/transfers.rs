@@ -289,7 +289,7 @@ mod tests {
 
     #[test]
     fn rounds_converted_transfer_amount_to_two_decimals() {
-        let converted = convert_transfer_amount(Decimal::new(500_00, 2), Decimal::new(2, 2));
+        let converted = convert_transfer_amount(Decimal::new(50_000, 2), Decimal::new(2, 2));
 
         assert_eq!(converted, Decimal::new(10_00, 2));
     }

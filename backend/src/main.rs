@@ -113,6 +113,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
 }
 
 #[rocket::main]
+#[allow(clippy::result_large_err)]
 async fn main() -> Result<(), rocket::Error> {
     let rocket = match build_rocket().await {
         Ok(rocket) => rocket,
