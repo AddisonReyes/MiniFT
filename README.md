@@ -144,3 +144,5 @@ If you also package the frontend with Capacitor for Android against the same dep
 - Copy [frontend/.env.example](./frontend/.env.example) to `frontend/.env`.
 - Backend instructions: [backend/README.md](./backend/README.md)
 - Frontend instructions: [frontend/README.md](./frontend/README.md)
+
+The repository does not commit real environment files. Docker Compose treats `backend/.env` as optional and provides safe local defaults for development and CI validation, while production secrets should stay in Railway or the target deployment platform.
