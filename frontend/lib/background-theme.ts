@@ -1,17 +1,29 @@
 export const BACKGROUND_THEME_STORAGE_KEY = "minift_background_theme";
 export const BACKGROUND_THEME_CHANGE_EVENT = "minift-background-theme-change";
 
-export const BACKGROUND_THEMES = ["ledger", "cashflow", "glass"] as const;
+export const BACKGROUND_THEMES = ["structured", "flow", "minimal"] as const;
 
 export type BackgroundThemeId = (typeof BACKGROUND_THEMES)[number];
 
-export const DEFAULT_BACKGROUND_THEME: BackgroundThemeId = "ledger";
+export const DEFAULT_BACKGROUND_THEME: BackgroundThemeId = "structured";
+
+const LEGACY_BACKGROUND_THEMES: Record<string, BackgroundThemeId> = {
+  ledger: "structured",
+  cashflow: "flow",
+  glass: "minimal",
+};
 
 export function normalizeBackgroundTheme(
   value: string | null | undefined,
 ): BackgroundThemeId | null {
+  if (!value) {
+    return null;
+  }
+
   return BACKGROUND_THEMES.includes(value as BackgroundThemeId)
     ? (value as BackgroundThemeId)
+    : LEGACY_BACKGROUND_THEMES[value]
+      ? LEGACY_BACKGROUND_THEMES[value]
     : null;
 }
 
@@ -20,11 +32,32 @@ export function getStoredBackgroundTheme(): BackgroundThemeId {
     return DEFAULT_BACKGROUND_THEME;
   }
 
-  return (
+  const storedValue = window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY);
+  const normalizedTheme = normalizeBackgroundTheme(storedValue);
+
+  if (normalizedTheme && storedValue !== normalizedTheme) {
+    window.localStorage.setItem(BACKGROUND_THEME_STORAGE_KEY, normalizedTheme);
+  }
+
+  return normalizedTheme ?? DEFAULT_BACKGROUND_THEME;
+}
+
+export function hasStoredBackgroundTheme() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return Boolean(
     normalizeBackgroundTheme(
       window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY),
-    ) ?? DEFAULT_BACKGROUND_THEME
+    ),
   );
+}
+
+export function getRandomBackgroundTheme(): BackgroundThemeId {
+  const index = Math.floor(Math.random() * BACKGROUND_THEMES.length);
+
+  return BACKGROUND_THEMES[index] ?? DEFAULT_BACKGROUND_THEME;
 }
 
 export function applyBackgroundTheme(

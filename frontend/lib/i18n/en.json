@@ -798,15 +798,15 @@
       "description": "Choose the visual atmosphere used across MiniFT. The setting is saved on this device.",
       "backgroundLabel": "Background",
       "themes": {
-        "ledger": {
+        "structured": {
           "name": "Structured",
-          "description": "A precise finance-workspace background with subtle ledger lines and a clean accounting rhythm."
+          "description": "A precise finance-workspace background with subtle accounting lines and a clean monthly rhythm."
         },
-        "cashflow": {
+        "flow": {
           "name": "Flow",
-          "description": "A quiet directional background with soft cashflow bands and muted financial accents."
+          "description": "A quiet directional background with soft movement bands and muted financial accents."
         },
-        "glass": {
+        "minimal": {
           "name": "Minimal",
           "description": "A calm premium surface with almost no pattern, soft highlights, and generous negative space."
         }

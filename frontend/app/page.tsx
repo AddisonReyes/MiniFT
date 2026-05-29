@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BrandLink } from "@/components/brand-link";
@@ -10,11 +10,63 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { NativeAppLandingGate } from "@/components/native-app-landing-gate";
 import { SiteFooter } from "@/components/site-footer";
 import { Card, cn } from "@/components/ui";
+import {
+  applyBackgroundTheme,
+  DEFAULT_BACKGROUND_THEME,
+  getRandomBackgroundTheme,
+  hasStoredBackgroundTheme,
+} from "@/lib/background-theme";
 
 type LandingLink = {
   href: string;
   label: string;
 };
+
+function LandingReveal({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -12%", threshold: 0.12 },
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={cn("landing-reveal", className)}
+      data-visible={isVisible}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function LandingNav({ links }: { links: LandingLink[] }) {
   const { t } = useTranslation();
@@ -160,7 +212,7 @@ function SectionHeader({
   centered?: boolean;
 }) {
   return (
-    <div className={cn("mb-10 space-y-3", centered && "text-center")}> 
+    <LandingReveal className={cn("mb-10 space-y-3", centered && "text-center")}>
       <p className="text-xs uppercase tracking-[0.28em] text-signal">{eyebrow}</p>
       <h2 className="text-3xl font-semibold leading-tight sm:text-4xl">{title}</h2>
       {description ? (
@@ -168,12 +220,24 @@ function SectionHeader({
           {description}
         </p>
       ) : null}
-    </div>
+    </LandingReveal>
   );
 }
 
 export default function LandingPage() {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (hasStoredBackgroundTheme()) {
+      return;
+    }
+
+    applyBackgroundTheme(getRandomBackgroundTheme(), { animate: true });
+
+    return () => {
+      applyBackgroundTheme(DEFAULT_BACKGROUND_THEME);
+    };
+  }, []);
 
   const navLinks = [
     { href: "#home", label: t("landing.nav.home") },
@@ -304,7 +368,7 @@ export default function LandingPage() {
           id="home"
           className="grid min-w-0 scroll-mt-28 items-center gap-10 py-14 sm:py-18 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:py-20"
         >
-          <div className="min-w-0 space-y-8">
+          <LandingReveal className="min-w-0 space-y-8">
             <div className="space-y-5">
               <div className="inline-flex max-w-full rounded-full border border-signal/20 bg-signal/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-signal [overflow-wrap:anywhere] sm:tracking-[0.22em]">
                 {t("landing.hero.eyebrow")}
@@ -342,11 +406,11 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </LandingReveal>
 
-          <div className="panel min-w-0 max-w-full overflow-hidden p-3 sm:p-6">
+          <LandingReveal className="panel min-w-0 max-w-full overflow-hidden p-3 sm:p-6" delay={120}>
             <FinanceSnapshot showActivity />
-          </div>
+          </LandingReveal>
         </section>
 
         <section id="value" className="scroll-mt-28 border-t border-white/[0.06] py-20 sm:py-24">
@@ -358,8 +422,9 @@ export default function LandingPage() {
           />
 
           <div className="grid gap-4 md:grid-cols-3">
-            {valueCards.map((card) => (
-              <Card key={card.title} className="space-y-5 transition hover:border-white/15 hover:bg-white/[0.035]">
+            {valueCards.map((card, index) => (
+              <LandingReveal key={card.title} delay={index * 80}>
+              <Card className="h-full space-y-5 transition hover:border-white/15 hover:bg-white/[0.035]">
                 <div className="text-xs uppercase tracking-[0.22em] text-signal/80">
                   {card.metric}
                 </div>
@@ -368,6 +433,7 @@ export default function LandingPage() {
                   <p className="text-sm leading-6 text-mist">{card.description}</p>
                 </div>
               </Card>
+              </LandingReveal>
             ))}
           </div>
         </section>
@@ -381,8 +447,9 @@ export default function LandingPage() {
           />
 
           <div className="grid gap-8 md:grid-cols-3">
-            {steps.map((step) => (
-              <Card key={step.number} className="relative space-y-4 bg-white/[0.025]">
+            {steps.map((step, index) => (
+              <LandingReveal key={step.number} delay={index * 80}>
+              <Card className="relative h-full space-y-4 bg-white/[0.025]">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-signal/30 bg-signal/10 text-sm font-semibold text-signal">
                     {step.number}
@@ -393,6 +460,7 @@ export default function LandingPage() {
                   {step.description}
                 </p>
               </Card>
+              </LandingReveal>
             ))}
           </div>
         </section>
@@ -406,11 +474,9 @@ export default function LandingPage() {
           />
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {features.map((feature) => (
-              <Card
-                key={feature.key}
-                className="space-y-4 transition hover:border-white/15 hover:bg-white/[0.035]"
-              >
+            {features.map((feature, index) => (
+              <LandingReveal key={feature.key} delay={index * 70}>
+              <Card className="h-full space-y-4 transition hover:border-white/15 hover:bg-white/[0.035]">
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold">{feature.title}</h3>
                   <p className="text-sm leading-6 text-mist">
@@ -432,6 +498,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
               </Card>
+              </LandingReveal>
             ))}
           </div>
         </section>
@@ -445,9 +512,9 @@ export default function LandingPage() {
           />
 
           <div className="mx-auto grid max-w-4xl gap-3">
-            {faqs.map((item) => (
+            {faqs.map((item, index) => (
+              <LandingReveal key={item.question} delay={index * 45}>
               <details
-                key={item.question}
                 className="group rounded-[22px] border border-white/10 bg-white/[0.03] p-5 transition open:bg-white/[0.045]"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left font-medium text-white focus:outline-none focus:ring-2 focus:ring-signal/40">
@@ -458,11 +525,12 @@ export default function LandingPage() {
                 </summary>
                 <p className="mt-4 text-sm leading-6 text-mist">{item.answer}</p>
               </details>
+              </LandingReveal>
             ))}
           </div>
         </section>
 
-        <section className="mb-24 rounded-[24px] border border-white/10 bg-background-elevated px-6 py-14 text-center">
+        <LandingReveal className="mb-24 rounded-[24px] border border-white/10 bg-background-elevated px-6 py-14 text-center">
           <p className="text-xs uppercase tracking-[0.28em] text-signal">
             {t("landing.cta.eyebrow")}
           </p>
@@ -476,7 +544,7 @@ export default function LandingPage() {
           >
             {t("landing.cta.button")}
           </Link>
-        </section>
+        </LandingReveal>
 
         <SiteFooter className="pb-6" landingLinks={navLinks} />
       </main>
