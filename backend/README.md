@@ -32,7 +32,7 @@ ROCKET_ADDRESS=0.0.0.0
 ROCKET_PORT=8000
 ```
 
-`backend/.env` is not committed. Copy `backend/.env.example` to `backend/.env` for local development, or configure the same variables directly in Railway for production. Docker Compose can validate and start with local defaults when `backend/.env` is missing, but real deployments should use explicit production values.
+`backend/.env` is not committed. Copy `backend/.env.example` to `backend/.env` for local development, or configure the same variables directly in Railway for production. Docker Compose can validate when `backend/.env` is missing, but starting the backend requires real local or deployment-provided values.
 
 `TEST_DATABASE_URL` is optional but recommended for integration tests. If it is omitted, the test helpers fall back to `DATABASE_URL`.
 Frankfurter is used as the default online exchange-rate provider. Leave it enabled unless you want accounts to rely only on manual overrides.

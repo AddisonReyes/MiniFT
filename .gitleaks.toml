@@ -1,0 +1,16 @@
+title = "MiniFT Gitleaks Configuration"
+
+[allowlist]
+description = "Allow documented local-development placeholders only."
+regexes = [
+  '''postgres://postgres:postgres@(localhost|postgres):5432/minift''',
+  '''POSTGRES_PASSWORD:\s*postgres''',
+  '''JWT_SECRET[:=]\s*(ci-jwt-secret|replace-with-at-least-32-random-characters)''',
+  '''RESEND_API_KEY=re_xxxxxxxxx''',
+]
+paths = [
+  '''(^|/)backend/\.env\.example$''',
+  '''(^|/)backend/README\.md$''',
+  '''(^|/)\.github/workflows/ci\.yml$''',
+  '''(^|/)docker-compose\.yml$''',
+]
