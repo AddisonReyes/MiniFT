@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { PasswordInput } from "@/components/password-input";
 import { Card, Button, Input } from "@/components/ui";
 import {
   confirmPasswordReset,
@@ -136,9 +137,8 @@ export default function ForgotPasswordPage() {
 
               <div className="space-y-2">
                 <label htmlFor="reset-password">{t("auth.forgotPassword.newPasswordLabel")}</label>
-                <Input
+                <PasswordInput
                   id="reset-password"
-                  type="password"
                   placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -151,9 +151,8 @@ export default function ForgotPasswordPage() {
                 <label htmlFor="reset-password-confirmation">
                   {t("auth.forgotPassword.confirmPasswordLabel")}
                 </label>
-                <Input
+                <PasswordInput
                   id="reset-password-confirmation"
-                  type="password"
                   placeholder={t("auth.forgotPassword.confirmPasswordPlaceholder")}
                   value={passwordConfirmation}
                   onChange={(event) => setPasswordConfirmation(event.target.value)}
