@@ -26,13 +26,15 @@ function LandingReveal({
   children,
   className,
   delay = 0,
+  initialVisible = false,
 }: {
   children: ReactNode;
   className?: string;
   delay?: number;
+  initialVisible?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setVisible] = useState(false);
+  const [isVisible, setVisible] = useState(initialVisible);
 
   useEffect(() => {
     const element = ref.current;
@@ -54,7 +56,7 @@ function LandingReveal({
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, []);
+  }, [initialVisible]);
 
   return (
     <div
@@ -368,7 +370,7 @@ export default function LandingPage() {
           id="home"
           className="grid min-w-0 scroll-mt-28 items-center gap-10 py-14 sm:py-18 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:py-20"
         >
-          <LandingReveal className="min-w-0 space-y-8">
+          <LandingReveal className="min-w-0 space-y-8" initialVisible>
             <div className="space-y-5">
               <div className="inline-flex max-w-full rounded-full border border-signal/20 bg-signal/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-signal [overflow-wrap:anywhere] sm:tracking-[0.22em]">
                 {t("landing.hero.eyebrow")}
@@ -408,7 +410,11 @@ export default function LandingPage() {
             </div>
           </LandingReveal>
 
-          <LandingReveal className="panel min-w-0 max-w-full overflow-hidden p-3 sm:p-6" delay={120}>
+          <LandingReveal
+            className="panel min-w-0 max-w-full overflow-hidden p-3 sm:p-6"
+            delay={120}
+            initialVisible
+          >
             <FinanceSnapshot showActivity />
           </LandingReveal>
         </section>

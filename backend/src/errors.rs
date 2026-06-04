@@ -43,6 +43,10 @@ impl ApiError {
         Self::new(Status::Conflict, message)
     }
 
+    pub fn too_many_requests(message: impl Into<String>) -> Self {
+        Self::new(Status::TooManyRequests, message)
+    }
+
     pub fn internal(message: impl Into<String>) -> Self {
         Self::new(Status::InternalServerError, message)
     }

@@ -167,6 +167,13 @@ body[data-background-transitioning="true"] > div::after {
   }
 }
 
+@media (scripting: none) {
+  .landing-reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 body > div {
   min-height: 100vh;
   min-height: 100dvh;

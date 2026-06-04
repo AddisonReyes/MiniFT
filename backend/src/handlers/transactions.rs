@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::{
         common::{MessageResponse, MonthQuery},
         transaction::{
@@ -71,6 +71,7 @@ pub async fn list(
 pub async fn create(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<CreateTransactionRequest>,
 ) -> Result<Json<TransactionResponse>, ApiError> {
     Ok(Json(
@@ -141,6 +142,7 @@ pub async fn update(
     state: &State<AppState>,
     user: AuthUser,
     transaction_id: Uuid,
+    _origin: MutatingOrigin,
     payload: Json<UpdateTransactionRequest>,
 ) -> Result<Json<TransactionResponse>, ApiError> {
     Ok(Json(
@@ -180,6 +182,7 @@ pub async fn update(
 pub async fn delete(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     transaction_id: Uuid,
 ) -> Result<Json<MessageResponse>, ApiError> {
     transactions::delete_transaction(&state.pool, user.user_id, transaction_id).await?;

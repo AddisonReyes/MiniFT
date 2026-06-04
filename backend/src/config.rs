@@ -144,12 +144,7 @@ pub struct CorsConfig {
 }
 
 impl CorsConfig {
-    pub fn from_env() -> Result<Self, String> {
-        let raw_origins = env::var("CORS_ALLOWED_ORIGINS").unwrap_or_else(|_| {
-            "[\"http://localhost:3000\",\"http://localhost\",\"https://localhost\"]".to_string()
-        });
-        let allowed_origins = parse_allowed_origins(&raw_origins);
-
+    pub fn from_allowed_origins(allowed_origins: Vec<String>) -> Result<Self, String> {
         if allowed_origins
             .iter()
             .any(|allowed_origin| allowed_origin == "*")
@@ -161,6 +156,15 @@ impl CorsConfig {
         }
 
         Ok(Self { allowed_origins })
+    }
+
+    pub fn from_env() -> Result<Self, String> {
+        let raw_origins = env::var("CORS_ALLOWED_ORIGINS").unwrap_or_else(|_| {
+            "[\"http://localhost:3000\",\"http://localhost\",\"https://localhost\"]".to_string()
+        });
+        let allowed_origins = parse_allowed_origins(&raw_origins);
+
+        Self::from_allowed_origins(allowed_origins)
     }
 
     pub fn allowed_origin_header(&self, request_origin: &str) -> Option<String> {
@@ -189,6 +193,19 @@ impl WorkerConfig {
                 .ok()
                 .and_then(|value| value.parse().ok())
                 .unwrap_or(60),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DocsConfig {
+    pub enabled: bool,
+}
+
+impl DocsConfig {
+    pub fn from_env() -> Self {
+        Self {
+            enabled: parse_bool_env("DOCS_ENABLED", false),
         }
     }
 }
@@ -354,6 +371,7 @@ pub struct AppState {
     pub auth: AuthConfig,
     pub cors: CorsConfig,
     pub worker: WorkerConfig,
+    pub docs: DocsConfig,
     pub seed: SeedConfig,
     pub exchange_rates: ExchangeRateProviderConfig,
     pub google: GoogleIntegrationConfig,
@@ -365,7 +383,7 @@ mod tests {
     use rocket::http::SameSite;
 
     use super::{
-        parse_allowed_origins, parse_same_site, validate_jwt_secret, CorsConfig,
+        parse_allowed_origins, parse_same_site, validate_jwt_secret, CorsConfig, DocsConfig,
         ExchangeRateProviderConfig, GoogleIntegrationConfig,
     };
 
@@ -467,5 +485,12 @@ mod tests {
         };
 
         assert!(!config.is_configured());
+    }
+
+    #[test]
+    fn docs_config_is_disabled_by_default() {
+        let config = DocsConfig { enabled: false };
+
+        assert!(!config.enabled);
     }
 }

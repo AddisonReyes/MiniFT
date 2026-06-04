@@ -3,7 +3,7 @@ use rocket::{response::Redirect, serde::json::Json, State};
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::{
         common::MessageResponse,
         integration::{
@@ -114,6 +114,7 @@ pub async fn callback(
 pub async fn disconnect(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
 ) -> Result<Json<MessageResponse>, ApiError> {
     gmail_sync_service::disconnect_google_connection(state, user.user_id).await?;
     Ok(Json(MessageResponse::new("Google connection removed")))
@@ -186,6 +187,7 @@ pub async fn gmail_status(
 pub async fn sync_now(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
 ) -> Result<Json<GmailIntegrationStatusResponse>, ApiError> {
     Ok(Json(
         gmail_sync_service::trigger_manual_sync(state.inner().clone(), user.user_id).await?,
@@ -215,6 +217,7 @@ pub async fn sync_now(
 pub async fn update_preferences(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<UpdateGmailPreferencesRequest>,
 ) -> Result<Json<GmailIntegrationStatusResponse>, ApiError> {
     Ok(Json(

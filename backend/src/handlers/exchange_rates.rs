@@ -3,7 +3,7 @@ use rocket::{serde::json::Json, State};
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::exchange_rate::{ExchangeRateResponse, ReplaceExchangeRatesRequest},
     services::exchange_rates,
 };
@@ -76,6 +76,7 @@ pub async fn list(
 pub async fn replace(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<ReplaceExchangeRatesRequest>,
 ) -> Result<Json<Vec<ExchangeRateResponse>>, ApiError> {
     Ok(Json(

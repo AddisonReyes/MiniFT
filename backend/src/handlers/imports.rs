@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::imports::{
         ApproveImportRequest, ApproveReadyImportsResponse, EmailTransactionImportResponse,
         ImportListQuery, LinkAccountRequest, RejectImportRequest,
@@ -65,6 +65,7 @@ pub async fn approve(
     state: &State<AppState>,
     user: AuthUser,
     import_id: Uuid,
+    _origin: MutatingOrigin,
     payload: Json<ApproveImportRequest>,
 ) -> Result<Json<EmailTransactionImportResponse>, ApiError> {
     Ok(Json(
@@ -99,6 +100,7 @@ pub async fn reject(
     state: &State<AppState>,
     user: AuthUser,
     import_id: Uuid,
+    _origin: MutatingOrigin,
     payload: Json<RejectImportRequest>,
 ) -> Result<Json<EmailTransactionImportResponse>, ApiError> {
     Ok(Json(
@@ -137,6 +139,7 @@ pub async fn link_account(
     state: &State<AppState>,
     user: AuthUser,
     import_id: Uuid,
+    _origin: MutatingOrigin,
     payload: Json<LinkAccountRequest>,
 ) -> Result<Json<EmailTransactionImportResponse>, ApiError> {
     Ok(Json(
@@ -168,6 +171,7 @@ pub async fn link_account(
 pub async fn approve_ready(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
 ) -> Result<Json<ApproveReadyImportsResponse>, ApiError> {
     Ok(Json(
         gmail_sync_service::approve_ready_imports(&state.pool, user.user_id).await?,

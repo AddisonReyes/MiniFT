@@ -2,13 +2,12 @@ use std::env;
 
 use minift_backend::{
     config::{
-        AppState, AuthConfig, CorsConfig, EmailState, ExchangeRateProviderConfig, SeedConfig,
-        WorkerConfig,
+        AppState, AuthConfig, CorsConfig, DocsConfig, EmailState, ExchangeRateProviderConfig,
+        SeedConfig, WorkerConfig,
     },
     cors, db, docs, logging, routes, services,
 };
 use rocket::fairing::AdHoc;
-use utoipa_swagger_ui::SwaggerUi;
 
 async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
@@ -23,6 +22,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         auth: AuthConfig::from_env().map_err(std::io::Error::other)?,
         cors: CorsConfig::from_env().map_err(std::io::Error::other)?,
         worker: WorkerConfig::from_env(),
+        docs: DocsConfig::from_env(),
         seed: SeedConfig::from_env(),
         exchange_rates: ExchangeRateProviderConfig::from_env(),
         google: minift_backend::config::GoogleIntegrationConfig::from_env(),
@@ -45,7 +45,7 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
                 "auth_cookie_same_site",
                 format!("{:?}", state.auth.cookie_same_site),
             ),
-            logging::field("docs_enabled", true),
+            logging::field("docs_enabled", state.docs.enabled),
         ],
     );
 
@@ -53,24 +53,11 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
         .await
         .map_err(|error| std::io::Error::other(error.message.clone()))?;
 
-    let route_count = routes::all().len() + 2;
-    let docs_state = docs::ApiDocsState::from_openapi(docs::build_openapi(&state))
-        .map_err(std::io::Error::other)?;
-
     let rocket = rocket::build()
         .manage(state.clone())
-        .manage(docs_state.clone())
         .attach(cors::Cors)
         .attach(logging::HttpLogger)
         .mount("/", routes::all())
-        .mount(
-            "/",
-            rocket::routes![minift_backend::handlers::docs::openapi_json],
-        )
-        .mount(
-            "/",
-            SwaggerUi::new("/docs/<_..>").config(docs_state.swagger_ui_config()),
-        )
         .attach(AdHoc::on_liftoff("Recurring Worker", |rocket| {
             Box::pin(async move {
                 if let Some(state) = rocket.state::<AppState>().cloned() {
@@ -103,6 +90,19 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
                 }
             })
         }));
+    let route_count = if state.docs.enabled {
+        routes::all().len() + 2
+    } else {
+        routes::all().len()
+    };
+    let rocket = if state.docs.enabled {
+        let docs_state = docs::ApiDocsState::from_openapi(docs::build_openapi(&state))
+            .map_err(std::io::Error::other)?;
+
+        minift_backend::handlers::docs::mount_docs_routes(rocket, docs_state, true)
+    } else {
+        rocket
+    };
 
     logging::info(
         "app.startup.ready",

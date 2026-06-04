@@ -213,10 +213,7 @@ pub async fn get_transaction(
             field("user_id", user_id),
             field("transaction_id", transaction.id),
             field("account_id", transaction.account_id),
-            field("amount", transaction.amount),
             field("type", transaction.display_type),
-            field("category", &transaction.category),
-            field("date", transaction.date),
             field("transfer_id", transaction.transfer_id),
         ],
     );
@@ -280,10 +277,7 @@ pub async fn create_transaction(
             field("user_id", user_id),
             field("transaction_id", transaction.id),
             field("account_id", transaction.account_id),
-            field("amount", transaction.amount),
             field("type", transaction.display_type),
-            field("category", &transaction.category),
-            field("date", transaction.date),
         ],
     );
 
@@ -343,10 +337,7 @@ pub async fn update_transaction(
             field("user_id", user_id),
             field("transaction_id", transaction.id),
             field("account_id", transaction.account_id),
-            field("amount", transaction.amount),
             field("type", transaction.display_type),
-            field("category", &transaction.category),
-            field("date", transaction.date),
         ],
     );
 
@@ -380,10 +371,7 @@ pub async fn delete_transaction(
             field("user_id", user_id),
             field("transaction_id", transaction.id),
             field("account_id", transaction.account_id),
-            field("amount", transaction.amount),
             field("type", transaction.display_type),
-            field("category", &transaction.category),
-            field("date", transaction.date),
         ],
     );
 

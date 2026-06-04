@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::{
         common::MessageResponse,
         transfer::{CreateTransferRequest, TransferResponse},
@@ -62,6 +62,7 @@ pub async fn list(
 pub async fn create(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<CreateTransferRequest>,
 ) -> Result<Json<TransferResponse>, ApiError> {
     Ok(Json(
@@ -99,6 +100,7 @@ pub async fn create(
 pub async fn delete(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     transfer_id: Uuid,
 ) -> Result<Json<MessageResponse>, ApiError> {
     transfers::delete_transfer(&state.pool, user.user_id, transfer_id).await?;

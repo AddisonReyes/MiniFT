@@ -472,13 +472,10 @@ pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
         return Ok(());
     }
 
-    logging::info("seed.dev.started", &[field("email", DEMO_EMAIL)]);
+    logging::info("seed.dev.started", &[]);
 
     if demo_user_exists(&state.pool).await? {
-        logging::info(
-            "seed.dev.skipped_existing_user",
-            &[field("email", DEMO_EMAIL)],
-        );
+        logging::info("seed.dev.skipped_existing_user", &[]);
         return Ok(());
     }
 
@@ -507,7 +504,6 @@ pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
         "seed.dev.completed",
         &[
             field("user_id", user_id),
-            field("email", DEMO_EMAIL),
             field("default_currency", DEMO_DEFAULT_CURRENCY),
         ],
     );

@@ -157,8 +157,6 @@ pub async fn create_budget(
         &[
             field("user_id", user_id),
             field("budget_id", budget.id),
-            field("category", &budget.category),
-            field("limit_amount", budget.limit_amount),
             field("month", budget.month),
         ],
     );
@@ -215,10 +213,7 @@ pub async fn update_budget(
         &[
             field("user_id", user_id),
             field("budget_id", budget.id),
-            field("category", &budget.category),
-            field("limit_amount", budget.limit_amount),
             field("month", budget.month),
-            field("spent_amount", budget.spent_amount),
         ],
     );
 
@@ -263,11 +258,7 @@ pub async fn get_budget(
         &[
             field("user_id", user_id),
             field("budget_id", budget.id),
-            field("category", &budget.category),
-            field("limit_amount", budget.limit_amount),
             field("month", budget.month),
-            field("spent_amount", budget.spent_amount),
-            field("remaining_amount", budget.remaining_amount),
         ],
     );
 
@@ -291,8 +282,6 @@ pub async fn delete_budget(pool: &PgPool, user_id: Uuid, budget_id: Uuid) -> Res
         &[
             field("user_id", user_id),
             field("budget_id", budget.id),
-            field("category", &budget.category),
-            field("limit_amount", budget.limit_amount),
             field("month", budget.month),
         ],
     );

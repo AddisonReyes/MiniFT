@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui";
 import { useSessionQuery } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { describeError } from "@/lib/error-message";
 
 export function PageFrame({
   title,
@@ -47,7 +48,7 @@ export function PageFrame({
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t("pageFrame.errorTitle")}</h2>
-          <p>{session.error.message}</p>
+          <p>{describeError(session.error, t("pageFrame.errorTitle"))}</p>
         </Card>
       </div>
     );

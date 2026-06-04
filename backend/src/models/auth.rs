@@ -100,4 +100,6 @@ pub struct EmailChallengeRecord {
     pub created_at: DateTime<Utc>,
     pub used_at: Option<DateTime<Utc>>,
     pub revoked_at: Option<DateTime<Utc>>,
+    pub failed_attempts: i32,
+    pub max_attempts: i32,
 }

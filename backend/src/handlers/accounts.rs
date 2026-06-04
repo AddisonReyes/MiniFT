@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::{
         account::{AccountResponse, CreateAccountRequest, UpdateAccountRequest},
         common::MessageResponse,
@@ -92,6 +92,7 @@ pub async fn get(
 pub async fn create(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<CreateAccountRequest>,
 ) -> Result<Json<AccountResponse>, ApiError> {
     Ok(Json(
@@ -126,6 +127,7 @@ pub async fn update(
     state: &State<AppState>,
     user: AuthUser,
     account_id: Uuid,
+    _origin: MutatingOrigin,
     payload: Json<UpdateAccountRequest>,
 ) -> Result<Json<AccountResponse>, ApiError> {
     Ok(Json(
@@ -159,6 +161,7 @@ pub async fn update(
 pub async fn delete(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     account_id: Uuid,
 ) -> Result<Json<MessageResponse>, ApiError> {
     accounts::delete_account(&state.pool, user.user_id, account_id).await?;

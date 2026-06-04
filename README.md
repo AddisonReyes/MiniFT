@@ -38,7 +38,7 @@ Once the stack is ready:
 - Backend health: `http://localhost:8000/health`
 - Railway backend: `https://minift-backend.up.railway.app/`
 
-The backend also exposes public API documentation:
+The local development backend exposes API documentation when `DOCS_ENABLED=true`:
 
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
@@ -65,7 +65,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 
 - JWT access cookies with rotated refresh sessions
 - Email verification on registration plus Resend-backed password reset and password change confirmations
-- Generated OpenAPI 3.1 spec with embedded public Swagger UI
+- Optional OpenAPI 3.1 spec with embedded Swagger UI
 - Argon2 password hashing
 - Default `Cash` account created at registration using the user's default currency
 - Per-account currencies plus user-owned exchange rate overrides layered over Frankfurter daily rates
@@ -105,10 +105,12 @@ GitHub Actions mirrors this baseline in [.github/workflows/ci.yml](./.github/wor
 
 ## API Documentation
 
-The backend serves interactive API docs directly from Rocket:
+The backend can serve interactive API docs directly from Rocket when `DOCS_ENABLED=true`:
 
 - Swagger UI: `http://localhost:8000/docs`
 - OpenAPI JSON: `http://localhost:8000/api-docs/openapi.json`
+
+`DOCS_ENABLED` defaults to `false` for production-safe startup. The sample backend env file sets it to `true` for local development.
 Protected API endpoints still accept either a Bearer access token or the configured HttpOnly access cookie once you're inside the docs.
 
 ## Exchange Rates

@@ -226,10 +226,8 @@ pub async fn get_account(
         &[
             field("user_id", user_id),
             field("account_id", account.id),
-            field("name", &account.name),
             field("type", account.r#type),
             field("currency", &account.currency),
-            field("balance", account.balance),
         ],
     );
 
@@ -266,7 +264,6 @@ pub async fn create_account(
         &[
             field("user_id", user_id),
             field("account_id", created_account.id),
-            field("name", &created_account.name),
             field("type", created_account.r#type),
             field("currency", &created_account.currency),
         ],
@@ -312,10 +309,8 @@ pub async fn update_account(
         &[
             field("user_id", user_id),
             field("account_id", updated_account.id),
-            field("name", &updated_account.name),
             field("type", updated_account.r#type),
             field("currency", &updated_account.currency),
-            field("balance", updated_account.balance),
         ],
     );
 
@@ -360,7 +355,6 @@ pub async fn delete_account(
         &[
             field("user_id", user_id),
             field("account_id", account.id),
-            field("name", &account.name),
             field("type", account.r#type),
             field("currency", &account.currency),
         ],

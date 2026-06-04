@@ -227,8 +227,6 @@ pub async fn create_transfer(
             field("to_account_id", response.to_account_id),
             field("from_currency", &from_account.currency),
             field("to_currency", &to_account.currency),
-            field("source_amount", response.amount),
-            field("destination_amount", destination_amount),
             field("exchange_rate", applied_exchange_rate),
             field("same_currency_transfer", same_currency_transfer),
             field("date", response.date),

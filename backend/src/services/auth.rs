@@ -28,6 +28,9 @@ use crate::{
     services::normalize_currency_code,
 };
 
+const PASSWORD_CODE_MAX_ATTEMPTS: i32 = 5;
+const EMAIL_CHALLENGE_REQUEST_COOLDOWN_SECONDS: i64 = 60;
+
 #[derive(Debug, Clone)]
 pub struct IssuedAuthSession {
     pub user: UserProfile,
@@ -308,7 +311,8 @@ async fn find_email_challenge_for_update(
     purpose: EmailChallengePurpose,
 ) -> Result<Option<EmailChallengeRecord>, ApiError> {
     sqlx::query_as::<_, EmailChallengeRecord>(
-        "SELECT id, user_id, purpose, secret_hash, expires_at, created_at, used_at, revoked_at
+        "SELECT id, user_id, purpose, secret_hash, expires_at, created_at, used_at, revoked_at,
+                failed_attempts, max_attempts
          FROM email_challenges
          WHERE id = $1
            AND purpose = $2
@@ -327,7 +331,8 @@ async fn find_active_email_challenge_for_update(
     purpose: EmailChallengePurpose,
 ) -> Result<Option<EmailChallengeRecord>, ApiError> {
     sqlx::query_as::<_, EmailChallengeRecord>(
-        "SELECT id, user_id, purpose, secret_hash, expires_at, created_at, used_at, revoked_at
+        "SELECT id, user_id, purpose, secret_hash, expires_at, created_at, used_at, revoked_at,
+                failed_attempts, max_attempts
          FROM email_challenges
          WHERE user_id = $1
            AND purpose = $2
@@ -342,6 +347,30 @@ async fn find_active_email_challenge_for_update(
     .fetch_optional(&mut **transaction)
     .await
     .map_err(ApiError::from)
+}
+
+async fn find_recent_active_email_challenge(
+    pool: &PgPool,
+    user_id: Uuid,
+    purpose: EmailChallengePurpose,
+    cooldown_seconds: i64,
+) -> Result<bool, ApiError> {
+    Ok(sqlx::query_scalar(
+        "SELECT EXISTS(
+           SELECT 1
+           FROM email_challenges
+           WHERE user_id = $1
+             AND purpose = $2
+             AND used_at IS NULL
+             AND revoked_at IS NULL
+             AND created_at > NOW() - ($3::text || ' seconds')::interval
+         )",
+    )
+    .bind(user_id)
+    .bind(purpose)
+    .bind(cooldown_seconds)
+    .fetch_one(pool)
+    .await?)
 }
 
 async fn revoke_active_email_challenges(
@@ -397,25 +426,48 @@ async fn revoke_email_challenge(
     Ok(())
 }
 
+async fn record_email_challenge_failed_attempt(
+    transaction: &mut Transaction<'_, Postgres>,
+    challenge: &EmailChallengeRecord,
+) -> Result<i32, ApiError> {
+    let failed_attempts = sqlx::query_scalar(
+        "UPDATE email_challenges
+         SET failed_attempts = failed_attempts + 1
+         WHERE id = $1
+         RETURNING failed_attempts",
+    )
+    .bind(challenge.id)
+    .fetch_one(&mut **transaction)
+    .await?;
+
+    if failed_attempts >= challenge.max_attempts {
+        revoke_email_challenge(transaction, challenge.id).await?;
+    }
+
+    Ok(failed_attempts)
+}
+
 async fn insert_email_challenge(
     transaction: &mut Transaction<'_, Postgres>,
     user_id: Uuid,
     purpose: EmailChallengePurpose,
     secret: &str,
     expires_at: chrono::DateTime<Utc>,
+    max_attempts: i32,
 ) -> Result<Uuid, ApiError> {
     let challenge_id = Uuid::new_v4();
     let secret_hash = hash_secret(secret)?;
 
     sqlx::query(
-        "INSERT INTO email_challenges (id, user_id, purpose, secret_hash, expires_at)
-         VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO email_challenges (id, user_id, purpose, secret_hash, expires_at, max_attempts)
+         VALUES ($1, $2, $3, $4, $5, $6)",
     )
     .bind(challenge_id)
     .bind(user_id)
     .bind(purpose)
     .bind(secret_hash)
     .bind(expires_at)
+    .bind(max_attempts)
     .execute(&mut **transaction)
     .await?;
 
@@ -438,6 +490,7 @@ async fn create_email_verification_challenge(
         EmailChallengePurpose::VerifyEmail,
         &secret,
         expires_at,
+        PASSWORD_CODE_MAX_ATTEMPTS,
     )
     .await?;
 
@@ -454,7 +507,15 @@ async fn create_password_code_challenge(
 
     let code = create_password_code();
     let expires_at = Utc::now() + Duration::minutes(ttl_minutes.max(1));
-    insert_email_challenge(transaction, user_id, purpose, &code, expires_at).await?;
+    insert_email_challenge(
+        transaction,
+        user_id,
+        purpose,
+        &code,
+        expires_at,
+        PASSWORD_CODE_MAX_ATTEMPTS,
+    )
+    .await?;
 
     Ok(code)
 }
@@ -603,10 +664,7 @@ pub async fn register_user(
         if is_unique_violation(&error) {
             logging::warn(
                 "auth.register.failed",
-                &[
-                    field("email", &email),
-                    field("reason", "email_already_registered"),
-                ],
+                &[field("reason", "email_already_registered")],
             );
             ApiError::conflict("Email is already registered")
         } else {
@@ -636,7 +694,6 @@ pub async fn register_user(
         "auth.register.succeeded",
         &[
             field("user_id", profile.id),
-            field("email", &profile.email),
             field("currency", &profile.currency),
             field("email_verified", profile.email_verified_at.is_some()),
         ],
@@ -658,7 +715,7 @@ pub async fn prepare_verification_email(
     let Some(user) = find_user_by_email(pool, &email).await? else {
         logging::info(
             "auth.verification.resend.skipped",
-            &[field("email", &email), field("reason", "user_not_found")],
+            &[field("reason", "user_not_found")],
         );
         return Ok(None);
     };
@@ -668,8 +725,25 @@ pub async fn prepare_verification_email(
             "auth.verification.resend.skipped",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
                 field("reason", "already_verified"),
+            ],
+        );
+        return Ok(None);
+    }
+
+    if find_recent_active_email_challenge(
+        pool,
+        user.id,
+        EmailChallengePurpose::VerifyEmail,
+        EMAIL_CHALLENGE_REQUEST_COOLDOWN_SECONDS,
+    )
+    .await?
+    {
+        logging::info(
+            "auth.verification.resend.skipped",
+            &[
+                field("user_id", user.id),
+                field("reason", "cooldown_active"),
             ],
         );
         return Ok(None);
@@ -683,7 +757,7 @@ pub async fn prepare_verification_email(
 
     logging::info(
         "auth.verification.resend.prepared",
-        &[field("user_id", user.id), field("email", &user.email)],
+        &[field("user_id", user.id)],
     );
 
     Ok(Some(VerificationEmailDelivery {
@@ -772,7 +846,6 @@ pub async fn verify_email_token(
         "auth.verification.succeeded",
         &[
             field("user_id", session.user.id),
-            field("email", &session.user.email),
             field("challenge_id", challenge.id),
         ],
     );
@@ -790,10 +863,7 @@ pub async fn login_user(
     let user = match find_user_by_email(pool, &email).await? {
         Some(user) => user,
         None => {
-            logging::warn(
-                "auth.login.failed",
-                &[field("email", &email), field("reason", "user_not_found")],
-            );
+            logging::warn("auth.login.failed", &[field("reason", "user_not_found")]);
             return Err(ApiError::unauthorized("Invalid credentials"));
         }
     };
@@ -807,7 +877,6 @@ pub async fn login_user(
             "auth.login.failed",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
                 field("reason", "invalid_password"),
             ],
         );
@@ -819,7 +888,6 @@ pub async fn login_user(
             "auth.login.failed",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
                 field("reason", "email_not_verified"),
             ],
         );
@@ -828,13 +896,7 @@ pub async fn login_user(
 
     let session = issue_auth_session(pool, auth, &user).await?;
 
-    logging::info(
-        "auth.login.succeeded",
-        &[
-            field("user_id", session.user.id),
-            field("email", &session.user.email),
-        ],
-    );
+    logging::info("auth.login.succeeded", &[field("user_id", session.user.id)]);
 
     Ok(session)
 }
@@ -938,7 +1000,6 @@ pub async fn refresh_session(
         "auth.refresh.succeeded",
         &[
             field("user_id", issued_session.user.id),
-            field("email", &issued_session.user.email),
             field("previous_session_id", session.id),
             field("replacement_session_id", replacement_session_id),
         ],
@@ -998,10 +1059,28 @@ pub async fn request_password_reset_code(
     let Some(user) = find_user_by_email(pool, &email).await? else {
         logging::info(
             "auth.password_reset.request.skipped",
-            &[field("email", &email), field("reason", "user_not_found")],
+            &[field("reason", "user_not_found")],
         );
         return Ok(None);
     };
+
+    if find_recent_active_email_challenge(
+        pool,
+        user.id,
+        EmailChallengePurpose::PasswordReset,
+        EMAIL_CHALLENGE_REQUEST_COOLDOWN_SECONDS,
+    )
+    .await?
+    {
+        logging::info(
+            "auth.password_reset.request.skipped",
+            &[
+                field("user_id", user.id),
+                field("reason", "cooldown_active"),
+            ],
+        );
+        return Ok(None);
+    }
 
     let mut transaction = pool.begin().await?;
     let code = create_password_code_challenge(
@@ -1015,7 +1094,7 @@ pub async fn request_password_reset_code(
 
     logging::info(
         "auth.password_reset.request.prepared",
-        &[field("user_id", user.id), field("email", &user.email)],
+        &[field("user_id", user.id)],
     );
 
     Ok(Some(PasswordCodeDelivery {
@@ -1058,20 +1137,36 @@ pub async fn confirm_password_reset(
             "auth.password_reset.confirm.failed",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
                 field("reason", "challenge_expired_or_inactive"),
             ],
         );
         return Err(invalid_password_code());
     }
 
-    if let Err(error) = verify_secret(&code, &challenge.secret_hash, "Invalid or expired code") {
+    if challenge.failed_attempts >= challenge.max_attempts {
+        revoke_email_challenge(&mut transaction, challenge.id).await?;
+        transaction.commit().await?;
         logging::warn(
             "auth.password_reset.confirm.failed",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
+                field("reason", "challenge_attempts_exhausted"),
+            ],
+        );
+        return Err(invalid_password_code());
+    }
+
+    if let Err(error) = verify_secret(&code, &challenge.secret_hash, "Invalid or expired code") {
+        let failed_attempts =
+            record_email_challenge_failed_attempt(&mut transaction, &challenge).await?;
+        transaction.commit().await?;
+        logging::warn(
+            "auth.password_reset.confirm.failed",
+            &[
+                field("user_id", user.id),
                 field("reason", "secret_mismatch"),
+                field("failed_attempts", failed_attempts),
+                field("max_attempts", challenge.max_attempts),
             ],
         );
         return Err(error);
@@ -1085,7 +1180,7 @@ pub async fn confirm_password_reset(
 
     logging::info(
         "auth.password_reset.confirm.succeeded",
-        &[field("user_id", user.id), field("email", &user.email)],
+        &[field("user_id", user.id)],
     );
 
     Ok(())
@@ -1100,6 +1195,26 @@ pub async fn request_password_change_code(
         .await?
         .ok_or_else(|| ApiError::not_found("User not found"))?;
 
+    if find_recent_active_email_challenge(
+        pool,
+        user.id,
+        EmailChallengePurpose::PasswordChange,
+        EMAIL_CHALLENGE_REQUEST_COOLDOWN_SECONDS,
+    )
+    .await?
+    {
+        logging::warn(
+            "auth.password_change.request.rejected",
+            &[
+                field("user_id", user.id),
+                field("reason", "cooldown_active"),
+            ],
+        );
+        return Err(ApiError::too_many_requests(
+            "Please wait before requesting another confirmation code",
+        ));
+    }
+
     let mut transaction = pool.begin().await?;
     let code = create_password_code_challenge(
         &mut transaction,
@@ -1112,7 +1227,7 @@ pub async fn request_password_change_code(
 
     logging::info(
         "auth.password_change.request.prepared",
-        &[field("user_id", user.id), field("email", &user.email)],
+        &[field("user_id", user.id)],
     );
 
     Ok(PasswordCodeDelivery {
@@ -1156,20 +1271,36 @@ pub async fn confirm_password_change(
             "auth.password_change.confirm.failed",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
                 field("reason", "challenge_expired_or_inactive"),
             ],
         );
         return Err(invalid_password_code());
     }
 
-    if let Err(error) = verify_secret(&code, &challenge.secret_hash, "Invalid or expired code") {
+    if challenge.failed_attempts >= challenge.max_attempts {
+        revoke_email_challenge(&mut transaction, challenge.id).await?;
+        transaction.commit().await?;
         logging::warn(
             "auth.password_change.confirm.failed",
             &[
                 field("user_id", user.id),
-                field("email", &user.email),
+                field("reason", "challenge_attempts_exhausted"),
+            ],
+        );
+        return Err(invalid_password_code());
+    }
+
+    if let Err(error) = verify_secret(&code, &challenge.secret_hash, "Invalid or expired code") {
+        let failed_attempts =
+            record_email_challenge_failed_attempt(&mut transaction, &challenge).await?;
+        transaction.commit().await?;
+        logging::warn(
+            "auth.password_change.confirm.failed",
+            &[
+                field("user_id", user.id),
                 field("reason", "secret_mismatch"),
+                field("failed_attempts", failed_attempts),
+                field("max_attempts", challenge.max_attempts),
             ],
         );
         return Err(error);
@@ -1183,7 +1314,7 @@ pub async fn confirm_password_change(
 
     logging::info(
         "auth.password_change.confirm.succeeded",
-        &[field("user_id", user.id), field("email", &user.email)],
+        &[field("user_id", user.id)],
     );
 
     issue_auth_session(pool, auth, &user).await
@@ -1200,7 +1331,6 @@ pub async fn get_user_profile(pool: &PgPool, user_id: Uuid) -> Result<UserProfil
         "auth.profile.read",
         &[
             field("user_id", profile.id),
-            field("email", &profile.email),
             field("currency", &profile.currency),
             field("email_verified", profile.email_verified_at.is_some()),
         ],
@@ -1236,7 +1366,6 @@ pub async fn update_default_currency(
         "auth.default_currency.updated",
         &[
             field("user_id", profile.id),
-            field("email", &profile.email),
             field("currency", &profile.currency),
         ],
     );

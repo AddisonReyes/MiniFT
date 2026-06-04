@@ -341,10 +341,7 @@ pub async fn handle_google_callback(
 
     logging::info(
         "integrations.google.connected",
-        &[
-            field("user_id", claims.sub),
-            field("google_email", profile.email_address),
-        ],
+        &[field("user_id", claims.sub)],
     );
 
     let user_id = claims.sub;
@@ -384,10 +381,7 @@ pub async fn disconnect_google_connection(state: &AppState, user_id: Uuid) -> Re
 
     logging::info(
         "integrations.google.disconnected",
-        &[
-            field("user_id", user_id),
-            field("google_email", connection.google_email),
-        ],
+        &[field("user_id", user_id)],
     );
 
     Ok(())
@@ -792,7 +786,7 @@ async fn sync_user_connection(
         let mut latest_history_id = connection.gmail_history_id;
 
         for message_ref in message_refs {
-            if import_exists(&state.pool, &message_ref.id).await? {
+            if import_exists(&state.pool, user_id, &message_ref.id).await? {
                 continue;
             }
 
@@ -809,7 +803,8 @@ async fn sync_user_connection(
                         parse_gmail_message(&message).map_err(ApiError::bad_request)?;
                     if let Some(last_synced_at) = last_synced_at {
                         if parsed_email.sent_at <= last_synced_at
-                            && import_exists(&state.pool, &parsed_email.gmail_message_id).await?
+                            && import_exists(&state.pool, user_id, &parsed_email.gmail_message_id)
+                                .await?
                         {
                             continue;
                         }
@@ -2047,10 +2042,7 @@ async fn ensure_valid_access_token(
 
     logging::info(
         "integrations.google.token_refreshed",
-        &[
-            field("user_id", connection.user_id),
-            field("google_email", connection.google_email),
-        ],
+        &[field("user_id", connection.user_id)],
     );
 
     get_connection_for_user(&state.pool, connection.user_id)
@@ -2395,14 +2387,20 @@ async fn parse_json_response<T: DeserializeOwned>(
         .map_err(|_| ApiError::internal(failure_message))
 }
 
-async fn import_exists(pool: &PgPool, gmail_message_id: &str) -> Result<bool, ApiError> {
+async fn import_exists(
+    pool: &PgPool,
+    user_id: Uuid,
+    gmail_message_id: &str,
+) -> Result<bool, ApiError> {
     Ok(sqlx::query_scalar(
         "SELECT EXISTS(
             SELECT 1
             FROM email_transaction_imports
-            WHERE gmail_message_id = $1
+            WHERE user_id = $1
+              AND gmail_message_id = $2
          )",
     )
+    .bind(user_id)
     .bind(gmail_message_id)
     .fetch_one(pool)
     .await?)

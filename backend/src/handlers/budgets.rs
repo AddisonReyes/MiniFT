@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     schema::{
         budget::{BudgetFilters, BudgetResponse, CreateBudgetRequest, UpdateBudgetRequest},
         common::MessageResponse,
@@ -69,6 +69,7 @@ pub async fn list(
 pub async fn create(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<CreateBudgetRequest>,
 ) -> Result<Json<BudgetResponse>, ApiError> {
     Ok(Json(
@@ -135,6 +136,7 @@ pub async fn update(
     state: &State<AppState>,
     user: AuthUser,
     budget_id: Uuid,
+    _origin: MutatingOrigin,
     payload: Json<UpdateBudgetRequest>,
 ) -> Result<Json<BudgetResponse>, ApiError> {
     Ok(Json(
@@ -166,6 +168,7 @@ pub async fn update(
 pub async fn delete(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     budget_id: Uuid,
 ) -> Result<Json<MessageResponse>, ApiError> {
     budgets::delete_budget(&state.pool, user.user_id, budget_id).await?;

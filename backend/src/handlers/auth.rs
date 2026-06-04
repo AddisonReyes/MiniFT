@@ -7,7 +7,7 @@ use rocket::{
 use crate::{
     config::AppState,
     errors::{ApiError, ErrorResponse},
-    guards::AuthUser,
+    guards::{AuthUser, MutatingOrigin},
     logging::{self, field},
     models::auth::UserProfile,
     schema::{
@@ -102,6 +102,7 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
 #[post("/api/auth/register", format = "json", data = "<payload>")]
 pub async fn register(
     state: &State<AppState>,
+    _origin: MutatingOrigin,
     payload: Json<RegisterRequest>,
 ) -> Result<Json<RegistrationResponse>, ApiError> {
     let registration = auth::register_user(
@@ -123,7 +124,7 @@ pub async fn register(
             logging::error(
                 "auth.register.verification_email.failed",
                 &[
-                    field("email", &email_address),
+                    field("user_id", registration.user.id),
                     field("error", &error.message),
                 ],
             );
@@ -159,6 +160,7 @@ pub async fn register(
 )]
 pub async fn resend_verification(
     state: &State<AppState>,
+    _origin: MutatingOrigin,
     payload: Json<ResendVerificationRequest>,
 ) -> Result<Json<MessageResponse>, ApiError> {
     let email_address = payload.email.clone();
@@ -205,6 +207,7 @@ pub async fn resend_verification(
 pub async fn verify_email(
     state: &State<AppState>,
     cookies: &CookieJar<'_>,
+    _origin: MutatingOrigin,
     payload: Json<VerifyEmailRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
     let session = auth::verify_email_token(&state.pool, &state.auth, &payload.token).await?;
@@ -239,6 +242,7 @@ pub async fn verify_email(
 pub async fn login(
     state: &State<AppState>,
     cookies: &CookieJar<'_>,
+    _origin: MutatingOrigin,
     payload: Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
     let session = auth::login_user(&state.pool, &state.auth, payload.into_inner()).await?;
@@ -267,6 +271,7 @@ pub async fn login(
 )]
 pub async fn request_password_reset(
     state: &State<AppState>,
+    _origin: MutatingOrigin,
     payload: Json<PasswordResetRequest>,
 ) -> Result<Json<MessageResponse>, ApiError> {
     if let Some(delivery) = auth::request_password_reset_code(
@@ -312,6 +317,7 @@ pub async fn request_password_reset(
 )]
 pub async fn confirm_password_reset(
     state: &State<AppState>,
+    _origin: MutatingOrigin,
     payload: Json<ConfirmPasswordResetRequest>,
 ) -> Result<Json<MessageResponse>, ApiError> {
     auth::confirm_password_reset(&state.pool, payload.into_inner()).await?;
@@ -343,6 +349,7 @@ pub async fn confirm_password_reset(
 pub async fn request_password_change(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
 ) -> Result<Json<MessageResponse>, ApiError> {
     let delivery = auth::request_password_change_code(
         &state.pool,
@@ -400,6 +407,7 @@ pub async fn confirm_password_change(
     state: &State<AppState>,
     cookies: &CookieJar<'_>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<ConfirmPasswordChangeRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
     let session =
@@ -437,6 +445,7 @@ pub async fn confirm_password_change(
 pub async fn refresh(
     state: &State<AppState>,
     cookies: &CookieJar<'_>,
+    _origin: MutatingOrigin,
 ) -> Result<Json<AuthResponse>, ApiError> {
     let refresh_token = cookies
         .get(state.auth.refresh_cookie_name.as_str())
@@ -471,6 +480,7 @@ pub async fn refresh(
 pub async fn logout(
     state: &State<AppState>,
     cookies: &CookieJar<'_>,
+    _origin: MutatingOrigin,
 ) -> Result<Json<MessageResponse>, ApiError> {
     let refresh_token = cookies
         .get(state.auth.refresh_cookie_name.as_str())
@@ -530,6 +540,7 @@ pub async fn me(state: &State<AppState>, user: AuthUser) -> Result<Json<UserProf
 pub async fn update_me(
     state: &State<AppState>,
     user: AuthUser,
+    _origin: MutatingOrigin,
     payload: Json<UpdateDefaultCurrencyRequest>,
 ) -> Result<Json<UserProfile>, ApiError> {
     Ok(Json(

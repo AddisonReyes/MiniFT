@@ -1,6 +1,6 @@
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use rocket::{
-    http::Status,
+    http::{Method, Status},
     request::{FromRequest, Outcome, Request},
 };
 use uuid::Uuid;
@@ -15,6 +15,68 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct AuthUser {
     pub user_id: Uuid,
+}
+
+#[derive(Debug, Clone)]
+pub struct MutatingOrigin;
+
+fn has_bearer_authorization(request: &Request<'_>) -> bool {
+    request
+        .headers()
+        .get_one("Authorization")
+        .and_then(|header| header.strip_prefix("Bearer "))
+        .is_some_and(|token| !token.trim().is_empty())
+}
+
+fn is_mutating_method(method: Method) -> bool {
+    matches!(
+        method,
+        Method::Post | Method::Put | Method::Patch | Method::Delete
+    )
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for MutatingOrigin {
+    type Error = ApiError;
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        if !is_mutating_method(request.method()) || has_bearer_authorization(request) {
+            return Outcome::Success(Self);
+        }
+
+        let Some(origin) = request.headers().get_one("Origin") else {
+            return Outcome::Success(Self);
+        };
+
+        let allowed_origin = request
+            .rocket()
+            .state::<AppState>()
+            .and_then(|state| state.cors.allowed_origin_header(origin))
+            .or_else(|| {
+                request
+                    .rocket()
+                    .state::<crate::config::CorsConfig>()
+                    .and_then(|cors| cors.allowed_origin_header(origin))
+            });
+
+        if allowed_origin.is_some() {
+            return Outcome::Success(Self);
+        }
+
+        logging::warn(
+            "auth.origin.rejected",
+            &[
+                field("method", request.method().as_str()),
+                field("path", request.uri().path().to_string()),
+                field("origin", origin),
+            ],
+        );
+
+        Outcome::Error((
+            Status::Forbidden,
+            ApiError::forbidden("Origin is not allowed for credentialed requests"),
+        ))
+    }
 }
 
 #[rocket::async_trait]
@@ -94,5 +156,68 @@ impl<'r> FromRequest<'r> for AuthUser {
         Outcome::Success(AuthUser {
             user_id: claims.sub,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rocket::{http::Status, local::blocking::Client};
+
+    use super::MutatingOrigin;
+    use crate::config::CorsConfig;
+
+    #[post("/guarded")]
+    fn guarded(_origin: MutatingOrigin) -> &'static str {
+        "ok"
+    }
+
+    fn client() -> Client {
+        let cors =
+            CorsConfig::from_allowed_origins(vec!["https://app.example".to_string()]).unwrap();
+
+        Client::tracked(rocket::build().manage(cors).mount("/", routes![guarded]))
+            .expect("test client should build")
+    }
+
+    #[test]
+    fn mutating_origin_allows_missing_origin() {
+        let client = client();
+        let response = client.post("/guarded").dispatch();
+
+        assert_eq!(response.status(), Status::Ok);
+    }
+
+    #[test]
+    fn mutating_origin_allows_configured_origin() {
+        let client = client();
+        let response = client
+            .post("/guarded")
+            .header(rocket::http::Header::new("Origin", "https://app.example"))
+            .dispatch();
+
+        assert_eq!(response.status(), Status::Ok);
+    }
+
+    #[test]
+    fn mutating_origin_allows_bearer_clients() {
+        let client = client();
+        let response = client
+            .post("/guarded")
+            .header(rocket::http::Header::new("Origin", "https://evil.example"))
+            .header(rocket::http::Header::new("Authorization", "Bearer token"))
+            .dispatch();
+
+        assert_eq!(response.status(), Status::Ok);
+    }
+
+    #[test]
+    fn mutating_origin_rejects_foreign_origin() {
+        let client = client();
+        let response = client
+            .post("/guarded")
+            .header(rocket::http::Header::new("Origin", "https://evil.example"))
+            .dispatch();
+
+        assert_eq!(response.status(), Status::Forbidden);
     }
 }
