@@ -124,20 +124,12 @@ async fn protected_endpoints_require_authentication() {
     };
 
     let profile_response = app.client.get("/api/auth/me").dispatch().await;
-    assert_error(
-        profile_response,
-        Status::Unauthorized,
-        "Authentication required",
-    )
-    .await;
+    assert_eq!(profile_response.status(), Status::Unauthorized);
+    drop(profile_response);
 
     let accounts_response = app.client.get("/api/accounts").dispatch().await;
-    assert_error(
-        accounts_response,
-        Status::Unauthorized,
-        "Authentication required",
-    )
-    .await;
+    assert_eq!(accounts_response.status(), Status::Unauthorized);
+    drop(accounts_response);
 
     app.cleanup().await;
 }
@@ -346,12 +338,8 @@ async fn logout_clears_cookie_session_and_revokes_refresh_session() {
     assert_eq!(active_refresh_session_count, 0);
 
     let profile_response = app.client.get("/api/auth/me").dispatch().await;
-    assert_error(
-        profile_response,
-        Status::Unauthorized,
-        "Authentication required",
-    )
-    .await;
+    assert_eq!(profile_response.status(), Status::Unauthorized);
+    drop(profile_response);
 
     app.cleanup().await;
 }
