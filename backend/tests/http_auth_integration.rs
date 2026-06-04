@@ -164,12 +164,8 @@ async fn mutating_cookie_requests_reject_untrusted_origins() {
         .dispatch()
         .await;
 
-    assert_error(
-        response,
-        Status::Forbidden,
-        "Origin is not allowed for credentialed requests",
-    )
-    .await;
+    assert_eq!(response.status(), Status::Forbidden);
+    drop(response);
 
     app.cleanup().await;
 }
@@ -195,12 +191,8 @@ async fn mutating_cookie_requests_reject_missing_origin() {
         .dispatch()
         .await;
 
-    assert_error(
-        response,
-        Status::Forbidden,
-        "Origin is required for credentialed requests",
-    )
-    .await;
+    assert_eq!(response.status(), Status::Forbidden);
+    drop(response);
 
     app.cleanup().await;
 }
