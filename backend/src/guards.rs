@@ -35,6 +35,13 @@ fn is_mutating_method(method: Method) -> bool {
     )
 }
 
+fn has_safe_fetch_site(request: &Request<'_>) -> bool {
+    request
+        .headers()
+        .get_one("Sec-Fetch-Site")
+        .is_some_and(|value| matches!(value, "same-origin" | "same-site" | "none"))
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for MutatingOrigin {
     type Error = ApiError;
@@ -44,8 +51,24 @@ impl<'r> FromRequest<'r> for MutatingOrigin {
             return Outcome::Success(Self);
         }
 
-        let Some(origin) = request.headers().get_one("Origin") else {
+        if has_safe_fetch_site(request) {
             return Outcome::Success(Self);
+        }
+
+        let Some(origin) = request.headers().get_one("Origin") else {
+            logging::warn(
+                "auth.origin.rejected",
+                &[
+                    field("method", request.method().as_str()),
+                    field("path", request.uri().path().to_string()),
+                    field("reason", "missing_origin"),
+                ],
+            );
+
+            return Outcome::Error((
+                Status::Forbidden,
+                ApiError::forbidden("Origin is required for credentialed requests"),
+            ));
         };
 
         let allowed_origin = request
@@ -180,11 +203,11 @@ mod tests {
     }
 
     #[test]
-    fn mutating_origin_allows_missing_origin() {
+    fn mutating_origin_rejects_missing_origin() {
         let client = client();
         let response = client.post("/guarded").dispatch();
 
-        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(response.status(), Status::Forbidden);
     }
 
     #[test]
@@ -193,6 +216,17 @@ mod tests {
         let response = client
             .post("/guarded")
             .header(rocket::http::Header::new("Origin", "https://app.example"))
+            .dispatch();
+
+        assert_eq!(response.status(), Status::Ok);
+    }
+
+    #[test]
+    fn mutating_origin_allows_safe_fetch_site_without_origin() {
+        let client = client();
+        let response = client
+            .post("/guarded")
+            .header(rocket::http::Header::new("Sec-Fetch-Site", "same-origin"))
             .dispatch();
 
         assert_eq!(response.status(), Status::Ok);

@@ -3,9 +3,19 @@
 use std::{env, sync::Arc};
 
 use minift_backend::{
-    config::AuthConfig, db::MIGRATOR, schema::auth::RegisterRequest, services::auth,
+    config::{
+        AppState, AuthConfig, CorsConfig, DocsConfig, EmailConfig, EmailState,
+        ExchangeRateProviderConfig, GoogleIntegrationConfig, SeedConfig, WorkerConfig,
+    },
+    cors,
+    db::MIGRATOR,
+    routes,
+    schema::auth::RegisterRequest,
+    services::auth,
 };
+use resend_rs::Resend;
 use rocket::http::SameSite;
+use rocket::local::asynchronous::Client;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 use uuid::Uuid;
 
@@ -13,6 +23,12 @@ pub struct TestDatabase {
     pub pool: PgPool,
     base_url: String,
     schema: String,
+}
+
+pub struct TestApp {
+    pub database: TestDatabase,
+    pub state: AppState,
+    pub client: Client,
 }
 
 impl TestDatabase {
@@ -98,6 +114,32 @@ impl TestDatabase {
     }
 }
 
+impl TestApp {
+    pub async fn new() -> Option<Self> {
+        let database = TestDatabase::new().await?;
+        let state = test_app_state(database.pool.clone());
+        let client = Client::tracked(build_test_rocket(state.clone()))
+            .await
+            .expect("test Rocket client should build");
+
+        Some(Self {
+            database,
+            state,
+            client,
+        })
+    }
+
+    pub async fn untracked_client(&self) -> Client {
+        Client::untracked(build_test_rocket(self.state.clone()))
+            .await
+            .expect("test Rocket client should build")
+    }
+
+    pub async fn cleanup(self) {
+        self.database.cleanup().await;
+    }
+}
+
 pub fn test_auth_config() -> AuthConfig {
     AuthConfig {
         jwt_secret: "integration-test-secret".to_string(),
@@ -109,6 +151,65 @@ pub fn test_auth_config() -> AuthConfig {
         cookie_same_site: SameSite::Lax,
         cookie_domain: None,
     }
+}
+
+pub fn disabled_exchange_rate_provider_config() -> ExchangeRateProviderConfig {
+    ExchangeRateProviderConfig {
+        enabled: false,
+        frankfurter_base_url: "https://api.frankfurter.dev/v2".to_string(),
+        request_timeout_seconds: 10,
+    }
+}
+
+fn test_email_state() -> EmailState {
+    EmailState {
+        client: Resend::new("re_test_dummy_key"),
+        config: EmailConfig {
+            from_email: "MiniFT <noreply@example.test>".to_string(),
+            app_base_url: "http://localhost:3000".to_string(),
+            verification_ttl_hours: 24,
+            password_reset_code_ttl_minutes: 15,
+        },
+    }
+}
+
+fn test_google_config() -> GoogleIntegrationConfig {
+    GoogleIntegrationConfig {
+        client_id: None,
+        client_secret: None,
+        redirect_url: None,
+        token_cipher: None,
+        gmail_readonly_scope: "https://www.googleapis.com/auth/gmail.readonly".to_string(),
+        sync_interval_seconds: 300,
+        request_timeout_seconds: 15,
+        max_sync_messages_per_run: 100,
+        min_manual_sync_interval_seconds: 60,
+        app_base_url: "http://localhost:3000".to_string(),
+    }
+}
+
+pub fn test_app_state(pool: PgPool) -> AppState {
+    AppState {
+        pool,
+        auth: test_auth_config(),
+        cors: CorsConfig::from_allowed_origins(vec!["https://app.example.test".to_string()])
+            .expect("test CORS config"),
+        worker: WorkerConfig {
+            interval_seconds: 60,
+        },
+        docs: DocsConfig { enabled: false },
+        seed: SeedConfig { enabled: false },
+        exchange_rates: disabled_exchange_rate_provider_config(),
+        google: test_google_config(),
+        email: test_email_state(),
+    }
+}
+
+fn build_test_rocket(state: AppState) -> rocket::Rocket<rocket::Build> {
+    rocket::build()
+        .manage(state)
+        .attach(cors::Cors)
+        .mount("/", routes::all())
 }
 
 pub async fn register_test_user(
@@ -130,4 +231,25 @@ pub async fn register_test_user(
     auth::mark_user_email_verified(pool, registration.user.id).await?;
 
     Ok(registration.user.id)
+}
+
+pub async fn register_verified_test_user(
+    pool: &PgPool,
+    email_prefix: &str,
+    currency: &str,
+) -> Result<(Uuid, String), minift_backend::errors::ApiError> {
+    let email = format!("{email_prefix}-{}@example.test", Uuid::new_v4().simple());
+    let registration = auth::register_user(
+        pool,
+        24,
+        RegisterRequest {
+            email: email.clone(),
+            password: "password123".to_string(),
+            currency: Some(currency.to_string()),
+        },
+    )
+    .await?;
+    auth::mark_user_email_verified(pool, registration.user.id).await?;
+
+    Ok((registration.user.id, email))
 }

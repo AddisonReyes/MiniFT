@@ -22,6 +22,18 @@ fn disabled_exchange_rate_provider_config() -> ExchangeRateProviderConfig {
     }
 }
 
+async fn cash_account(
+    pool: &sqlx::PgPool,
+    user_id: uuid::Uuid,
+) -> minift_backend::schema::account::AccountResponse {
+    accounts::list_accounts(pool, user_id)
+        .await
+        .expect("accounts")
+        .into_iter()
+        .find(|account| account.r#type == AccountType::Cash)
+        .expect("cash account")
+}
+
 #[tokio::test]
 async fn create_transfer_creates_mirrored_transaction_rows() {
     let Some(database) = TestDatabase::new().await else {
@@ -253,6 +265,23 @@ async fn create_transfer_rejects_missing_exchange_rate_for_different_currencies(
         "Missing exchange rate from EUR to USD for this transfer"
     );
 
+    let transfers_after_failure = transfers::list_transfers(&database.pool, user_id)
+        .await
+        .expect("transfers after failure");
+    let transfer_rows_after_failure = transactions::list_transactions(
+        &database.pool,
+        user_id,
+        TransactionFilters {
+            r#type: Some(TransactionType::Transfer),
+            ..TransactionFilters::default()
+        },
+    )
+    .await
+    .expect("transfer rows after failure");
+
+    assert!(transfers_after_failure.is_empty());
+    assert!(transfer_rows_after_failure.is_empty());
+
     database.cleanup().await;
 }
 
@@ -299,6 +328,157 @@ async fn create_transfer_rejects_note_longer_than_128_characters() {
     .expect_err("note should be rejected");
 
     assert_eq!(error.message, "Note must be 128 characters or fewer");
+
+    database.cleanup().await;
+}
+
+#[tokio::test]
+async fn delete_transfer_removes_mirrored_rows_and_restores_account_balances() {
+    let Some(database) = TestDatabase::new().await else {
+        return;
+    };
+
+    let user_id = register_test_user(&database.pool, "transfers-delete", "USD")
+        .await
+        .expect("test user");
+    let cash_account = cash_account(&database.pool, user_id).await;
+    let savings_account = accounts::create_account(
+        &database.pool,
+        user_id,
+        CreateAccountRequest {
+            name: "Savings".to_string(),
+            r#type: AccountType::BankAccount,
+            currency: Some("USD".to_string()),
+        },
+    )
+    .await
+    .expect("savings");
+
+    let transfer = transfers::create_transfer(
+        &database.pool,
+        user_id,
+        &disabled_exchange_rate_provider_config(),
+        CreateTransferRequest {
+            from_account_id: cash_account.id,
+            to_account_id: savings_account.id,
+            amount: Decimal::new(125_00, 2),
+            date: chrono::NaiveDate::from_ymd_opt(2026, 5, 12).unwrap(),
+            note: Some("Build savings".to_string()),
+        },
+    )
+    .await
+    .expect("transfer should be created");
+
+    let accounts_after_transfer = accounts::list_accounts(&database.pool, user_id)
+        .await
+        .expect("accounts after transfer");
+    let cash_after_transfer = accounts_after_transfer
+        .iter()
+        .find(|account| account.id == cash_account.id)
+        .expect("cash account after transfer");
+    let savings_after_transfer = accounts_after_transfer
+        .iter()
+        .find(|account| account.id == savings_account.id)
+        .expect("savings account after transfer");
+
+    assert_eq!(cash_after_transfer.balance, Decimal::new(-125_00, 2));
+    assert_eq!(savings_after_transfer.balance, Decimal::new(125_00, 2));
+
+    transfers::delete_transfer(&database.pool, user_id, transfer.id)
+        .await
+        .expect("transfer should delete");
+
+    let transfer_rows = transactions::list_transactions(
+        &database.pool,
+        user_id,
+        TransactionFilters {
+            r#type: Some(TransactionType::Transfer),
+            ..TransactionFilters::default()
+        },
+    )
+    .await
+    .expect("transfer rows after delete");
+    let transfers_after_delete = transfers::list_transfers(&database.pool, user_id)
+        .await
+        .expect("transfers after delete");
+    let accounts_after_delete = accounts::list_accounts(&database.pool, user_id)
+        .await
+        .expect("accounts after delete");
+    let cash_after_delete = accounts_after_delete
+        .iter()
+        .find(|account| account.id == cash_account.id)
+        .expect("cash account after delete");
+    let savings_after_delete = accounts_after_delete
+        .iter()
+        .find(|account| account.id == savings_account.id)
+        .expect("savings account after delete");
+
+    assert!(transfer_rows.is_empty());
+    assert!(transfers_after_delete.is_empty());
+    assert_eq!(cash_after_delete.balance, Decimal::ZERO);
+    assert_eq!(savings_after_delete.balance, Decimal::ZERO);
+
+    database.cleanup().await;
+}
+
+#[tokio::test]
+async fn delete_transfer_is_scoped_to_the_owning_user() {
+    let Some(database) = TestDatabase::new().await else {
+        return;
+    };
+
+    let user_id = register_test_user(&database.pool, "transfers-delete-scope", "USD")
+        .await
+        .expect("test user");
+    let other_user_id = register_test_user(&database.pool, "transfers-delete-scope-other", "USD")
+        .await
+        .expect("other test user");
+    let cash_account = cash_account(&database.pool, user_id).await;
+    let savings_account = accounts::create_account(
+        &database.pool,
+        user_id,
+        CreateAccountRequest {
+            name: "Savings".to_string(),
+            r#type: AccountType::BankAccount,
+            currency: Some("USD".to_string()),
+        },
+    )
+    .await
+    .expect("savings");
+
+    let transfer = transfers::create_transfer(
+        &database.pool,
+        user_id,
+        &disabled_exchange_rate_provider_config(),
+        CreateTransferRequest {
+            from_account_id: cash_account.id,
+            to_account_id: savings_account.id,
+            amount: Decimal::new(75_00, 2),
+            date: chrono::NaiveDate::from_ymd_opt(2026, 5, 13).unwrap(),
+            note: None,
+        },
+    )
+    .await
+    .expect("transfer should be created");
+
+    let error = transfers::delete_transfer(&database.pool, other_user_id, transfer.id)
+        .await
+        .expect_err("other user should not delete transfer");
+
+    assert_eq!(error.message, "Transfer not found");
+
+    let transfer_rows = transactions::list_transactions(
+        &database.pool,
+        user_id,
+        TransactionFilters {
+            r#type: Some(TransactionType::Transfer),
+            ..TransactionFilters::default()
+        },
+    )
+    .await
+    .expect("owner transfer rows should remain");
+
+    assert_eq!(transfer_rows.len(), 2);
 
     database.cleanup().await;
 }

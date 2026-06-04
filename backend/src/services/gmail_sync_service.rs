@@ -2338,13 +2338,12 @@ where
             }
             Ok(response) => {
                 let status = response.status();
-                let body = response.text().await.unwrap_or_default();
                 logging::warn(
                     log_event,
                     &[
                         field("attempt", attempt),
                         field("status", status.as_u16()),
-                        field("body", body.chars().take(200).collect::<String>()),
+                        field("reason", "unexpected_google_response"),
                     ],
                 );
                 return Err(ApiError::bad_request(

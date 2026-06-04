@@ -166,7 +166,7 @@ pub async fn list_transactions(
             field("user_id", user_id),
             field("result_count", transactions.len()),
             field("type_filter", type_filter),
-            field("category_filter", category_filter),
+            field("category_filter_present", category_filter.is_some()),
             field("account_id_filter", account_filter),
             field("start_date_filter", start_date_filter),
             field("end_date_filter", end_date_filter),
@@ -413,9 +413,10 @@ pub async fn monthly_summary(
         &[
             field("user_id", user_id),
             field("month", summary.month),
-            field("income_total", summary.income_total),
-            field("expense_total", summary.expense_total),
-            field("net_total", summary.net_total),
+            field(
+                "has_activity",
+                summary.income_total != Decimal::ZERO || summary.expense_total != Decimal::ZERO,
+            ),
         ],
     );
 

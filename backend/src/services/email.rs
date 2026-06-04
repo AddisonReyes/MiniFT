@@ -128,20 +128,15 @@ async fn send_email(
         .with_html(&html)
         .with_text(&text);
 
-    email_state
-        .client
-        .emails
-        .send(email)
-        .await
-        .map_err(|error| {
-            logging::error(
-                log_event,
-                &[field("to", to), field("error", error.to_string())],
-            );
-            ApiError::internal("Unable to send email right now")
-        })?;
+    email_state.client.emails.send(email).await.map_err(|_| {
+        logging::error(
+            log_event,
+            &[field("status", "failed"), field("reason", "provider_error")],
+        );
+        ApiError::internal("Unable to send email right now")
+    })?;
 
-    logging::info(log_event, &[field("to", to), field("status", "sent")]);
+    logging::info(log_event, &[field("status", "sent")]);
 
     Ok(())
 }

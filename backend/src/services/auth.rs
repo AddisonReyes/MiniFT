@@ -30,6 +30,8 @@ use crate::{
 
 const PASSWORD_CODE_MAX_ATTEMPTS: i32 = 5;
 const EMAIL_CHALLENGE_REQUEST_COOLDOWN_SECONDS: i64 = 60;
+const LOGIN_MAX_FAILED_ATTEMPTS: i32 = 5;
+const LOGIN_LOCKOUT_MINUTES: i64 = 15;
 
 #[derive(Debug, Clone)]
 pub struct IssuedAuthSession {
@@ -349,7 +351,7 @@ async fn find_active_email_challenge_for_update(
     .map_err(ApiError::from)
 }
 
-async fn find_recent_active_email_challenge(
+async fn find_recent_email_challenge(
     pool: &PgPool,
     user_id: Uuid,
     purpose: EmailChallengePurpose,
@@ -361,8 +363,6 @@ async fn find_recent_active_email_challenge(
            FROM email_challenges
            WHERE user_id = $1
              AND purpose = $2
-             AND used_at IS NULL
-             AND revoked_at IS NULL
              AND created_at > NOW() - ($3::text || ' seconds')::interval
          )",
     )
@@ -591,6 +591,88 @@ async fn revoke_all_refresh_sessions_for_user(
     Ok(())
 }
 
+async fn ensure_login_not_throttled(pool: &PgPool, email: &str) -> Result<(), ApiError> {
+    let locked_until = sqlx::query_scalar::<_, chrono::DateTime<Utc>>(
+        "SELECT locked_until
+         FROM auth_login_attempts
+         WHERE email = $1
+           AND locked_until > NOW()",
+    )
+    .bind(email)
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(locked_until) = locked_until {
+        logging::warn(
+            "auth.login.throttled",
+            &[
+                field("email_present", !email.is_empty()),
+                field("locked_until", locked_until),
+            ],
+        );
+
+        return Err(ApiError::too_many_requests(
+            "Too many failed login attempts. Please wait before trying again",
+        ));
+    }
+
+    Ok(())
+}
+
+async fn record_failed_login_attempt(pool: &PgPool, email: &str) -> Result<(), ApiError> {
+    sqlx::query(
+        "INSERT INTO auth_login_attempts (email, failed_attempts, last_failed_at, locked_until, updated_at)
+         VALUES (
+           $1,
+           1,
+           NOW(),
+           CASE WHEN 1 >= $2 THEN NOW() + ($3::text || ' minutes')::interval ELSE NULL END,
+           NOW()
+         )
+         ON CONFLICT (email)
+         DO UPDATE SET
+           failed_attempts = CASE
+             WHEN auth_login_attempts.locked_until IS NOT NULL
+              AND auth_login_attempts.locked_until <= NOW()
+             THEN 1
+             ELSE auth_login_attempts.failed_attempts + 1
+           END,
+           last_failed_at = NOW(),
+           locked_until = CASE
+             WHEN auth_login_attempts.locked_until IS NOT NULL
+              AND auth_login_attempts.locked_until > NOW()
+             THEN auth_login_attempts.locked_until
+             WHEN (
+               CASE
+                 WHEN auth_login_attempts.locked_until IS NOT NULL
+                  AND auth_login_attempts.locked_until <= NOW()
+                 THEN 1
+                 ELSE auth_login_attempts.failed_attempts + 1
+               END
+             ) >= $2
+             THEN NOW() + ($3::text || ' minutes')::interval
+             ELSE NULL
+           END,
+           updated_at = NOW()",
+    )
+    .bind(email)
+    .bind(LOGIN_MAX_FAILED_ATTEMPTS)
+    .bind(LOGIN_LOCKOUT_MINUTES)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+async fn clear_failed_login_attempts(pool: &PgPool, email: &str) -> Result<(), ApiError> {
+    sqlx::query("DELETE FROM auth_login_attempts WHERE email = $1")
+        .bind(email)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
 async fn issue_auth_session(
     pool: &PgPool,
     auth: &AuthConfig,
@@ -731,7 +813,7 @@ pub async fn prepare_verification_email(
         return Ok(None);
     }
 
-    if find_recent_active_email_challenge(
+    if find_recent_email_challenge(
         pool,
         user.id,
         EmailChallengePurpose::VerifyEmail,
@@ -859,10 +941,12 @@ pub async fn login_user(
     payload: LoginRequest,
 ) -> Result<IssuedAuthSession, ApiError> {
     let email = normalize_email(&payload.email)?;
+    ensure_login_not_throttled(pool, &email).await?;
 
     let user = match find_user_by_email(pool, &email).await? {
         Some(user) => user,
         None => {
+            record_failed_login_attempt(pool, &email).await?;
             logging::warn("auth.login.failed", &[field("reason", "user_not_found")]);
             return Err(ApiError::unauthorized("Invalid credentials"));
         }
@@ -873,6 +957,7 @@ pub async fn login_user(
         &user.password_hash,
         "Invalid credentials",
     ) {
+        record_failed_login_attempt(pool, &email).await?;
         logging::warn(
             "auth.login.failed",
             &[
@@ -894,6 +979,7 @@ pub async fn login_user(
         return Err(error);
     }
 
+    clear_failed_login_attempts(pool, &email).await?;
     let session = issue_auth_session(pool, auth, &user).await?;
 
     logging::info("auth.login.succeeded", &[field("user_id", session.user.id)]);
@@ -931,14 +1017,35 @@ pub async fn refresh_session(
         })?;
 
     if session.revoked_at.is_some() || session.expires_at <= Utc::now() {
-        revoke_refresh_session(&mut transaction, session.id, None).await?;
+        let is_rotated_token_reuse = session.revoked_at.is_some()
+            && session.replaced_by_session_id.is_some()
+            && verify_secret(
+                &secret,
+                &session.token_hash,
+                "Invalid or expired refresh token",
+            )
+            .is_ok();
+
+        if is_rotated_token_reuse {
+            revoke_all_refresh_sessions_for_user(&mut transaction, session.user_id).await?;
+        } else {
+            revoke_refresh_session(&mut transaction, session.id, None).await?;
+        }
+
         transaction.commit().await?;
         logging::warn(
             "auth.refresh.failed",
             &[
                 field("session_id", session.id),
                 field("user_id", session.user_id),
-                field("reason", "refresh_session_revoked_or_expired"),
+                field(
+                    "reason",
+                    if is_rotated_token_reuse {
+                        "refresh_token_reuse_detected"
+                    } else {
+                        "refresh_session_revoked_or_expired"
+                    },
+                ),
             ],
         );
         return Err(invalid_refresh_token());
@@ -1064,7 +1171,7 @@ pub async fn request_password_reset_code(
         return Ok(None);
     };
 
-    if find_recent_active_email_challenge(
+    if find_recent_email_challenge(
         pool,
         user.id,
         EmailChallengePurpose::PasswordReset,
@@ -1195,7 +1302,7 @@ pub async fn request_password_change_code(
         .await?
         .ok_or_else(|| ApiError::not_found("User not found"))?;
 
-    if find_recent_active_email_challenge(
+    if find_recent_email_challenge(
         pool,
         user.id,
         EmailChallengePurpose::PasswordChange,
