@@ -2,10 +2,8 @@ mod common;
 
 use common::{test_auth_config, TestDatabase};
 use minift_backend::{
-    schema::auth::{
-        ConfirmPasswordChangeRequest, ConfirmPasswordResetRequest, LoginRequest, RegisterRequest,
-    },
-    services::auth,
+    schema::auth::{ConfirmPasswordChangeRequest, ConfirmPasswordResetRequest},
+    services::auth::{self, LoginUserInput, RegisterUserInput},
 };
 use rocket::http::Status;
 use sqlx::Row;
@@ -20,7 +18,7 @@ async fn email_verification_is_required_before_login() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "verify-flow@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -32,7 +30,7 @@ async fn email_verification_is_required_before_login() {
     let login_error = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -59,7 +57,7 @@ async fn email_verification_is_required_before_login() {
     let login_session = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -82,7 +80,7 @@ async fn login_is_temporarily_throttled_after_repeated_failures() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "login-throttle@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -98,7 +96,7 @@ async fn login_is_temporarily_throttled_after_repeated_failures() {
         let error = auth::login_user(
             &database.pool,
             &auth_config,
-            LoginRequest {
+            LoginUserInput {
                 email: registration.user.email.clone(),
                 password: "wrong-password".to_string(),
             },
@@ -112,7 +110,7 @@ async fn login_is_temporarily_throttled_after_repeated_failures() {
     let throttled_error = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -135,7 +133,7 @@ async fn login_is_temporarily_throttled_after_repeated_failures() {
     let session = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -171,7 +169,7 @@ async fn reusing_rotated_refresh_token_revokes_active_refresh_sessions() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "refresh-reuse@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -186,7 +184,7 @@ async fn reusing_rotated_refresh_token_revokes_active_refresh_sessions() {
     let initial_session = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -241,7 +239,7 @@ async fn password_reset_updates_password_and_revokes_existing_refresh_sessions()
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "reset-flow@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -256,7 +254,7 @@ async fn password_reset_updates_password_and_revokes_existing_refresh_sessions()
     auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -312,7 +310,7 @@ async fn password_reset_updates_password_and_revokes_existing_refresh_sessions()
     let old_password_error = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -325,7 +323,7 @@ async fn password_reset_updates_password_and_revokes_existing_refresh_sessions()
     let new_password_session = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "new-password123".to_string(),
         },
@@ -348,7 +346,7 @@ async fn authenticated_password_change_reissues_a_session() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "change-flow@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -363,7 +361,7 @@ async fn authenticated_password_change_reissues_a_session() {
     let initial_session = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -394,7 +392,7 @@ async fn authenticated_password_change_reissues_a_session() {
     let old_password_error = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "password123".to_string(),
         },
@@ -407,7 +405,7 @@ async fn authenticated_password_change_reissues_a_session() {
     let new_password_session = auth::login_user(
         &database.pool,
         &auth_config,
-        LoginRequest {
+        LoginUserInput {
             email: registration.user.email.clone(),
             password: "changed-password123".to_string(),
         },
@@ -429,7 +427,7 @@ async fn password_reset_code_is_revoked_after_too_many_failed_attempts() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "reset-attempts@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -489,7 +487,7 @@ async fn password_change_code_is_revoked_after_too_many_failed_attempts() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "change-attempts@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -549,7 +547,7 @@ async fn exhausted_password_reset_code_still_enforces_request_cooldown() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "reset-exhausted-cooldown@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -600,7 +598,7 @@ async fn exhausted_password_change_code_still_enforces_request_cooldown() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "change-exhausted-cooldown@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -649,7 +647,7 @@ async fn password_reset_request_respects_silent_cooldown() {
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "reset-cooldown@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),
@@ -685,7 +683,7 @@ async fn authenticated_password_change_request_returns_rate_limit_during_cooldow
     let registration = auth::register_user(
         &database.pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: "change-cooldown@example.test".to_string(),
             password: "password123".to_string(),
             currency: Some("USD".to_string()),

@@ -10,6 +10,7 @@ Set these before running locally outside Docker:
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/minift
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/minift
 JWT_SECRET=replace-with-at-least-32-random-characters
+TURNSTILE_SECRET_KEY=
 RESEND_API_KEY=re_xxxxxxxxx
 RESEND_FROM_EMAIL=MiniFT <onboarding@resend.dev>
 APP_BASE_URL=http://localhost:3000
@@ -37,6 +38,7 @@ ROCKET_PORT=8000
 `TEST_DATABASE_URL` is optional but recommended for integration tests. If it is omitted, the test helpers fall back to `DATABASE_URL`.
 Frankfurter is used as the default online exchange-rate provider. Leave it enabled unless you want accounts to rely only on manual overrides.
 `JWT_SECRET` is required, must be at least 32 characters, and must not use a placeholder value.
+`TURNSTILE_SECRET_KEY` is required for login and registration. If it is empty, those auth flows return a server error instead of continuing without bot protection.
 `RESEND_API_KEY` is required because registration, email verification, password reset, and password change confirmations are now email-backed.
 `APP_BASE_URL` is the frontend origin used in verification links sent by email. For local web development, `http://localhost:3000` is the expected default.
 `ACCESS_COOKIE_NAME` and `REFRESH_COOKIE_NAME` are optional overrides for the auth cookie names.
@@ -92,6 +94,8 @@ Unit tests live next to the modules they cover. Integration tests live under `ba
 - `PUT /api/exchange-rates`
 - monthly and category summaries under `/api/transactions/summary/*`
 
+`POST /api/auth/register` and `POST /api/auth/login` require a `turnstile_token` JSON field. The backend validates that token against Cloudflare Turnstile `siteverify` before running registration or credential checks.
+
 ## Swagger / OpenAPI
 
 The backend publishes an OpenAPI 3.1 document and an embedded Swagger UI.
@@ -119,3 +123,4 @@ The backend publishes an OpenAPI 3.1 document and an embedded Swagger UI.
 - Logs cover startup, database connectivity, HTTP request completion, auth failures, user CRUD operations, exchange-rate refreshes, dev seed activity, and recurring worker processing.
 - Business logs include identifiers and operational context such as `user_id`, resource ids, counts, currencies, dates, and status codes.
 - Credentials, JWT secrets, passwords, and raw auth tokens are not written to logs.
+- Turnstile logs may include failure reasons or Cloudflare error codes, but never the Turnstile token or secret key.

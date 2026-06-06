@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { PasswordInput } from "@/components/password-input";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { Card, Button, Input, Select } from "@/components/ui";
 import { register, sessionQueryKey, useSessionQuery } from "@/lib/auth";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
@@ -25,9 +26,15 @@ function RegisterPageContent() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [clientError, setClientError] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const mutation = useMutation({
     mutationFn: register,
+    onError: () => {
+      setTurnstileToken("");
+      setTurnstileResetKey((key) => key + 1);
+    },
     onSuccess: async (response) => {
       await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
       router.replace(
@@ -50,8 +57,13 @@ function RegisterPageContent() {
       return;
     }
 
+    if (!turnstileToken) {
+      setClientError(t("auth.securityVerificationFailed"));
+      return;
+    }
+
     setClientError("");
-    mutation.mutate({ email, password, currency });
+    mutation.mutate({ email, password, currency, turnstile_token: turnstileToken });
   }
 
   return (
@@ -133,6 +145,16 @@ function RegisterPageContent() {
               </Select>
             </div>
 
+            <TurnstileWidget
+              key={turnstileResetKey}
+              action="register"
+              onClear={() => setTurnstileToken("")}
+              onVerify={(token) => {
+                setClientError("");
+                setTurnstileToken(token);
+              }}
+            />
+
             {clientError ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
                 {clientError}
@@ -151,7 +173,7 @@ function RegisterPageContent() {
             <Button
               className="w-full"
               type="submit"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !turnstileToken}
             >
               {mutation.isPending ? t("auth.register.submitting") : t("auth.register.submit")}
             </Button>

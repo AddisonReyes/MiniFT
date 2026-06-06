@@ -1,10 +1,10 @@
-use std::env;
+use std::{env, sync::Arc};
 
 use resend_rs::Resend;
 use rocket::http::SameSite;
 use sqlx::PgPool;
 
-use crate::{logging, security::encryption::TokenCipher};
+use crate::{logging, security::encryption::TokenCipher, services::turnstile::TurnstileVerifier};
 
 fn normalize_origin(origin: &str) -> Option<String> {
     let trimmed = origin.trim().trim_end_matches('/');
@@ -369,6 +369,8 @@ impl EmailState {
 pub struct AppState {
     pub pool: PgPool,
     pub auth: AuthConfig,
+    pub turnstile_secret_key: String,
+    pub turnstile_verifier: Arc<dyn TurnstileVerifier>,
     pub cors: CorsConfig,
     pub worker: WorkerConfig,
     pub docs: DocsConfig,

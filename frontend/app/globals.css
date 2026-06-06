@@ -236,6 +236,39 @@ body > div {
     @apply min-w-0 [overflow-wrap:anywhere];
   }
 
+  /* Cloudflare paints a light rounded edge inside the iframe; scale and clip it out. */
+  .turnstile-shell {
+    background: #303030;
+    isolation: isolate;
+    position: relative;
+  }
+
+  .turnstile-shell > div {
+    height: 65px !important;
+    transform: scale(1.025, 1.08);
+    transform-origin: center;
+    width: 100% !important;
+  }
+
+  .turnstile-shell::after {
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px #303030;
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .turnstile-shell iframe {
+    border: 0 !important;
+    display: block;
+    height: 65px !important;
+    margin: 0 !important;
+    outline: 0 !important;
+    width: 100% !important;
+  }
+
   .landing-reveal {
     opacity: 0;
     transform: translateY(18px);

@@ -8,6 +8,7 @@ pub mod gmail_sync_service;
 pub mod recurring;
 pub mod transactions;
 pub mod transfers;
+pub mod turnstile;
 
 use chrono::{Datelike, Months, NaiveDate, Utc};
 use rust_decimal::Decimal;

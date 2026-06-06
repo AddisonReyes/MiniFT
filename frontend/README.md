@@ -27,9 +27,11 @@ Next.js App Router frontend for MiniFT. It renders the public landing page, prot
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ```
 
 `NEXT_PUBLIC_API_BASE_URL` is the public backend origin the browser will call directly.
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` is the public Cloudflare Turnstile site key used by the login and registration forms.
 
 ## Run Locally
 
@@ -151,7 +153,9 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 - Build command: `npm run build`
 - Build output directory: `out`
 - Required build env: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
+- Required build env: `NEXT_PUBLIC_TURNSTILE_SITE_KEY=<your-cloudflare-turnstile-site-key>`
 - Backend env: `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000","http://localhost","https://localhost"]`
+- Backend env: `TURNSTILE_SECRET_KEY=<your-cloudflare-turnstile-secret-key>`
 - Backend env: `AUTH_COOKIE_SECURE=true`
 - Backend env: `AUTH_COOKIE_SAME_SITE=none`
 
@@ -159,6 +163,7 @@ Use the `Next.js (Static HTML Export)` preset or equivalent settings:
 
 - `next.config.ts` uses `output: "export"` so `npm run build` emits a deploy-ready `out/` folder.
 - The frontend authenticates with HttpOnly cookies and automatically retries requests after a successful refresh.
+- Login and registration include a Cloudflare Turnstile challenge token that the backend verifies before processing credentials or account creation.
 - Registration now pauses on an email verification step before the first authenticated session starts.
 - Since the app is exported as static HTML, protected pages are enforced after the client-side session check rather than by a server render.
 - The backend must allow cross-origin requests from the Cloudflare Pages site and expose cookies with `AUTH_COOKIE_SECURE=true` plus `AUTH_COOKIE_SAME_SITE=none` in production.

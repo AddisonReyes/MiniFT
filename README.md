@@ -20,6 +20,7 @@ MiniFT is open-source software licensed under the [MIT License](./LICENSE).
 - `backend/` exposes the Rocket API under `/api/*`.
 - The backend authenticates users with `HttpOnly` access cookies plus rotated refresh sessions persisted in PostgreSQL.
 - New accounts are verified by email before the first browser session is issued.
+- Login and registration are protected by Cloudflare Turnstile; the browser sends a challenge token and the backend validates it before credentials or account creation are processed.
 - Because the frontend is a static export, authenticated routes are client-guarded after the session check instead of server-rendered behind middleware.
 - `postgres` stores users, accounts, per-account currencies, exchange rates, transactions, transfers, recurring rules, and budgets.
 - The backend runs a background worker to materialize due recurring transactions.
@@ -64,6 +65,7 @@ Or, if development seed data is enabled, open `http://localhost:3000/login` and 
 ## Backend Highlights
 
 - JWT access cookies with rotated refresh sessions
+- Cloudflare Turnstile validation on login and registration
 - Email verification on registration plus Resend-backed password reset and password change confirmations
 - Optional OpenAPI 3.1 spec with embedded Swagger UI
 - Argon2 password hashing
@@ -129,15 +131,18 @@ Build the frontend from `frontend/` with:
 - Build command: `npm run build`
 - Output directory: `out`
 - Environment variable: `NEXT_PUBLIC_API_BASE_URL=https://<your-railway-backend>/api`
+- Environment variable: `NEXT_PUBLIC_TURNSTILE_SITE_KEY=<your-cloudflare-turnstile-site-key>`
 
-Set the Railway backend allowlist with:
+Set the Railway backend environment with:
 
+- `TURNSTILE_SECRET_KEY=<your-cloudflare-turnstile-secret-key>`
 - `CORS_ALLOWED_ORIGINS=["https://<your-project>.pages.dev","http://localhost:3000","http://localhost","https://localhost"]`
 - `AUTH_COOKIE_SECURE=true`
 - `AUTH_COOKIE_SAME_SITE=none`
 - `AUTH_COOKIE_DOMAIN=` optionally set to your API cookie domain when your production setup requires it
 
 The backend must use an explicit origin allowlist for cookie auth. Avoid `CORS_ALLOWED_ORIGINS=["*"]` in production.
+The Turnstile site key is public and belongs in the frontend environment; the secret key belongs only in the backend environment. The backend validates Turnstile tokens on `POST /api/auth/login` and `POST /api/auth/register`.
 If you also package the frontend with Capacitor for Android against the same deployed backend, keep the localhost WebView origins in that allowlist. This repo pins Android to `http://localhost`, but allowing both `http://localhost` and `https://localhost` is safer during migrations and rebuilds.
 
 ## Local Development Without Docker

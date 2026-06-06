@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type {
   AuthSessionResponse,
   MessageResponse,
@@ -11,12 +11,19 @@ import type {
 } from "@/lib/types";
 
 export const sessionQueryKey = ["auth", "session"];
+export const emailNotVerifiedMessage = "Please verify your email before signing in";
 
 type AuthResponsePayload = {
   user: User;
 };
 
-async function authenticate(path: "/auth/login", payload: { email: string; password: string }) {
+type LoginPayload = {
+  email: string;
+  password: string;
+  turnstile_token: string;
+};
+
+async function authenticate(path: "/auth/login", payload: LoginPayload) {
   const response = await api.post<AuthResponsePayload>(path, payload);
 
   return {
@@ -36,14 +43,23 @@ export function useSessionQuery() {
   });
 }
 
-export async function login(payload: { email: string; password: string }) {
+export async function login(payload: LoginPayload) {
   return authenticate("/auth/login", payload);
+}
+
+export function isEmailNotVerifiedError(error: unknown) {
+  return (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    error.message === emailNotVerifiedMessage
+  );
 }
 
 export async function register(payload: {
   email: string;
   password: string;
   currency: string;
+  turnstile_token: string;
 }) {
   return api.post<RegistrationResponse>("/auth/register", payload);
 }

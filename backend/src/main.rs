@@ -20,6 +20,14 @@ async fn build_rocket() -> Result<rocket::Rocket<rocket::Build>, Box<dyn std::er
     let state = AppState {
         pool,
         auth: AuthConfig::from_env().map_err(std::io::Error::other)?,
+        turnstile_secret_key: env::var("TURNSTILE_SECRET_KEY")
+            .unwrap_or_default()
+            .trim()
+            .to_string(),
+        turnstile_verifier: std::sync::Arc::new(
+            services::turnstile::CloudflareTurnstileVerifier::new()
+                .map_err(|_| std::io::Error::other("Unable to initialize Turnstile HTTP client"))?,
+        ),
         cors: CorsConfig::from_env().map_err(std::io::Error::other)?,
         worker: WorkerConfig::from_env(),
         docs: DocsConfig::from_env(),

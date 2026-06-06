@@ -10,8 +10,10 @@ use minift_backend::{
     cors,
     db::MIGRATOR,
     routes,
-    schema::auth::RegisterRequest,
-    services::auth,
+    services::{
+        auth::{self, RegisterUserInput},
+        turnstile::{TurnstileError, TurnstileVerifier},
+    },
 };
 use resend_rs::Resend;
 use rocket::http::SameSite;
@@ -29,6 +31,20 @@ pub struct TestApp {
     pub database: TestDatabase,
     pub state: AppState,
     pub client: Client,
+}
+
+#[derive(Debug)]
+struct AcceptingTurnstileVerifier;
+
+#[rocket::async_trait]
+impl TurnstileVerifier for AcceptingTurnstileVerifier {
+    async fn verify_token(&self, _secret_key: &str, token: &str) -> Result<(), TurnstileError> {
+        if token.trim().is_empty() {
+            return Err(TurnstileError::MissingToken);
+        }
+
+        Ok(())
+    }
 }
 
 impl TestDatabase {
@@ -192,6 +208,8 @@ pub fn test_app_state(pool: PgPool) -> AppState {
     AppState {
         pool,
         auth: test_auth_config(),
+        turnstile_secret_key: "test-turnstile-secret".to_string(),
+        turnstile_verifier: Arc::new(AcceptingTurnstileVerifier),
         cors: CorsConfig::from_allowed_origins(vec!["https://app.example.test".to_string()])
             .expect("test CORS config"),
         worker: WorkerConfig {
@@ -221,7 +239,7 @@ pub async fn register_test_user(
     let registration = auth::register_user(
         pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email,
             password: "password123".to_string(),
             currency: Some(currency.to_string()),
@@ -242,7 +260,7 @@ pub async fn register_verified_test_user(
     let registration = auth::register_user(
         pool,
         24,
-        RegisterRequest {
+        RegisterUserInput {
             email: email.clone(),
             password: "password123".to_string(),
             currency: Some(currency.to_string()),

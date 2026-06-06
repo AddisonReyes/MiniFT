@@ -22,8 +22,8 @@ use crate::{
         },
     },
     schema::auth::{
-        AuthResponse, ConfirmPasswordChangeRequest, ConfirmPasswordResetRequest, LoginRequest,
-        RegisterRequest, UpdateDefaultCurrencyRequest,
+        AuthResponse, ConfirmPasswordChangeRequest, ConfirmPasswordResetRequest,
+        UpdateDefaultCurrencyRequest,
     },
     services::normalize_currency_code,
 };
@@ -56,6 +56,19 @@ pub struct VerificationEmailDelivery {
 pub struct PasswordCodeDelivery {
     pub email: String,
     pub code: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct RegisterUserInput {
+    pub email: String,
+    pub password: String,
+    pub currency: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LoginUserInput {
+    pub email: String,
+    pub password: String,
 }
 
 fn normalize_email(email: &str) -> Result<String, ApiError> {
@@ -720,16 +733,19 @@ async fn update_password_hash(
 pub async fn register_user(
     pool: &PgPool,
     verification_ttl_hours: i64,
-    payload: RegisterRequest,
+    payload: RegisterUserInput,
 ) -> Result<RegistrationResult, ApiError> {
-    let email = normalize_email(&payload.email)?;
-    validate_password(&payload.password)?;
-    let currency = normalize_currency_code(
-        payload.currency.as_deref().unwrap_or("USD"),
-        "Default currency",
-    )?;
+    let RegisterUserInput {
+        email,
+        password,
+        currency,
+    } = payload;
+    let email = normalize_email(&email)?;
+    validate_password(&password)?;
+    let currency =
+        normalize_currency_code(currency.as_deref().unwrap_or("USD"), "Default currency")?;
 
-    let password_hash = hash_secret(&payload.password)?;
+    let password_hash = hash_secret(&password)?;
     let mut transaction = pool.begin().await?;
 
     let user = sqlx::query_as::<_, UserRecord>(
@@ -938,9 +954,10 @@ pub async fn verify_email_token(
 pub async fn login_user(
     pool: &PgPool,
     auth: &AuthConfig,
-    payload: LoginRequest,
+    payload: LoginUserInput,
 ) -> Result<IssuedAuthSession, ApiError> {
-    let email = normalize_email(&payload.email)?;
+    let LoginUserInput { email, password } = payload;
+    let email = normalize_email(&email)?;
     ensure_login_not_throttled(pool, &email).await?;
 
     let user = match find_user_by_email(pool, &email).await? {
@@ -952,11 +969,7 @@ pub async fn login_user(
         }
     };
 
-    if let Err(error) = verify_secret(
-        &payload.password,
-        &user.password_hash,
-        "Invalid credentials",
-    ) {
+    if let Err(error) = verify_secret(&password, &user.password_hash, "Invalid credentials") {
         record_failed_login_attempt(pool, &email).await?;
         logging::warn(
             "auth.login.failed",

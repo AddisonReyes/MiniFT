@@ -77,6 +77,7 @@ async fn login_sets_http_only_cookies_and_cookie_session_can_read_profile() {
         .json(&json!({
             "email": email,
             "password": "password123",
+            "turnstile_token": "test-turnstile-token",
         }))
         .dispatch()
         .await;
@@ -118,6 +119,66 @@ async fn login_sets_http_only_cookies_and_cookie_session_can_read_profile() {
 }
 
 #[tokio::test]
+async fn login_rejects_missing_turnstile_token() {
+    let Some(app) = TestApp::new().await else {
+        return;
+    };
+
+    let (_user_id, email) =
+        register_verified_test_user(&app.database.pool, "http-login-turnstile", "USD")
+            .await
+            .expect("verified test user");
+
+    let response = app
+        .client
+        .post("/api/auth/login")
+        .header(Header::new("Origin", ALLOWED_ORIGIN))
+        .json(&json!({
+            "email": email,
+            "password": "password123",
+        }))
+        .dispatch()
+        .await;
+
+    assert_error(
+        response,
+        Status::Forbidden,
+        "Security verification failed. Please try again.",
+    )
+    .await;
+
+    app.cleanup().await;
+}
+
+#[tokio::test]
+async fn register_rejects_missing_turnstile_token() {
+    let Some(app) = TestApp::new().await else {
+        return;
+    };
+
+    let response = app
+        .client
+        .post("/api/auth/register")
+        .header(Header::new("Origin", ALLOWED_ORIGIN))
+        .json(&json!({
+            "email": "missing-register-turnstile@example.test",
+            "password": "password123",
+            "currency": "USD",
+        }))
+        .dispatch()
+        .await;
+
+    assert_error(
+        response,
+        Status::Forbidden,
+        "Security verification failed. Please try again.",
+    )
+    .await;
+
+    app.cleanup().await;
+}
+
+#[tokio::test]
 async fn protected_endpoints_require_authentication() {
     let Some(app) = TestApp::new().await else {
         return;
@@ -152,6 +213,7 @@ async fn mutating_cookie_requests_reject_untrusted_origins() {
         .json(&json!({
             "email": email,
             "password": "password123",
+            "turnstile_token": "test-turnstile-token",
         }))
         .dispatch()
         .await;
@@ -179,6 +241,7 @@ async fn mutating_cookie_requests_reject_missing_origin() {
         .json(&json!({
             "email": email,
             "password": "password123",
+            "turnstile_token": "test-turnstile-token",
         }))
         .dispatch()
         .await;
@@ -207,6 +270,7 @@ async fn refresh_rotates_refresh_cookie_and_rejects_reusing_the_old_token() {
         .json(&json!({
             "email": email,
             "password": "password123",
+            "turnstile_token": "test-turnstile-token",
         }))
         .dispatch()
         .await;
@@ -301,6 +365,7 @@ async fn logout_clears_cookie_session_and_revokes_refresh_session() {
         .json(&json!({
             "email": email,
             "password": "password123",
+            "turnstile_token": "test-turnstile-token",
         }))
         .dispatch()
         .await;

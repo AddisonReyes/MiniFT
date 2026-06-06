@@ -193,6 +193,7 @@
     "emailPlaceholder": "tu@ejemplo.com",
     "passwordLabel": "Contraseña",
     "passwordPlaceholder": "Mínimo 8 caracteres",
+    "securityVerificationFailed": "La verificación de seguridad falló. Inténtalo de nuevo.",
     "viewPassword": "Ver contraseña",
     "hidePassword": "Ocultar contraseña",
     "login": {

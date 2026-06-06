@@ -18,8 +18,43 @@ use crate::{
         },
         common::MessageResponse,
     },
-    services::{auth, email, email::PasswordCodeEmailKind},
+    services::{auth, email, email::PasswordCodeEmailKind, turnstile},
 };
+
+async fn verify_auth_turnstile(state: &AppState, token: &str) -> Result<(), ApiError> {
+    state
+        .turnstile_verifier
+        .verify_token(&state.turnstile_secret_key, token)
+        .await
+        .map_err(|error| match error {
+            turnstile::TurnstileError::MissingSecret => {
+                logging::error("auth.turnstile.missing_secret", &[]);
+                ApiError::internal("Turnstile verification is not configured")
+            }
+            turnstile::TurnstileError::MissingToken => {
+                logging::warn("auth.turnstile.failed", &[field("reason", "missing_token")]);
+                ApiError::forbidden("Security verification failed. Please try again.")
+            }
+            turnstile::TurnstileError::Rejected { error_codes } => {
+                logging::warn(
+                    "auth.turnstile.failed",
+                    &[
+                        field("reason", "rejected"),
+                        field("error_codes", error_codes),
+                    ],
+                );
+                ApiError::forbidden("Security verification failed. Please try again.")
+            }
+            turnstile::TurnstileError::RequestFailed => {
+                logging::error("auth.turnstile.request_failed", &[]);
+                ApiError::internal("Unable to verify security challenge")
+            }
+            turnstile::TurnstileError::InvalidResponse => {
+                logging::error("auth.turnstile.invalid_response", &[]);
+                ApiError::internal("Unable to verify security challenge")
+            }
+        })
+}
 
 fn add_auth_cookie(
     cookies: &CookieJar<'_>,
@@ -95,6 +130,7 @@ fn clear_auth_cookies(cookies: &CookieJar<'_>, state: &AppState) {
             body = RegistrationResponse
         ),
         (status = 400, description = "Invalid registration payload", body = ErrorResponse),
+        (status = 403, description = "Security verification failed", body = ErrorResponse),
         (status = 409, description = "Email already registered", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
     )
@@ -105,10 +141,17 @@ pub async fn register(
     _origin: MutatingOrigin,
     payload: Json<RegisterRequest>,
 ) -> Result<Json<RegistrationResponse>, ApiError> {
+    let payload = payload.into_inner();
+    verify_auth_turnstile(state, &payload.turnstile_token).await?;
+
     let registration = auth::register_user(
         &state.pool,
         state.email.config.verification_ttl_hours,
-        payload.into_inner(),
+        auth::RegisterUserInput {
+            email: payload.email,
+            password: payload.password,
+            currency: payload.currency,
+        },
     )
     .await?;
     let email_address = registration.user.email.clone();
@@ -234,7 +277,7 @@ pub async fn verify_email(
         ),
         (status = 400, description = "Invalid login payload", body = ErrorResponse),
         (status = 401, description = "Invalid credentials", body = ErrorResponse),
-        (status = 403, description = "Email address has not been verified yet", body = ErrorResponse),
+        (status = 403, description = "Security verification failed or email address has not been verified yet", body = ErrorResponse),
         (status = 500, description = "Server error", body = ErrorResponse)
     )
 )]
@@ -245,7 +288,18 @@ pub async fn login(
     _origin: MutatingOrigin,
     payload: Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, ApiError> {
-    let session = auth::login_user(&state.pool, &state.auth, payload.into_inner()).await?;
+    let payload = payload.into_inner();
+    verify_auth_turnstile(state, &payload.turnstile_token).await?;
+
+    let session = auth::login_user(
+        &state.pool,
+        &state.auth,
+        auth::LoginUserInput {
+            email: payload.email,
+            password: payload.password,
+        },
+    )
+    .await?;
     set_auth_cookies(cookies, state, &session);
     Ok(Json(auth::auth_response(&session)))
 }

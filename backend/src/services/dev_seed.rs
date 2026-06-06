@@ -9,11 +9,15 @@ use crate::{
     logging::{self, field},
     models::{account::AccountType, recurring::RecurringFrequency, transaction::TransactionType},
     schema::{
-        account::CreateAccountRequest, auth::RegisterRequest, budget::CreateBudgetRequest,
+        account::CreateAccountRequest, budget::CreateBudgetRequest,
         exchange_rate::ExchangeRateInput, recurring::CreateRecurringTransactionRequest,
         transaction::CreateTransactionRequest, transfer::CreateTransferRequest,
     },
-    services::{accounts, auth, budgets, exchange_rates, recurring, transactions, transfers},
+    services::{
+        accounts,
+        auth::{self, RegisterUserInput},
+        budgets, exchange_rates, recurring, transactions, transfers,
+    },
 };
 
 const DEMO_EMAIL: &str = "demo@minift.local";
@@ -482,7 +486,7 @@ pub async fn seed_dev_data(state: &AppState) -> Result<(), ApiError> {
     let registration = auth::register_user(
         &state.pool,
         state.email.config.verification_ttl_hours,
-        RegisterRequest {
+        RegisterUserInput {
             email: DEMO_EMAIL.to_string(),
             password: DEMO_PASSWORD.to_string(),
             currency: Some(DEMO_DEFAULT_CURRENCY.to_string()),

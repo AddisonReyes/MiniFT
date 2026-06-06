@@ -8,9 +8,14 @@ import { useTranslation } from "react-i18next";
 
 import { FinanceSnapshot } from "@/components/marketing/finance-snapshot";
 import { PasswordInput } from "@/components/password-input";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { Card, Button, Input } from "@/components/ui";
-import { ApiError } from "@/lib/api";
-import { login, sessionQueryKey, useSessionQuery } from "@/lib/auth";
+import {
+  isEmailNotVerifiedError,
+  login,
+  sessionQueryKey,
+  useSessionQuery,
+} from "@/lib/auth";
 import { describeError } from "@/lib/error-message";
 import { sanitizeRedirectTarget } from "@/lib/redirect";
 
@@ -23,9 +28,16 @@ function LoginPageContent() {
   const session = useSessionQuery();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [clientError, setClientError] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const mutation = useMutation({
     mutationFn: login,
+    onError: () => {
+      setTurnstileToken("");
+      setTurnstileResetKey((key) => key + 1);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
       router.replace(nextPath);
@@ -40,11 +52,17 @@ function LoginPageContent() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    mutation.mutate({ email, password });
+
+    if (!turnstileToken) {
+      setClientError(t("auth.securityVerificationFailed"));
+      return;
+    }
+
+    setClientError("");
+    mutation.mutate({ email, password, turnstile_token: turnstileToken });
   }
 
-  const shouldOfferVerificationResend =
-    mutation.error instanceof ApiError && mutation.error.status === 403 && email;
+  const shouldOfferVerificationResend = isEmailNotVerifiedError(mutation.error) && email;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
@@ -98,6 +116,22 @@ function LoginPageContent() {
               />
             </div>
 
+            <TurnstileWidget
+              key={turnstileResetKey}
+              action="login"
+              onClear={() => setTurnstileToken("")}
+              onVerify={(token) => {
+                setClientError("");
+                setTurnstileToken(token);
+              }}
+            />
+
+            {clientError ? (
+              <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
+                {clientError}
+              </div>
+            ) : null}
+
             {mutation.error ? (
               <div className="rounded-2xl border border-hazard/20 bg-hazard/10 px-4 py-3 text-sm text-hazard">
                 <div className="font-medium">{t("auth.login.errorTitle")}</div>
@@ -120,7 +154,7 @@ function LoginPageContent() {
             <Button
               className="w-full"
               type="submit"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !turnstileToken}
             >
               {mutation.isPending ? t("auth.login.submitting") : t("auth.login.submit")}
             </Button>
